@@ -90,3 +90,18 @@ def test_wizard_step2_shows_api_key_input(page: ft.Page = None):
     # Find API key field
     textfields = _find_controls_by_type(wizard, ft.TextField)
     assert any("API Key" in str(tf.label) for tf in textfields)
+
+
+def test_wizard_step3_shows_completion(page: ft.Page = None):
+    """Test step 3 shows completion summary."""
+    ai_hub = AIHubView(page=page)
+    ai_hub.selected_providers = ["openai"]
+    ai_hub.wizard_step = 2
+
+    wizard = ai_hub._build_wizard_tab()
+
+    # Find completion text by searching for Text controls
+    text_controls = _find_controls_by_type(wizard, ft.Text)
+    text_values = [str(t.value) for t in text_controls if hasattr(t, 'value') and t.value]
+
+    assert "Setup Complete!" in text_values, f"Expected 'Setup Complete!' in {text_values}"

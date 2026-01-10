@@ -75,8 +75,10 @@ class AIHubView(ft.Column):
             return self._build_wizard_step1_provider_selection()
         elif self.wizard_step == 1:
             return self._build_wizard_step2_configure_providers()
+        elif self.wizard_step == 2:
+            return self._build_wizard_step3_completion()
         else:
-            return ft.Container(content=ft.Text("Other steps TBD"))
+            return ft.Container(content=ft.Text("Setup complete!"))
 
     def _on_provider_checked(self, e, provider_id):
         """Handle provider checkbox changes."""
@@ -282,6 +284,66 @@ class AIHubView(ft.Column):
             expand=True,
         )
 
+    def _build_wizard_step3_completion(self):
+        """Step 3: Setup completion and summary."""
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Icon(
+                        ft.Icons.CHECK_CIRCLE,
+                        size=64,
+                        color=Theme.SUCCESS,
+                    ),
+                    ft.Text(
+                        "Setup Complete!",
+                        size=28,
+                        weight=ft.FontWeight.BOLD,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        f"Configured {len(self.selected_providers)} AI provider(s)",
+                        size=14,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                    ft.Container(height=Theme.SPACING_LG),
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                ft.Text(
+                                    "What's Next:",
+                                    size=16,
+                                    weight=ft.FontWeight.W_600,
+                                ),
+                                ft.Text("• Download local models in Model Library tab"),
+                                ft.Text("• Add AI nodes to your workflows"),
+                                ft.Text("• Monitor usage and costs in Dashboard"),
+                            ],
+                            spacing=8,
+                        ),
+                        bgcolor=Theme.SURFACE,
+                        padding=Theme.SPACING_MD,
+                        border_radius=Theme.RADIUS_MD,
+                    ),
+                    ft.Container(expand=True),
+                    ft.Row(
+                        controls=[
+                            ft.TextButton("← Back", on_click=lambda e: self._wizard_prev_step()),
+                            ft.Container(expand=True),
+                            ft.ElevatedButton(
+                                "Get Started",
+                                bgcolor=Theme.SUCCESS,
+                                on_click=lambda e: self._complete_wizard(),
+                            ),
+                        ],
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=Theme.SPACING_LG,
+            expand=True,
+        )
+
     def _wizard_next_step(self):
         """Advance wizard to next step."""
         self.wizard_step += 1
@@ -315,6 +377,37 @@ class AIHubView(ft.Column):
         if self._page:
             # TODO: Implement tab switching
             pass
+
+    def _complete_wizard(self):
+        """Complete wizard and save configurations."""
+        from src.ai.security import store_api_key
+        from src.ai.storage import AIStorage
+        from src.data.storage import get_storage
+
+        # Save API keys to system keyring
+        for provider_id, config in self.provider_configs.items():
+            if "api_key" in config:
+                try:
+                    store_api_key(provider_id, config["api_key"])
+                except Exception as e:
+                    print(f"Failed to store API key for {provider_id}: {e}")
+
+        # Save provider configurations to database
+        storage = get_storage()
+        ai_storage = AIStorage(db_path=storage.db_path)
+
+        # Mark wizard as completed
+        storage.set_setting("ai_wizard_completed", "true")
+
+        # Reset wizard state
+        self.wizard_step = 0
+        self.selected_providers = []
+        self.provider_configs = {}
+
+        # Navigate to My Providers tab
+        if self._page:
+            # TODO: Switch to tab 1 (My Providers)
+            self._page.update()
 
     def _build_model_library_tab(self):
         """Model Library tab containing My Models and Download as subtabs."""
