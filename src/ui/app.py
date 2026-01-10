@@ -967,6 +967,53 @@ class SkynetteApp:
                         color=SkynetteTheme.TEXT_SECONDARY,
                     ),
                     ft.Container(height=24),
+                    # Theme Section
+                    self._build_settings_section(
+                        "Appearance",
+                        ft.Column(
+                            controls=[
+                                ft.Row(
+                                    controls=[
+                                        ft.Icon(
+                                            ft.Icons.PALETTE_OUTLINED,
+                                            size=20,
+                                            color=SkynetteTheme.PRIMARY,
+                                        ),
+                                        ft.Column(
+                                            controls=[
+                                                ft.Text(
+                                                    "Theme",
+                                                    size=14,
+                                                    weight=ft.FontWeight.W_500,
+                                                    color=SkynetteTheme.TEXT_PRIMARY,
+                                                ),
+                                                ft.Text(
+                                                    "Choose light or dark theme",
+                                                    size=12,
+                                                    color=SkynetteTheme.TEXT_SECONDARY,
+                                                ),
+                                            ],
+                                            spacing=2,
+                                            expand=True,
+                                        ),
+                                    ],
+                                    spacing=12,
+                                ),
+                                ft.Container(height=12),
+                                ft.Row(
+                                    controls=[
+                                        ft.Switch(
+                                            label="Dark Mode",
+                                            value=SkynetteTheme.get_theme_mode() == "dark",
+                                            on_change=self._toggle_theme,
+                                        ),
+                                    ],
+                                ),
+                            ],
+                            spacing=8,
+                        ),
+                    ),
+                    ft.Container(height=16),
                     # Updates Section
                     self._build_settings_section(
                         "Software Updates",
@@ -1187,6 +1234,21 @@ class SkynetteApp:
         self.assistant_visible = not self.assistant_visible
         if self.assistant_panel:
             self.assistant_panel.visible = self.assistant_visible
+        self.page.update()
+
+    def _toggle_theme(self, e):
+        """Toggle between light and dark theme."""
+        new_mode = "dark" if e.control.value else "light"
+        SkynetteTheme.set_theme_mode(new_mode)
+
+        # Save preference
+        self.storage.set_setting("theme_mode", new_mode)
+
+        # Update Flet page theme
+        self.page.theme_mode = ft.ThemeMode.DARK if new_mode == "dark" else ft.ThemeMode.LIGHT
+
+        # Force full UI rebuild
+        self._update_content()
         self.page.update()
 
     def _create_new_workflow(self, e=None):
