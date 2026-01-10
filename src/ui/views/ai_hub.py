@@ -76,6 +76,19 @@ class AIHubView(ft.Column):
         else:
             return ft.Container(content=ft.Text("Other steps TBD"))
 
+    def _on_provider_checked(self, e, provider_id):
+        """Handle provider checkbox changes."""
+        if e.control.value:
+            if provider_id not in self.selected_providers:
+                self.selected_providers.append(provider_id)
+        else:
+            if provider_id in self.selected_providers:
+                self.selected_providers.remove(provider_id)
+
+        # Trigger UI update to enable/disable Next button
+        if self._page:
+            self._page.update()
+
     def _build_wizard_step1_provider_selection(self):
         """Step 1: Select AI providers to configure."""
         providers = [
@@ -102,14 +115,6 @@ class AIHubView(ft.Column):
             },
         ]
 
-        def on_provider_checked(e, provider_id):
-            if e.control.value:
-                if provider_id not in self.selected_providers:
-                    self.selected_providers.append(provider_id)
-            else:
-                if provider_id in self.selected_providers:
-                    self.selected_providers.remove(provider_id)
-
         return ft.Container(
             content=ft.Column(
                 controls=[
@@ -132,7 +137,7 @@ class AIHubView(ft.Column):
                                     ft.Checkbox(
                                         label=p["name"],
                                         value=p["id"] in self.selected_providers,
-                                        on_change=lambda e, pid=p["id"]: on_provider_checked(e, pid),
+                                        on_change=lambda e, pid=p["id"]: self._on_provider_checked(e, pid),
                                     ),
                                     ft.Container(expand=True),
                                     ft.Column(
