@@ -168,11 +168,14 @@ class AIStorage:
         end_date: date
     ) -> Dict[str, Any]:
         """Get usage statistics for date range."""
+        if end_date < start_date:
+            raise ValueError("end_date must be >= start_date")
+
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            start_str = datetime.combine(start_date, datetime.min.time()).isoformat()
-            end_str = datetime.combine(end_date, datetime.max.time()).isoformat()
+            start_str = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc).isoformat()
+            end_str = datetime.combine(end_date, datetime.max.time(), tzinfo=timezone.utc).isoformat()
 
             cursor.execute("""
                 SELECT
@@ -198,11 +201,11 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            start_date = datetime(year, month, 1)
+            start_date = datetime(year, month, 1, tzinfo=timezone.utc)
             if month == 12:
-                end_date = datetime(year + 1, 1, 1)
+                end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
             else:
-                end_date = datetime(year, month + 1, 1)
+                end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc)
 
             cursor.execute("""
                 SELECT provider, SUM(cost_usd) as total_cost
@@ -220,11 +223,11 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            start_date = datetime(year, month, 1)
+            start_date = datetime(year, month, 1, tzinfo=timezone.utc)
             if month == 12:
-                end_date = datetime(year + 1, 1, 1)
+                end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
             else:
-                end_date = datetime(year, month + 1, 1)
+                end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc)
 
             cursor.execute("""
                 SELECT workflow_id, SUM(cost_usd) as total_cost
