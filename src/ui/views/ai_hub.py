@@ -240,13 +240,13 @@ class AIHubView(ft.Column):
             password=True,
             can_reveal_password=True,
             hint_text=f"Enter your {provider_name} API key",
-            on_change=lambda e: self._update_provider_config(provider_id, "api_key", e.control.value),
+            on_change=lambda e, pid=provider_id: self._update_provider_config(pid, "api_key", e.control.value),
         )
 
         test_button = ft.ElevatedButton(
             "Test Connection",
             icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
-            on_click=lambda e: self._test_provider_connection(provider_id),
+            on_click=lambda e, pid=provider_id: self._test_provider_connection(pid),
         )
 
         status_text = ft.Text("", size=12)
@@ -296,7 +296,10 @@ class AIHubView(ft.Column):
             self._page.update()
 
     def _update_provider_config(self, provider_id: str, key: str, value: str):
-        """Update provider configuration."""
+        """Update provider configuration.
+
+        TODO: Use secure keyring storage instead of plain memory (see src/ai/security.py)
+        """
         if provider_id not in self.provider_configs:
             self.provider_configs[provider_id] = {}
         self.provider_configs[provider_id][key] = value
