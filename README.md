@@ -38,44 +38,143 @@ An intelligent, AI-powered workflow automation platform that rivals n8n, combini
 - Share workflows with team members
 - Cloud execution for scheduled workflows
 
+## Requirements
+
+### System Requirements
+- **Operating System**: Windows 10+, macOS 11+, or Linux (Ubuntu 20.04+)
+- **Python**: 3.11 or higher
+- **RAM**: 4GB minimum, 8GB recommended (16GB for local AI models)
+- **Storage**: 2GB for application, 4-8GB per local AI model
+- **GPU** (optional): NVIDIA GPU with CUDA for faster local model inference
+
+### Python Dependencies
+All dependencies are automatically installed via pip. Key packages include:
+- **UI**: Flet 0.25+
+- **AI**: llama-cpp-python, openai, anthropic, google-generativeai
+- **Data**: SQLAlchemy, pandas, pyyaml
+- **Workflow**: apscheduler, watchdog, jinja2
+
+See [pyproject.toml](pyproject.toml) for complete list.
+
 ## Installation
 
-### From Source
+### Method 1: From Source (Recommended for Development)
+
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/skynette.git
-cd skynette
+# Clone the repository
+git clone https://github.com/flyingpurplepizzaeater/Skynette.git
+cd Skynette
 
-# Create virtual environment
+# Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
 
-# Install dependencies
-pip install -r requirements.txt
+# Activate virtual environment
+# On Linux/Mac:
+source venv/bin/activate
+# On Windows:
+venv\Scripts\activate
 
-# Run application
+# Install the package with dependencies
+pip install -e ".[dev]"
+
+# Run the application
+python src/main.py
+# or
 flet run src/main.py
 ```
 
-### Pre-built Executables
-Download from [Releases](https://github.com/yourusername/skynette/releases):
-- Windows: `skynette-windows.exe`
-- macOS: `skynette-macos.app`
-- Linux: `skynette-linux.AppImage`
+### Method 2: Install from PyPI (Coming Soon)
+
+```bash
+pip install skynette
+skynette
+```
+
+### Method 3: Pre-built Executables (Coming Soon)
+
+Download from [Releases](https://github.com/flyingpurplepizzaeater/Skynette/releases):
+- **Windows**: `Skynette-Setup.exe`
+- **macOS**: `Skynette.dmg`
+- **Linux**: `Skynette.AppImage`
+
+Double-click to install and launch.
 
 ## Quick Start
 
-1. **Launch Skynette** - Opens to the workflow dashboard
-2. **Create New Workflow** - Click "+" or use Skynet Assistant
-3. **Add Nodes** - Drag from node palette or describe in chat
-4. **Connect Nodes** - Draw connections between outputs and inputs
-5. **Configure** - Click nodes to set parameters
-6. **Execute** - Click Run or set up a trigger
+### First Time Setup
 
-### Example: Email Notification Workflow
+1. **Launch Skynette**:
+   ```bash
+   python src/main.py
+   ```
+
+2. **Configure AI Provider** (Optional but recommended):
+   - Navigate to **Settings** → **AI Providers**
+   - Choose between:
+     - **Local Models**: Free, private, but requires model download
+     - **Cloud Providers**: Fast, powerful, but requires API key
+   - See [AI Provider Setup Guide](docs/AI_PROVIDERS.md) for detailed instructions
+
+3. **Create Your First Workflow**:
+   - Click **New Workflow** button on the dashboard
+   - Choose between Simple Mode (wizard) or Advanced Mode (canvas)
+
+### Building a Workflow
+
+#### Option 1: Using Skynet Assistant (Easiest)
+
+1. Click the **Assistant** tab
+2. Describe your workflow in natural language:
+   ```
+   "Create a workflow that fetches weather data from an API every morning at 8 AM
+   and sends me a notification"
+   ```
+3. Review the generated workflow
+4. Click **Create Workflow** to build it automatically
+
+#### Option 2: Visual Editor
+
+1. **Add Trigger Node**:
+   - Drag **Schedule Trigger** from the node palette
+   - Configure: `0 8 * * *` (8 AM daily)
+
+2. **Add Action Nodes**:
+   - Drag **HTTP Request** node
+   - Set URL: `https://api.weather.com/...`
+   - Connect from trigger to HTTP node
+
+3. **Add Logic** (optional):
+   - Drag **If/Else** node to add conditions
+   - Example: If temperature < 10°C, add cold weather warning
+
+4. **Add Output**:
+   - Drag **Send Notification** node
+   - Configure notification settings
+
+5. **Execute**:
+   - Click **Run** to test immediately
+   - Or enable the trigger for automatic execution
+
+### Example Workflows
+
+#### 1. Email Notification Workflow
 ```
 Manual Trigger → HTTP Request (fetch data) → If/Else (check condition) → Send Email
+```
+
+#### 2. Data Processing Pipeline
+```
+File Watch Trigger → Read CSV → Transform Data → AI Analysis → Write to Database → Send Slack Message
+```
+
+#### 3. Content Generation
+```
+Schedule Trigger → AI Text Generation → Format Output → Post to Blog → Tweet Summary
+```
+
+#### 4. Smart Home Automation
+```
+Webhook Trigger → Check Sensor Data → If/Else Logic → Control Smart Devices → Log Event
 ```
 
 ## Architecture
@@ -152,6 +251,21 @@ cloud:
 - [ ] Phase 3: App integrations (30+ connectors)
 - [ ] Phase 4: Cloud features (sync, sharing, marketplace)
 - [ ] Phase 5: Mobile apps (iOS, Android via Flet)
+
+## Documentation
+
+### Guides
+- **[AI Provider Setup](docs/AI_PROVIDERS.md)**: Configure OpenAI, Anthropic, Google AI, local models, and more
+- **[Contributing Guide](CONTRIBUTING.md)**: How to contribute to Skynette
+- **[Architecture Overview](docs/ARCHITECTURE.md)**: System design and technical details (Coming Soon)
+- **[Plugin Development](docs/PLUGIN_DEVELOPMENT.md)**: Create custom nodes and integrations (Coming Soon)
+
+### Quick Links
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Example Workflows](#example-workflows)
+- [Configuration](#configuration)
+- [Troubleshooting](docs/AI_PROVIDERS.md#troubleshooting)
 
 ## Contributing
 
