@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.ai.security import store_api_key, get_api_key, delete_api_key, has_api_key
+from src.ai.security import store_api_key, get_api_key, delete_api_key, has_api_key, list_stored_providers
 
 
 class TestAPIKeySecurity:
@@ -63,3 +63,66 @@ class TestAPIKeySecurity:
         result = has_api_key("openai")
 
         assert result is False
+
+    @patch('keyring.set_password', side_effect=Exception("Keyring error"))
+    def test_store_api_key_error(self, mock_set):
+        """Test error handling when storing API key fails."""
+        with pytest.raises(Exception):
+            store_api_key("openai", "sk-test123")
+
+    @patch('keyring.get_password', side_effect=Exception("Keyring error"))
+    def test_get_api_key_error(self, mock_get):
+        """Test error handling when retrieving API key fails."""
+        key = get_api_key("openai")
+        assert key is None
+
+    @patch('keyring.delete_password', side_effect=Exception("Keyring error"))
+    def test_delete_api_key_error(self, mock_delete):
+        """Test error handling when deleting API key fails."""
+        with pytest.raises(Exception):
+            delete_api_key("openai")
+
+    @patch('src.ai.security.get_api_key')
+    def test_list_stored_providers(self, mock_get):
+        """Test listing stored providers."""
+        def side_effect(provider):
+            return "sk-key" if provider in ["openai", "anthropic"] else None
+
+        mock_get.side_effect = side_effect
+
+        providers = list_stored_providers()
+
+        assert "openai" in providers
+        assert "anthropic" in providers
+        assert "google" not in providers
+        assert "groq" not in providers
+
+    def test_store_api_key_empty_provider(self):
+        """Test that empty provider name is rejected."""
+        with pytest.raises(ValueError, match="Provider name cannot be empty"):
+            store_api_key("", "sk-test123")
+
+    def test_store_api_key_whitespace_provider(self):
+        """Test that whitespace-only provider name is rejected."""
+        with pytest.raises(ValueError, match="Provider name cannot be empty"):
+            store_api_key("   ", "sk-test123")
+
+    def test_store_api_key_empty_key(self):
+        """Test that empty API key is rejected."""
+        with pytest.raises(ValueError, match="API key cannot be empty"):
+            store_api_key("openai", "")
+
+    def test_get_api_key_empty_provider(self):
+        """Test that empty provider name is rejected."""
+        with pytest.raises(ValueError, match="Provider name cannot be empty"):
+            get_api_key("")
+
+    def test_delete_api_key_empty_provider(self):
+        """Test that empty provider name is rejected."""
+        with pytest.raises(ValueError, match="Provider name cannot be empty"):
+            delete_api_key("")
+
+    def test_has_api_key_empty_provider(self):
+        """Test that empty provider name is rejected."""
+        with pytest.raises(ValueError, match="Provider name cannot be empty"):
+            has_api_key("")
