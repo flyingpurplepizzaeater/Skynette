@@ -77,3 +77,16 @@ def test_wizard_shows_provider_checkboxes(page: ft.Page = None):
     assert "OpenAI" in checkbox_labels
     assert "Anthropic" in checkbox_labels
     assert "Local Models" in checkbox_labels
+
+
+def test_wizard_step2_shows_api_key_input(page: ft.Page = None):
+    """Test step 2 shows API key configuration for selected providers."""
+    ai_hub = AIHubView(page=page)
+    ai_hub.selected_providers = ["openai"]
+    ai_hub.wizard_step = 1
+
+    wizard = ai_hub._build_wizard_tab()
+
+    # Find API key field
+    textfields = _find_controls_by_type(wizard, ft.TextField)
+    assert any("API Key" in str(tf.label) for tf in textfields)

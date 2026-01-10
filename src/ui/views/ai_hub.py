@@ -73,6 +73,8 @@ class AIHubView(ft.Column):
         """Build setup wizard tab."""
         if self.wizard_step == 0:
             return self._build_wizard_step1_provider_selection()
+        elif self.wizard_step == 1:
+            return self._build_wizard_step2_configure_providers()
         else:
             return ft.Container(content=ft.Text("Other steps TBD"))
 
@@ -180,11 +182,129 @@ class AIHubView(ft.Column):
             expand=True,
         )
 
+    def _build_wizard_step2_configure_providers(self):
+        """Step 2: Configure selected providers."""
+        if not self.selected_providers:
+            # No providers selected, skip to step 3
+            self.wizard_step = 2
+            return self._build_wizard_tab()
+
+        # Configure first provider in list
+        provider_id = self.selected_providers[0]
+        provider_names = {
+            "openai": "OpenAI",
+            "anthropic": "Anthropic",
+            "local": "Local Models",
+        }
+
+        provider_name = provider_names.get(provider_id, provider_id)
+
+        # For local provider, no API key needed
+        if provider_id == "local":
+            return ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            f"Configure {provider_name}",
+                            size=24,
+                            weight=ft.FontWeight.BOLD,
+                        ),
+                        ft.Text(
+                            "Local models run on your computer. No API key required!",
+                            size=14,
+                            color=Theme.SUCCESS,
+                        ),
+                        ft.Container(height=Theme.SPACING_LG),
+                        ft.Text("Local models will be available after downloading them in the Model Library."),
+                        ft.Container(expand=True),
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("← Back", on_click=lambda e: self._wizard_prev_step()),
+                                ft.Container(expand=True),
+                                ft.ElevatedButton(
+                                    "Next →",
+                                    bgcolor=Theme.PRIMARY,
+                                    on_click=lambda e: self._wizard_next_step(),
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+                padding=Theme.SPACING_LG,
+                expand=True,
+            )
+
+        # Cloud providers need API key
+        api_key_field = ft.TextField(
+            label="API Key",
+            password=True,
+            can_reveal_password=True,
+            hint_text=f"Enter your {provider_name} API key",
+            on_change=lambda e: self._update_provider_config(provider_id, "api_key", e.control.value),
+        )
+
+        test_button = ft.ElevatedButton(
+            "Test Connection",
+            icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
+            on_click=lambda e: self._test_provider_connection(provider_id),
+        )
+
+        status_text = ft.Text("", size=12)
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        f"Configure {provider_name}",
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                    ft.Container(height=Theme.SPACING_MD),
+                    api_key_field,
+                    ft.Container(height=Theme.SPACING_SM),
+                    test_button,
+                    status_text,
+                    ft.Container(expand=True),
+                    ft.Row(
+                        controls=[
+                            ft.TextButton("← Back", on_click=lambda e: self._wizard_prev_step()),
+                            ft.Container(expand=True),
+                            ft.ElevatedButton(
+                                "Next →",
+                                bgcolor=Theme.PRIMARY,
+                                on_click=lambda e: self._wizard_next_step(),
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            padding=Theme.SPACING_LG,
+            expand=True,
+        )
+
     def _wizard_next_step(self):
         """Advance wizard to next step."""
         self.wizard_step += 1
         if self._page:
             self._page.update()
+
+    def _wizard_prev_step(self):
+        """Go back to previous wizard step."""
+        if self.wizard_step > 0:
+            self.wizard_step -= 1
+        if self._page:
+            self._page.update()
+
+    def _update_provider_config(self, provider_id: str, key: str, value: str):
+        """Update provider configuration."""
+        if provider_id not in self.provider_configs:
+            self.provider_configs[provider_id] = {}
+        self.provider_configs[provider_id][key] = value
+
+    def _test_provider_connection(self, provider_id: str):
+        """Test provider connection (mock for now)."""
+        # TODO: Implement actual API test
+        print(f"Testing {provider_id} connection...")
 
     def _skip_wizard(self):
         """Skip wizard and go to providers tab."""
