@@ -7,10 +7,43 @@ Defines colors, fonts, and styling for the application.
 import flet as ft
 
 
-class SkynetteTheme:
+class ThemeMeta(type):
+    """Metaclass to handle dynamic theme properties."""
+
+    _dynamic_attrs = {
+        'BG_PRIMARY': ('DARK_BG_PRIMARY', 'LIGHT_BG_PRIMARY'),
+        'BG_SECONDARY': ('DARK_BG_SECONDARY', 'LIGHT_BG_SECONDARY'),
+        'BG_TERTIARY': ('DARK_BG_TERTIARY', 'LIGHT_BG_TERTIARY'),
+        'BG_ELEVATED': ('DARK_BG_SECONDARY', 'LIGHT_BG_SECONDARY'),
+        'SURFACE': ('DARK_BG_SECONDARY', 'LIGHT_BG_SECONDARY'),
+        'TEXT_PRIMARY': ('DARK_TEXT_PRIMARY', 'LIGHT_TEXT_PRIMARY'),
+        'TEXT_SECONDARY': ('DARK_TEXT_SECONDARY', 'LIGHT_TEXT_SECONDARY'),
+        'TEXT_MUTED': ('DARK_TEXT_MUTED', 'LIGHT_TEXT_MUTED'),
+        'BORDER': ('DARK_BORDER', 'LIGHT_BORDER'),
+        'BORDER_LIGHT': ('DARK_BORDER_LIGHT', 'LIGHT_BORDER_LIGHT'),
+    }
+
+    def __getattribute__(cls, name):
+        """Override attribute access to provide dynamic theme colors."""
+        # Get _dynamic_attrs dict without triggering recursion
+        dynamic_attrs = object.__getattribute__(cls, '_dynamic_attrs')
+
+        if name in dynamic_attrs:
+            dark_attr, light_attr = dynamic_attrs[name]
+            current_mode = type.__getattribute__(cls, '_current_mode')
+            attr_name = dark_attr if current_mode == 'dark' else light_attr
+            return type.__getattribute__(cls, attr_name)
+
+        return type.__getattribute__(cls, name)
+
+
+class SkynetteTheme(metaclass=ThemeMeta):
     """Theme configuration for Skynette application."""
 
-    # Brand Colors
+    # Current theme mode
+    _current_mode = "dark"  # "dark" or "light"
+
+    # Brand Colors (same for both themes)
     PRIMARY = "#6366F1"  # Indigo
     PRIMARY_LIGHT = "#818CF8"
     PRIMARY_DARK = "#4F46E5"
@@ -19,25 +52,31 @@ class SkynetteTheme:
     SECONDARY_LIGHT = "#34D399"
     SECONDARY_DARK = "#059669"
 
-    # Semantic Colors
+    # Semantic Colors (same for both themes)
     SUCCESS = "#22C55E"
     WARNING = "#F59E0B"
     ERROR = "#EF4444"
     INFO = "#3B82F6"
 
-    # Neutral Colors (Dark Theme)
-    BG_PRIMARY = "#0F172A"  # Slate 900
-    BG_SECONDARY = "#1E293B"  # Slate 800
-    BG_TERTIARY = "#334155"  # Slate 700
-    BG_ELEVATED = "#1E293B"
-    SURFACE = "#1E293B"  # Same as BG_SECONDARY for surface elements
+    # Dark Theme Colors
+    DARK_BG_PRIMARY = "#0F172A"  # Slate 900
+    DARK_BG_SECONDARY = "#1E293B"  # Slate 800
+    DARK_BG_TERTIARY = "#334155"  # Slate 700
+    DARK_TEXT_PRIMARY = "#F8FAFC"  # Slate 50
+    DARK_TEXT_SECONDARY = "#94A3B8"  # Slate 400
+    DARK_TEXT_MUTED = "#64748B"  # Slate 500
+    DARK_BORDER = "#334155"  # Slate 700
+    DARK_BORDER_LIGHT = "#475569"  # Slate 600
 
-    TEXT_PRIMARY = "#F8FAFC"  # Slate 50
-    TEXT_SECONDARY = "#94A3B8"  # Slate 400
-    TEXT_MUTED = "#64748B"  # Slate 500
-
-    BORDER = "#334155"  # Slate 700
-    BORDER_LIGHT = "#475569"  # Slate 600
+    # Light Theme Colors
+    LIGHT_BG_PRIMARY = "#F8FAFC"  # Slate 50
+    LIGHT_BG_SECONDARY = "#FFFFFF"  # White
+    LIGHT_BG_TERTIARY = "#E2E8F0"  # Slate 200
+    LIGHT_TEXT_PRIMARY = "#0F172A"  # Slate 900
+    LIGHT_TEXT_SECONDARY = "#64748B"  # Slate 500
+    LIGHT_TEXT_MUTED = "#94A3B8"  # Slate 400
+    LIGHT_BORDER = "#CBD5E1"  # Slate 300
+    LIGHT_BORDER_LIGHT = "#E2E8F0"  # Slate 200
 
     # Node Category Colors
     NODE_COLORS = {
@@ -135,6 +174,17 @@ class SkynetteTheme:
                 "color": cls.TEXT_SECONDARY,
             }
         return {}
+
+    @classmethod
+    def set_theme_mode(cls, mode: str):
+        """Set the current theme mode."""
+        if mode in ("dark", "light"):
+            cls._current_mode = mode
+
+    @classmethod
+    def get_theme_mode(cls) -> str:
+        """Get the current theme mode."""
+        return cls._current_mode
 
 
 # Alias for convenience

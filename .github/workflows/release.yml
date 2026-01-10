@@ -32,6 +32,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           pip install pyinstaller
+        env:
+          # Use prebuilt wheels for llama-cpp-python (when AI features enabled)
+          CMAKE_ARGS: "-DGGML_NATIVE=off"
 
       - name: Build executable
         run: |

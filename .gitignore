@@ -26,7 +26,7 @@ wheels/
 
 # PyInstaller
 *.manifest
-*.spec
+# *.spec  # Commented out - we need skynette.spec for builds
 
 # Installer logs
 pip-log.txt
@@ -76,3 +76,6 @@ installer/
 
 # Auto Claude data directory
 .auto-claude/
+
+# Git worktrees for isolated development
+.worktrees/

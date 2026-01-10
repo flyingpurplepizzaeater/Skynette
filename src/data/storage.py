@@ -94,6 +94,83 @@ class WorkflowStorage:
             )
         """)
 
+        # AI Providers table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ai_providers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                enabled INTEGER DEFAULT 1,
+                priority INTEGER DEFAULT 0,
+                config TEXT NOT NULL,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        """)
+
+        # AI Usage Log table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ai_usage (
+                id TEXT PRIMARY KEY,
+                workflow_id TEXT,
+                node_id TEXT,
+                provider TEXT NOT NULL,
+                model TEXT NOT NULL,
+                prompt_tokens INTEGER,
+                completion_tokens INTEGER,
+                total_tokens INTEGER,
+                cost_usd REAL,
+                latency_ms INTEGER,
+                timestamp TEXT,
+                success INTEGER DEFAULT 1,
+                error_message TEXT,
+                FOREIGN KEY (workflow_id) REFERENCES workflows(id) ON DELETE CASCADE
+            )
+        """)
+
+        # Create indices for ai_usage
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_ai_usage_workflow
+            ON ai_usage(workflow_id)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_ai_usage_timestamp
+            ON ai_usage(timestamp)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_ai_usage_provider
+            ON ai_usage(provider)
+        """)
+
+        # Local Models table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS local_models (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                file_path TEXT NOT NULL UNIQUE,
+                size_bytes INTEGER,
+                quantization TEXT,
+                source TEXT,
+                huggingface_repo TEXT,
+                downloaded_at TEXT,
+                last_used TEXT,
+                usage_count INTEGER DEFAULT 0
+            )
+        """)
+
+        # AI Budgets table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ai_budgets (
+                id TEXT PRIMARY KEY DEFAULT 'default',
+                monthly_limit_usd REAL,
+                alert_threshold REAL DEFAULT 0.8,
+                email_notifications INTEGER DEFAULT 0,
+                notification_email TEXT,
+                reset_day INTEGER DEFAULT 1,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        """)
+
         conn.commit()
         conn.close()
         logger.info(f"Database initialized at {self.db_path}")
