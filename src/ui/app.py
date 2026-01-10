@@ -35,6 +35,11 @@ class SkynetteApp:
 
         # Core services
         self.storage = WorkflowStorage()
+
+        # Load theme preference
+        theme_pref = self.storage.get_setting("theme_mode", "dark")
+        SkynetteTheme.set_theme_mode(theme_pref)
+
         self.node_registry = NodeRegistry()
         self.executor = WorkflowExecutor()
 
