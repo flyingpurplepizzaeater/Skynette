@@ -262,6 +262,50 @@ class SkynetteApp:
             padding=ft.padding.symmetric(horizontal=4, vertical=8),
         )
 
+    def _build_provider_status_bar(self):
+        """Build provider status indicator."""
+        from src.ai.security import has_api_key
+
+        # Count configured providers
+        providers = ["openai", "anthropic"]
+        configured_count = sum(1 for p in providers if has_api_key(p))
+
+        # Always count local as available
+        total_available = configured_count + 1
+
+        if total_available == 0:
+            icon_color = SkynetteTheme.TEXT_MUTED
+            tooltip = "No AI providers configured"
+        elif configured_count == 0:
+            icon_color = SkynetteTheme.WARNING
+            tooltip = f"{total_available} provider available (Local only)"
+        else:
+            icon_color = SkynetteTheme.SUCCESS
+            tooltip = f"{total_available} providers available"
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(
+                        ft.Icons.CLOUD_DONE if total_available > 1 else ft.Icons.COMPUTER,
+                        size=16,
+                        color=icon_color,
+                    ),
+                    ft.Text(
+                        f"{total_available} AI",
+                        size=12,
+                        color=icon_color,
+                    ),
+                ],
+                spacing=4,
+            ),
+            tooltip=tooltip,
+            on_click=lambda e: self._navigate_to("ai_hub"),
+            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+            border_radius=12,
+            bgcolor=SkynetteTheme.BG_SECONDARY,
+        )
+
     def _build_top_bar(self) -> ft.Container:
         """Build the top bar with title and actions."""
         # Create title text with reference for dynamic updates
@@ -277,6 +321,7 @@ class SkynetteApp:
                     # View Title
                     self.view_title_text,
                     ft.Container(expand=True),
+                    self._build_provider_status_bar(),
                     # Action Buttons
                     ft.IconButton(
                         icon=ft.Icons.CHAT_ROUNDED,

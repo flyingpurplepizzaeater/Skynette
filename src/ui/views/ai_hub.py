@@ -11,35 +11,35 @@ class AIHubView(ft.Column):
 
     def __init__(self, page: ft.Page = None):
         super().__init__()
-        self.page = page
+        self._page = page
         self.expand = True
         self.hub = get_hub()
         self.download_cards: dict[str, ft.Container] = {}
         self.installed_list = None
         self.recommended_list = None
 
+        # Wizard state
+        self.wizard_step = 0
+        self.selected_providers = []
+        self.provider_configs = {}
+
     def build(self):
+        # Create tabs
+        setup_tab = ft.Tab(label="Setup", icon=ft.Icons.ROCKET_LAUNCH)
+        setup_tab.content = self._build_wizard_tab()
+
+        providers_tab = ft.Tab(label="My Providers", icon=ft.Icons.CLOUD)
+        providers_tab.content = self._build_providers_tab()
+
+        library_tab = ft.Tab(label="Model Library", icon=ft.Icons.FOLDER)
+        library_tab.content = self._build_model_library_tab()
+
         return ft.Column(
             controls=[
                 self._build_header(),
                 ft.Tabs(
-                    tabs=[
-                        ft.Tab(
-                            text="My Models",
-                            icon=ft.Icons.FOLDER,
-                            content=self._build_installed_tab(),
-                        ),
-                        ft.Tab(
-                            text="Download",
-                            icon=ft.Icons.DOWNLOAD,
-                            content=self._build_download_tab(),
-                        ),
-                        ft.Tab(
-                            text="Providers",
-                            icon=ft.Icons.CLOUD,
-                            content=self._build_providers_tab(),
-                        ),
-                    ],
+                    length=3,
+                    content=[setup_tab, providers_tab, library_tab],
                     expand=True,
                 ),
             ],
@@ -67,6 +67,370 @@ class AIHubView(ft.Column):
                     ),
                 ],
             ),
+        )
+
+    def _build_wizard_tab(self):
+        """Build setup wizard tab."""
+        if self.wizard_step == 0:
+            return self._build_wizard_step1_provider_selection()
+        elif self.wizard_step == 1:
+            return self._build_wizard_step2_configure_providers()
+        elif self.wizard_step == 2:
+            return self._build_wizard_step3_completion()
+        else:
+            return ft.Container(content=ft.Text("Setup complete!"))
+
+    def _on_provider_checked(self, e, provider_id):
+        """Handle provider checkbox changes."""
+        if e.control.value:
+            if provider_id not in self.selected_providers:
+                self.selected_providers.append(provider_id)
+        else:
+            if provider_id in self.selected_providers:
+                self.selected_providers.remove(provider_id)
+
+        # Trigger UI update to enable/disable Next button
+        if self._page:
+            self._page.update()
+
+    def _build_wizard_step1_provider_selection(self):
+        """Step 1: Select AI providers to configure."""
+        providers = [
+            {
+                "id": "openai",
+                "name": "OpenAI",
+                "description": "GPT-4, GPT-3.5 Turbo",
+                "cost": "$$$",
+                "type": "Cloud • Requires API key",
+            },
+            {
+                "id": "anthropic",
+                "name": "Anthropic",
+                "description": "Claude 3 Opus, Sonnet, Haiku",
+                "cost": "$$",
+                "type": "Cloud • Requires API key",
+            },
+            {
+                "id": "local",
+                "name": "Local Models",
+                "description": "llama.cpp - Run models on your computer",
+                "cost": "Free",
+                "type": "Private • No API key needed",
+            },
+        ]
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "Welcome to Skynette AI Setup",
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        "Select which AI providers you want to use:",
+                        size=14,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                    ft.Container(height=Theme.SPACING_LG),
+                    *[
+                        ft.Container(
+                            content=ft.Row(
+                                controls=[
+                                    ft.Checkbox(
+                                        label=p["name"],
+                                        value=p["id"] in self.selected_providers,
+                                        on_change=lambda e, pid=p["id"]: self._on_provider_checked(e, pid),
+                                    ),
+                                    ft.Container(expand=True),
+                                    ft.Column(
+                                        controls=[
+                                            ft.Text(p["description"], size=12, color=Theme.TEXT_SECONDARY),
+                                            ft.Text(
+                                                f"{p['type']} • {p['cost']}",
+                                                size=11,
+                                                color=Theme.TEXT_MUTED,
+                                            ),
+                                        ],
+                                        spacing=2,
+                                    ),
+                                ],
+                            ),
+                            bgcolor=Theme.SURFACE,
+                            padding=Theme.SPACING_MD,
+                            border_radius=Theme.RADIUS_MD,
+                            border=ft.border.all(1, Theme.BORDER),
+                        )
+                        for p in providers
+                    ],
+                    ft.Container(expand=True),
+                    ft.Row(
+                        controls=[
+                            ft.TextButton("Skip Setup", on_click=lambda e: self._skip_wizard()),
+                            ft.Container(expand=True),
+                            ft.ElevatedButton(
+                                "Next: Configure →",
+                                bgcolor=Theme.PRIMARY,
+                                on_click=lambda e: self._wizard_next_step(),
+                                disabled=len(self.selected_providers) == 0,
+                            ),
+                        ],
+                    ),
+                ],
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=Theme.SPACING_LG,
+            expand=True,
+        )
+
+    def _build_wizard_step2_configure_providers(self):
+        """Step 2: Configure selected providers."""
+        if not self.selected_providers:
+            # No providers selected, skip to step 3
+            self.wizard_step = 2
+            return self._build_wizard_tab()
+
+        # Configure first provider in list
+        provider_id = self.selected_providers[0]
+        provider_names = {
+            "openai": "OpenAI",
+            "anthropic": "Anthropic",
+            "local": "Local Models",
+        }
+
+        provider_name = provider_names.get(provider_id, provider_id)
+
+        # For local provider, no API key needed
+        if provider_id == "local":
+            return ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            f"Configure {provider_name}",
+                            size=24,
+                            weight=ft.FontWeight.BOLD,
+                        ),
+                        ft.Text(
+                            "Local models run on your computer. No API key required!",
+                            size=14,
+                            color=Theme.SUCCESS,
+                        ),
+                        ft.Container(height=Theme.SPACING_LG),
+                        ft.Text("Local models will be available after downloading them in the Model Library."),
+                        ft.Container(expand=True),
+                        ft.Row(
+                            controls=[
+                                ft.TextButton("← Back", on_click=lambda e: self._wizard_prev_step()),
+                                ft.Container(expand=True),
+                                ft.ElevatedButton(
+                                    "Next →",
+                                    bgcolor=Theme.PRIMARY,
+                                    on_click=lambda e: self._wizard_next_step(),
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+                padding=Theme.SPACING_LG,
+                expand=True,
+            )
+
+        # Cloud providers need API key
+        api_key_field = ft.TextField(
+            label="API Key",
+            password=True,
+            can_reveal_password=True,
+            hint_text=f"Enter your {provider_name} API key",
+            on_change=lambda e, pid=provider_id: self._update_provider_config(pid, "api_key", e.control.value),
+        )
+
+        test_button = ft.ElevatedButton(
+            "Test Connection",
+            icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
+            on_click=lambda e, pid=provider_id: self._test_provider_connection(pid),
+        )
+
+        status_text = ft.Text("", size=12)
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        f"Configure {provider_name}",
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                    ft.Container(height=Theme.SPACING_MD),
+                    api_key_field,
+                    ft.Container(height=Theme.SPACING_SM),
+                    test_button,
+                    status_text,
+                    ft.Container(expand=True),
+                    ft.Row(
+                        controls=[
+                            ft.TextButton("← Back", on_click=lambda e: self._wizard_prev_step()),
+                            ft.Container(expand=True),
+                            ft.ElevatedButton(
+                                "Next →",
+                                bgcolor=Theme.PRIMARY,
+                                on_click=lambda e: self._wizard_next_step(),
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+            padding=Theme.SPACING_LG,
+            expand=True,
+        )
+
+    def _build_wizard_step3_completion(self):
+        """Step 3: Setup completion and summary."""
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Icon(
+                        ft.Icons.CHECK_CIRCLE,
+                        size=64,
+                        color=Theme.SUCCESS,
+                    ),
+                    ft.Text(
+                        "Setup Complete!",
+                        size=28,
+                        weight=ft.FontWeight.BOLD,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        f"Configured {len(self.selected_providers)} AI provider(s)",
+                        size=14,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                    ft.Container(height=Theme.SPACING_LG),
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                ft.Text(
+                                    "What's Next:",
+                                    size=16,
+                                    weight=ft.FontWeight.W_600,
+                                ),
+                                ft.Text("• Download local models in Model Library tab"),
+                                ft.Text("• Add AI nodes to your workflows"),
+                                ft.Text("• Monitor usage and costs in Dashboard"),
+                            ],
+                            spacing=8,
+                        ),
+                        bgcolor=Theme.SURFACE,
+                        padding=Theme.SPACING_MD,
+                        border_radius=Theme.RADIUS_MD,
+                    ),
+                    ft.Container(expand=True),
+                    ft.Row(
+                        controls=[
+                            ft.TextButton("← Back", on_click=lambda e: self._wizard_prev_step()),
+                            ft.Container(expand=True),
+                            ft.ElevatedButton(
+                                "Get Started",
+                                bgcolor=Theme.SUCCESS,
+                                on_click=lambda e: self._complete_wizard(),
+                            ),
+                        ],
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=Theme.SPACING_LG,
+            expand=True,
+        )
+
+    def _wizard_next_step(self):
+        """Advance wizard to next step."""
+        self.wizard_step += 1
+        if self._page:
+            self._page.update()
+
+    def _wizard_prev_step(self):
+        """Go back to previous wizard step."""
+        if self.wizard_step > 0:
+            self.wizard_step -= 1
+        if self._page:
+            self._page.update()
+
+    def _update_provider_config(self, provider_id: str, key: str, value: str):
+        """Update provider configuration.
+
+        TODO: Use secure keyring storage instead of plain memory (see src/ai/security.py)
+        """
+        if provider_id not in self.provider_configs:
+            self.provider_configs[provider_id] = {}
+        self.provider_configs[provider_id][key] = value
+
+    def _test_provider_connection(self, provider_id: str):
+        """Test provider connection (mock for now)."""
+        # TODO: Implement actual API test
+        print(f"Testing {provider_id} connection...")
+
+    def _skip_wizard(self):
+        """Skip wizard and go to providers tab."""
+        # Switch to My Providers tab (index 1)
+        if self._page:
+            # TODO: Implement tab switching
+            pass
+
+    def _complete_wizard(self):
+        """Complete wizard and save configurations."""
+        from src.ai.security import store_api_key
+        from src.data.storage import get_storage
+        import json
+
+        storage = get_storage()
+
+        # Save API keys to system keyring
+        for provider_id, config in self.provider_configs.items():
+            if "api_key" in config:
+                try:
+                    store_api_key(provider_id, config["api_key"])
+                except Exception as e:
+                    print(f"Failed to store API key for {provider_id}: {e}")
+
+        # Save selected providers list to settings
+        storage.set_setting("configured_providers", json.dumps(self.selected_providers))
+
+        # Save individual provider configs (without API keys, those are in keyring)
+        for provider_id in self.selected_providers:
+            config_data = {k: v for k, v in self.provider_configs.get(provider_id, {}).items() if k != "api_key"}
+            storage.set_setting(f"provider_config_{provider_id}", json.dumps(config_data))
+
+        # Mark wizard as completed
+        storage.set_setting("ai_wizard_completed", "true")
+
+        # Reset wizard state
+        self.wizard_step = 0
+        self.selected_providers = []
+        self.provider_configs = {}
+
+        # Navigate to My Providers tab
+        if self._page:
+            # TODO: Switch to tab 1 (My Providers)
+            self._page.update()
+
+    def _build_model_library_tab(self):
+        """Model Library tab containing My Models and Download as subtabs."""
+        # Create subtabs for My Models and Download
+        my_models_tab = ft.Tab(label="My Models", icon=ft.Icons.FOLDER)
+        my_models_tab.content = self._build_installed_tab()
+
+        download_tab = ft.Tab(label="Download", icon=ft.Icons.DOWNLOAD)
+        download_tab.content = self._build_download_tab()
+
+        return ft.Container(
+            content=ft.Tabs(
+                length=2,
+                content=[my_models_tab, download_tab],
+                expand=True,
+            ),
+            expand=True,
         )
 
     def _build_installed_tab(self):
@@ -354,6 +718,7 @@ class AIHubView(ft.Column):
         )
 
     def _build_providers_tab(self):
+        """My Providers management tab."""
         providers = [
             {"name": "OpenAI", "icon": ft.Icons.CLOUD, "color": "#10a37f", "status": "Not configured", "configured": False},
             {"name": "Anthropic", "icon": ft.Icons.CLOUD, "color": "#d4a574", "status": "Not configured", "configured": False},
@@ -420,15 +785,15 @@ class AIHubView(ft.Column):
     def _refresh_models(self, e):
         """Refresh the model list."""
         self.hub.scan_local_models()
-        if self.page:
-            self.page.update()
+        if self._page:
+            self._page.update()
 
     def _start_download(self, model: ModelInfo):
         """Start downloading a model."""
         async def do_download():
             def on_progress(progress: DownloadProgress):
                 # Update UI
-                if model.id in self.download_cards and self.page:
+                if model.id in self.download_cards and self._page:
                     # Rebuild the card with new progress
                     new_card = self._build_recommended_model_card(model)
                     # Find and replace
@@ -438,7 +803,7 @@ class AIHubView(ft.Column):
                                 self.recommended_list.controls[i] = new_card
                                 self.download_cards[model.id] = new_card
                                 break
-                    self.page.update()
+                    self._page.update()
 
             try:
                 await self.hub.download_model(model, on_progress)
@@ -447,7 +812,7 @@ class AIHubView(ft.Column):
             except Exception as ex:
                 print(f"Download failed: {ex}")
 
-        if self.page:
+        if self._page:
             asyncio.create_task(do_download())
 
     def _delete_model(self, model: ModelInfo):
