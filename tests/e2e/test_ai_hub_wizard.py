@@ -26,6 +26,27 @@ def _find_tabs_control(view):
     return find_in_controls(view)
 
 
+def _find_controls_by_type(container, control_type):
+    """Recursively find all controls of a specific type."""
+    found = []
+
+    if isinstance(container, control_type):
+        found.append(container)
+
+    if hasattr(container, 'controls'):
+        for control in container.controls:
+            found.extend(_find_controls_by_type(control, control_type))
+
+    if hasattr(container, 'content'):
+        if isinstance(container.content, list):
+            for item in container.content:
+                found.extend(_find_controls_by_type(item, control_type))
+        elif container.content:
+            found.extend(_find_controls_by_type(container.content, control_type))
+
+    return found
+
+
 def test_wizard_tab_exists():
     """Test that setup wizard tab is visible."""
     # AIHubView accepts page=None for testing
@@ -42,3 +63,17 @@ def test_wizard_tab_exists():
     assert "Setup" in tab_labels, f"Setup tab not found. Available tabs: {tab_labels}"
     assert "My Providers" in tab_labels, f"My Providers tab not found. Available tabs: {tab_labels}"
     assert "Model Library" in tab_labels, f"Model Library tab not found. Available tabs: {tab_labels}"
+
+
+def test_wizard_shows_provider_checkboxes(page: ft.Page = None):
+    """Test wizard displays provider selection checkboxes."""
+    ai_hub = AIHubView(page=page)
+    wizard = ai_hub._build_wizard_tab()
+
+    # Find checkboxes
+    checkboxes = _find_controls_by_type(wizard, ft.Checkbox)
+    checkbox_labels = [cb.label for cb in checkboxes]
+
+    assert "OpenAI" in checkbox_labels
+    assert "Anthropic" in checkbox_labels
+    assert "Local Models" in checkbox_labels

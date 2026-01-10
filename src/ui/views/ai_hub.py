@@ -18,6 +18,11 @@ class AIHubView(ft.Column):
         self.installed_list = None
         self.recommended_list = None
 
+        # Wizard state
+        self.wizard_step = 0
+        self.selected_providers = []
+        self.provider_configs = {}
+
     def build(self):
         # Create tabs
         setup_tab = ft.Tab(label="Setup", icon=ft.Icons.ROCKET_LAUNCH)
@@ -65,11 +70,123 @@ class AIHubView(ft.Column):
         )
 
     def _build_wizard_tab(self):
-        """Setup wizard tab - placeholder for AI setup wizard."""
+        """Build setup wizard tab."""
+        if self.wizard_step == 0:
+            return self._build_wizard_step1_provider_selection()
+        else:
+            return ft.Container(content=ft.Text("Other steps TBD"))
+
+    def _build_wizard_step1_provider_selection(self):
+        """Step 1: Select AI providers to configure."""
+        providers = [
+            {
+                "id": "openai",
+                "name": "OpenAI",
+                "description": "GPT-4, GPT-3.5 Turbo",
+                "cost": "$$$",
+                "type": "Cloud • Requires API key",
+            },
+            {
+                "id": "anthropic",
+                "name": "Anthropic",
+                "description": "Claude 3 Opus, Sonnet, Haiku",
+                "cost": "$$",
+                "type": "Cloud • Requires API key",
+            },
+            {
+                "id": "local",
+                "name": "Local Models",
+                "description": "llama.cpp - Run models on your computer",
+                "cost": "Free",
+                "type": "Private • No API key needed",
+            },
+        ]
+
+        def on_provider_checked(e, provider_id):
+            if e.control.value:
+                if provider_id not in self.selected_providers:
+                    self.selected_providers.append(provider_id)
+            else:
+                if provider_id in self.selected_providers:
+                    self.selected_providers.remove(provider_id)
+
         return ft.Container(
-            content=ft.Text("Wizard placeholder"),
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "Welcome to Skynette AI Setup",
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        "Select which AI providers you want to use:",
+                        size=14,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                    ft.Container(height=Theme.SPACING_LG),
+                    *[
+                        ft.Container(
+                            content=ft.Row(
+                                controls=[
+                                    ft.Checkbox(
+                                        label=p["name"],
+                                        value=p["id"] in self.selected_providers,
+                                        on_change=lambda e, pid=p["id"]: on_provider_checked(e, pid),
+                                    ),
+                                    ft.Container(expand=True),
+                                    ft.Column(
+                                        controls=[
+                                            ft.Text(p["description"], size=12, color=Theme.TEXT_SECONDARY),
+                                            ft.Text(
+                                                f"{p['type']} • {p['cost']}",
+                                                size=11,
+                                                color=Theme.TEXT_MUTED,
+                                            ),
+                                        ],
+                                        spacing=2,
+                                    ),
+                                ],
+                            ),
+                            bgcolor=Theme.SURFACE,
+                            padding=Theme.SPACING_MD,
+                            border_radius=Theme.RADIUS_MD,
+                            border=ft.border.all(1, Theme.BORDER),
+                        )
+                        for p in providers
+                    ],
+                    ft.Container(expand=True),
+                    ft.Row(
+                        controls=[
+                            ft.TextButton("Skip Setup", on_click=lambda e: self._skip_wizard()),
+                            ft.Container(expand=True),
+                            ft.ElevatedButton(
+                                "Next: Configure →",
+                                bgcolor=Theme.PRIMARY,
+                                on_click=lambda e: self._wizard_next_step(),
+                                disabled=len(self.selected_providers) == 0,
+                            ),
+                        ],
+                    ),
+                ],
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=Theme.SPACING_LG,
             expand=True,
         )
+
+    def _wizard_next_step(self):
+        """Advance wizard to next step."""
+        self.wizard_step += 1
+        if self._page:
+            self._page.update()
+
+    def _skip_wizard(self):
+        """Skip wizard and go to providers tab."""
+        # Switch to My Providers tab (index 1)
+        if self._page:
+            # TODO: Implement tab switching
+            pass
 
     def _build_model_library_tab(self):
         """Model Library tab containing My Models and Download as subtabs."""
