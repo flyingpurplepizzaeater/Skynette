@@ -1,5 +1,10 @@
 # Skynette - Open Source Workflow Automation Platform
 
+[![CI](https://github.com/flyingpurplepizzaeater/Skynette/actions/workflows/ci.yml/badge.svg)](https://github.com/flyingpurplepizzaeater/Skynette/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/flyingpurplepizzaeater/Skynette/branch/master/graph/badge.svg)](https://codecov.io/gh/flyingpurplepizzaeater/Skynette)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 An intelligent, AI-powered workflow automation platform that rivals n8n, combining visual workflow building with multi-model AI capabilities. Built with Python and Flet for cross-platform desktop and mobile deployment.
 
 ## Features
