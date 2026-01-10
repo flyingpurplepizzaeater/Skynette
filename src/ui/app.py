@@ -1565,8 +1565,21 @@ class SkynetteApp:
                 categories[cat] = []
             categories[cat].append(node_def)
 
+        # Define category ordering (AI comes after triggers and before actions)
+        category_order = ["trigger", "AI", "action", "flow", "http", "data", "apps", "utility", "coding", "database", "other"]
+
+        # Sort categories by defined order
+        def category_sort_key(cat_name):
+            cat_lower = cat_name.lower()
+            try:
+                return category_order.index(cat_lower)
+            except ValueError:
+                return len(category_order)  # Unknown categories go last
+
+        sorted_categories = sorted(categories.items(), key=lambda x: category_sort_key(x[0]))
+
         palette_items = []
-        for cat_name, nodes in sorted(categories.items()):
+        for cat_name, nodes in sorted_categories:
             node_buttons = []
             for node_def in sorted(nodes, key=lambda n: n.name):
                 node_buttons.append(
@@ -1581,7 +1594,7 @@ class SkynetteApp:
             palette_items.append(
                 ft.ExpansionTile(
                     title=ft.Text(cat_name.title(), size=13, weight=ft.FontWeight.W_500),
-                    expanded=cat_name.lower() in ["triggers", "trigger"],
+                    expanded=cat_name.lower() in ["triggers", "trigger", "ai"],  # AI category also expanded by default
                     controls=node_buttons,
                     tile_padding=ft.padding.symmetric(horizontal=8),
                 )
@@ -2145,6 +2158,7 @@ class SkynetteApp:
             "action": Theme.PRIMARY,
             "flow": Theme.INFO,
             "http": Theme.SUCCESS,
+            "AI": "#8B5CF6",  # Violet for AI nodes
         }
         color = color_map.get(node_def.category if node_def else "action", Theme.PRIMARY)
 
