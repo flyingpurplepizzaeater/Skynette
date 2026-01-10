@@ -2,9 +2,13 @@
 
 import pytest
 import sqlite3
+import json
 from pathlib import Path
+from datetime import datetime, date, timezone
 
 from src.data.storage import WorkflowStorage
+from src.ai.storage import AIStorage
+from src.ai.models.data import ProviderConfig, UsageRecord, LocalModel, BudgetSettings
 
 
 class TestAIStorageMigration:
@@ -84,3 +88,165 @@ class TestAIStorageMigration:
         assert 'idx_ai_usage_workflow' in index_names
         assert 'idx_ai_usage_timestamp' in index_names
         assert 'idx_ai_usage_provider' in index_names
+
+
+class TestAIStorage:
+    """Test AIStorage service."""
+
+    @pytest.fixture
+    def storage(self, tmp_path):
+        """Create AIStorage instance with temp database."""
+        # Initialize WorkflowStorage first to create tables
+        WorkflowStorage(data_dir=str(tmp_path))
+        return AIStorage(db_path=str(tmp_path / "skynette.db"))
+
+    # Provider Config Tests
+    async def test_save_provider_config(self, storage):
+        """Test saving provider config."""
+        config = ProviderConfig(
+            name="openai",
+            config={"api_key_stored": True, "model": "gpt-4"}
+        )
+
+        await storage.save_provider_config(config)
+
+        loaded = await storage.get_provider_config(config.id)
+        assert loaded is not None
+        assert loaded.name == "openai"
+        assert loaded.config["model"] == "gpt-4"
+
+    async def test_get_all_provider_configs(self, storage):
+        """Test getting all provider configs."""
+        config1 = ProviderConfig(name="openai", config={})
+        config2 = ProviderConfig(name="anthropic", config={})
+
+        await storage.save_provider_config(config1)
+        await storage.save_provider_config(config2)
+
+        configs = await storage.get_provider_configs()
+        assert len(configs) == 2
+
+    async def test_update_provider_priority(self, storage):
+        """Test updating provider priority."""
+        config = ProviderConfig(name="openai", priority=0, config={})
+        await storage.save_provider_config(config)
+
+        await storage.update_provider_priority(config.id, 5)
+
+        updated = await storage.get_provider_config(config.id)
+        assert updated.priority == 5
+
+    async def test_delete_provider_config(self, storage):
+        """Test deleting provider config."""
+        config = ProviderConfig(name="openai", config={})
+        await storage.save_provider_config(config)
+
+        await storage.delete_provider_config(config.id)
+
+        loaded = await storage.get_provider_config(config.id)
+        assert loaded is None
+
+    # Usage Tracking Tests
+    async def test_log_usage(self, storage):
+        """Test logging usage record."""
+        record = UsageRecord(
+            provider="openai",
+            model="gpt-4",
+            prompt_tokens=100,
+            completion_tokens=50,
+            total_tokens=150,
+            cost_usd=0.0045,
+            latency_ms=1200
+        )
+
+        await storage.log_usage(record)
+
+        # Verify it was saved (we'll implement get methods)
+        stats = await storage.get_usage_stats(date.today(), date.today())
+        assert stats["total_calls"] >= 1
+
+    async def test_get_cost_by_provider(self, storage):
+        """Test getting cost breakdown by provider."""
+        record1 = UsageRecord(
+            provider="openai", model="gpt-4",
+            prompt_tokens=100, completion_tokens=50, total_tokens=150,
+            cost_usd=0.50, latency_ms=1000
+        )
+        record2 = UsageRecord(
+            provider="anthropic", model="claude-3",
+            prompt_tokens=200, completion_tokens=100, total_tokens=300,
+            cost_usd=0.30, latency_ms=800
+        )
+
+        await storage.log_usage(record1)
+        await storage.log_usage(record2)
+
+        costs = await storage.get_cost_by_provider(1, 2026)
+        assert costs["openai"] == 0.50
+        assert costs["anthropic"] == 0.30
+
+    # Model Management Tests
+    async def test_save_model(self, storage):
+        """Test saving local model."""
+        model = LocalModel(
+            name="Mistral 7B",
+            file_path=Path("/models/mistral.gguf"),
+            size_bytes=4000000000,
+            quantization="Q4_K_M",
+            source="recommended",
+            downloaded_at=datetime.now(timezone.utc)
+        )
+
+        await storage.save_model(model)
+
+        loaded = await storage.get_model(model.id)
+        assert loaded is not None
+        assert loaded.name == "Mistral 7B"
+
+    async def test_get_downloaded_models(self, storage):
+        """Test getting all downloaded models."""
+        model1 = LocalModel(
+            name="Mistral", file_path=Path("/m1.gguf"),
+            size_bytes=4000000000, quantization="Q4_K_M",
+            source="recommended", downloaded_at=datetime.now(timezone.utc)
+        )
+        model2 = LocalModel(
+            name="Llama", file_path=Path("/m2.gguf"),
+            size_bytes=3800000000, quantization="Q4_K_M",
+            source="recommended", downloaded_at=datetime.now(timezone.utc)
+        )
+
+        await storage.save_model(model1)
+        await storage.save_model(model2)
+
+        models = await storage.get_downloaded_models()
+        assert len(models) == 2
+
+    async def test_update_model_usage(self, storage):
+        """Test incrementing model usage count."""
+        model = LocalModel(
+            name="Mistral", file_path=Path("/m.gguf"),
+            size_bytes=4000000000, quantization="Q4_K_M",
+            source="recommended", downloaded_at=datetime.now(timezone.utc)
+        )
+        await storage.save_model(model)
+
+        await storage.update_model_usage(model.id)
+
+        updated = await storage.get_model(model.id)
+        assert updated.usage_count == 1
+        assert updated.last_used is not None
+
+    # Budget Tests
+    async def test_save_budget_settings(self, storage):
+        """Test saving budget settings."""
+        budget = BudgetSettings(
+            monthly_limit_usd=10.0,
+            alert_threshold=0.8
+        )
+
+        await storage.update_budget_settings(budget)
+
+        loaded = await storage.get_budget_settings()
+        assert loaded is not None
+        assert loaded.monthly_limit_usd == 10.0
