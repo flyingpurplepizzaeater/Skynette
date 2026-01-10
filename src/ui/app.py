@@ -84,7 +84,7 @@ class SkynetteApp:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            alignment=ft.alignment.center,
+            alignment=ft.alignment.Alignment(0, 0),
             bgcolor=SkynetteTheme.BG_PRIMARY + "E6",  # Semi-transparent
             visible=False,
             expand=True,
