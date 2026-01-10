@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm update:*)",
+      "Skill(superpowers:brainstorming)",
+      "Bash(dir /s /b \"C:\\\\Users\\\\karlt\\\\OneDrive\\\\Desktop\\\\Claude\\\\skynette-repo\")",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m playwright install:*)",
+      "Bash(python:*)",
+      "Bash(timeout 10 python:*)",
+      "Bash(where:*)",
+      "Skill(superpowers:systematic-debugging)",
+      "Bash(powershell -Command \"\n# Start app in background\n$job = Start-Process -FilePath ''python'' -ArgumentList ''test_dom_check.py'' -PassThru -WindowStyle Hidden\nStart-Sleep -Seconds 15\n\ntry {\n    # Run playwright check\n    python -c @''\nfrom playwright.sync_api import sync_playwright\nimport time\n\nwith sync_playwright\\(\\) as p:\n    browser = p.chromium.launch\\(headless=True\\)\n    page = browser.new_page\\(\\)\n    \n    try:\n        page.goto\\(\"\"http://localhost:8558\"\", timeout=30000\\)\n        page.wait_for_load_state\\(\"\"networkidle\"\", timeout=20000\\)\n        time.sleep\\(5\\)\n        \n        print\\(\"\"=== DOM Structure ===\"\"\\)\n        \n        canvas = page.locator\\(\"\"canvas\"\"\\)\n        print\\(f\"\"Canvas elements: {canvas.count\\(\\)}\"\"\\)\n        \n        semantics = page.locator\\(\"\"flt-semantics\"\"\\)\n        print\\(f\"\"flt-semantics elements: {semantics.count\\(\\)}\"\"\\)\n        \n        aria = page.locator\\(\"\"[aria-label]\"\"\\)\n        print\\(f\"\"[aria-label] elements: {aria.count\\(\\)}\"\"\\)\n        \n        role = page.locator\\(\"\"[role]\"\"\\)\n        print\\(f\"\"[role] elements: {role.count\\(\\)}\"\"\\)\n        \n        if aria.count\\(\\) > 0:\n            print\\(\\)\n            print\\(\"\"=== Elements with aria-label ===\"\"\\)\n            for i in range\\(min\\(aria.count\\(\\), 40\\)\\):\n                elem = aria.nth\\(i\\)\n                label = elem.get_attribute\\(\"\"aria-label\"\"\\)\n                tag = elem.evaluate\\(\"\"el => el.tagName\"\"\\)\n                print\\(f\"\"  {tag}: label={label}\"\"\\)\n                \n    except Exception as e:\n        print\\(f\"\"Error: {e}\"\"\\)\n    finally:\n        browser.close\\(\\)\n''@\n} finally {\n    Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue\n}\n\")",
+      "Bash(powershell -Command \"\n$job = Start-Process -FilePath ''python'' -ArgumentList ''test_dom_check.py'' -PassThru -WindowStyle Hidden\nStart-Sleep -Seconds 15\ntry {\n    python check_dom.py 8558\n} finally {\n    Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue\n}\n\")",
+      "Bash(powershell -Command \"\n$job = Start-Process -FilePath ''python'' -ArgumentList ''test_dom_check.py'' -PassThru -WindowStyle Hidden\nStart-Sleep -Seconds 15\ntry {\n    python check_dom_with_a11y.py 8558\n} finally {\n    Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue\n}\n\")",
+      "Bash(del:*)"
+    ]
+  }
+}
