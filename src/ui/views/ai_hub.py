@@ -381,8 +381,10 @@ class AIHubView(ft.Column):
     def _complete_wizard(self):
         """Complete wizard and save configurations."""
         from src.ai.security import store_api_key
-        from src.ai.storage import AIStorage
         from src.data.storage import get_storage
+        import json
+
+        storage = get_storage()
 
         # Save API keys to system keyring
         for provider_id, config in self.provider_configs.items():
@@ -392,9 +394,13 @@ class AIHubView(ft.Column):
                 except Exception as e:
                     print(f"Failed to store API key for {provider_id}: {e}")
 
-        # Save provider configurations to database
-        storage = get_storage()
-        ai_storage = AIStorage(db_path=storage.db_path)
+        # Save selected providers list to settings
+        storage.set_setting("configured_providers", json.dumps(self.selected_providers))
+
+        # Save individual provider configs (without API keys, those are in keyring)
+        for provider_id in self.selected_providers:
+            config_data = {k: v for k, v in self.provider_configs.get(provider_id, {}).items() if k != "api_key"}
+            storage.set_setting(f"provider_config_{provider_id}", json.dumps(config_data))
 
         # Mark wizard as completed
         storage.set_setting("ai_wizard_completed", "true")
