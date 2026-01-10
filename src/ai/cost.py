@@ -102,6 +102,12 @@ class CostCalculator:
         Returns:
             Cost in USD
         """
+        # Validate inputs
+        if not isinstance(prompt_tokens, int) or not isinstance(completion_tokens, int):
+            raise TypeError("Token counts must be integers")
+        if prompt_tokens < 0 or completion_tokens < 0:
+            raise ValueError("Token counts cannot be negative")
+
         # Get provider pricing
         if provider not in self.pricing:
             return 0.0

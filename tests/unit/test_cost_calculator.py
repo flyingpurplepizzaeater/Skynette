@@ -149,3 +149,75 @@ class TestCostCalculator:
         expected += 0.0  # local is free
 
         assert total_cost == expected
+
+    def test_estimate_cost(self):
+        """Test cost estimation with 70/30 split."""
+        cost = self.calc.estimate_cost(
+            provider="openai",
+            model="gpt-4",
+            estimated_tokens=1000
+        )
+
+        # Should split 1000 tokens into 700 input + 300 output
+        expected = self.calc.calculate_cost("openai", "gpt-4", 700, 300)
+        assert cost == expected
+
+    def test_get_model_pricing_existing_model(self):
+        """Test getting pricing for existing model."""
+        pricing = self.calc.get_model_pricing("openai", "gpt-4")
+
+        assert pricing["input"] == 30.0
+        assert pricing["output"] == 60.0
+
+    def test_get_model_pricing_wildcard(self):
+        """Test getting pricing for wildcard provider."""
+        pricing = self.calc.get_model_pricing("local", "any-model")
+
+        assert pricing["input"] == 0.0
+        assert pricing["output"] == 0.0
+
+    def test_get_model_pricing_unknown_provider(self):
+        """Test getting pricing for unknown provider."""
+        pricing = self.calc.get_model_pricing("unknown", "model")
+
+        assert pricing["input"] == 0.0
+        assert pricing["output"] == 0.0
+
+    def test_negative_tokens_raises_error(self):
+        """Test that negative tokens are rejected."""
+        with pytest.raises(ValueError, match="Token counts cannot be negative"):
+            self.calc.calculate_cost("openai", "gpt-4", -100, 50)
+
+        with pytest.raises(ValueError, match="Token counts cannot be negative"):
+            self.calc.calculate_cost("openai", "gpt-4", 100, -50)
+
+    def test_invalid_token_type_raises_error(self):
+        """Test that non-integer tokens are rejected."""
+        with pytest.raises(TypeError, match="Token counts must be integers"):
+            self.calc.calculate_cost("openai", "gpt-4", "100", 50)
+
+        with pytest.raises(TypeError, match="Token counts must be integers"):
+            self.calc.calculate_cost("openai", "gpt-4", 100.5, 50)
+
+    def test_unknown_provider(self):
+        """Test unknown provider returns zero cost."""
+        cost = self.calc.calculate_cost("unknown-provider", "model", 1000, 500)
+        assert cost == 0.0
+
+    def test_versioned_model_name(self):
+        """Test versioned model names work correctly."""
+        cost = self.calc.calculate_cost(
+            provider="anthropic",
+            model="claude-3-opus-20240229",
+            prompt_tokens=1000,
+            completion_tokens=500
+        )
+
+        # Should use same pricing as claude-3-opus
+        expected = (1000 * 0.015 / 1000) + (500 * 0.075 / 1000)
+        assert cost == expected
+
+    def test_zero_tokens(self):
+        """Test zero tokens results in zero cost."""
+        cost = self.calc.calculate_cost("openai", "gpt-4", 0, 0)
+        assert cost == 0.0
