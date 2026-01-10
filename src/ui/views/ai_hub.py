@@ -513,7 +513,6 @@ class AIHubView(ft.Column):
 
         # Get existing API key if configured
         existing_key = get_api_key(provider["id"]) if provider.get("requires_key") else None
-        masked_key = f"{existing_key[:8]}...{existing_key[-4:]}" if existing_key else ""
 
         api_key_field = ft.TextField(
             label="API Key",
@@ -540,11 +539,9 @@ class AIHubView(ft.Column):
 
                 if self._page:
                     self._page.update()
-                    # Refresh providers tab
-                    # Close dialog after 1 second
-                    import time
-                    time.sleep(1)
-                    close_dialog(e)
+
+                # Close dialog immediately after save
+                close_dialog(e)
             except Exception as ex:
                 status_text.value = f"Error: {ex}"
                 status_text.color = Theme.ERROR
