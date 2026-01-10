@@ -5,6 +5,45 @@ All notable changes to Skynette will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-10
+
+### Added - Phase 3: UI Foundation Complete
+
+**Sprint 1: MVP (Tasks 1-14)**
+- Integrated Flet UI with Phase 2 workflow engine
+- Workflow list view with create/delete/open
+- Simple Mode step-by-step editor
+- Workflow execution with results display
+- Complete end-to-end workflow lifecycle
+
+**Sprint 2: Advanced Editor (Tasks 1-6)**
+- Visual canvas editor with node rendering
+- Node palette with category organization
+- Connection system with visual lines
+- Dynamic node configuration forms
+- Support for all 5 Phase 2 node types
+
+**Sprint 3: Polish & Production (Tasks 1-9)**
+- Light/Dark theme toggle with persistence
+- Loading states for async operations
+- Enhanced error messages with guidance
+- Helpful empty states
+- Confirmation dialogs for destructive actions
+- Comprehensive integration test suite
+
+### Fixed
+- Async/UI threading issues with Flet
+- Theme persistence across sessions
+- Error handling in all UI operations
+- Flet alignment compatibility issues
+
+### Testing
+- 94 unit tests (Phase 2 engine)
+- 14 integration tests (UI workflows)
+- 2 E2E tests (Sprint 1 MVP, Advanced Mode)
+- Performance testing with 50+ workflows
+- Manual testing checklist documented
+
 ## [0.2.0] - 2026-01-10
 
 ### Added - Core Workflow Engine 🚀
