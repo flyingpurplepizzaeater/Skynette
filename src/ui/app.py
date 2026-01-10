@@ -1253,14 +1253,29 @@ class SkynetteApp:
 
     def _open_workflow(self, workflow_id: str):
         """Open a workflow for editing."""
-        workflow = self.storage.load_workflow(workflow_id)
-        if workflow:
-            self.current_workflow = workflow
-            self.current_view = "editor"
-            # Update the title text
-            if self.view_title_text:
-                self.view_title_text.value = self._get_view_title()
-            self._update_content()
+        try:
+            workflow = self.storage.load_workflow(workflow_id)
+            if workflow:
+                self.current_workflow = workflow
+                self.current_view = "editor"
+                # Update the title text
+                if self.view_title_text:
+                    self.view_title_text.value = self._get_view_title()
+                self._update_content()
+                self.page.update()
+            else:
+                self.page.snack_bar = ft.SnackBar(
+                    content=ft.Text("Workflow not found"),
+                    bgcolor=SkynetteTheme.ERROR,
+                )
+                self.page.snack_bar.open = True
+                self.page.update()
+        except Exception as ex:
+            self.page.snack_bar = ft.SnackBar(
+                content=ft.Text(f"Error loading workflow: {str(ex)}"),
+                bgcolor=SkynetteTheme.ERROR,
+            )
+            self.page.snack_bar.open = True
             self.page.update()
 
     def _update_content(self):
