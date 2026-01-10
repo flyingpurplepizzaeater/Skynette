@@ -1544,182 +1544,71 @@ class SkynetteApp:
 
         return lines
 
-    def _build_properties_panel(self) -> ft.Container:
-        """Build the node properties editor panel."""
-        # Get selected node
-        selected_node = None
-        if self.selected_node_id and self.current_workflow:
-            selected_node = self.current_workflow.get_node(self.selected_node_id)
+    def _build_properties_panel(self):
+        """Build the properties panel for selected node."""
+        from src.ui.theme import Theme
 
-        if not selected_node:
+        if not self.selected_node_id:
             return ft.Container(
-                content=ft.Column(
-                    controls=[
-                        ft.Container(
-                            content=ft.Text(
-                                "Properties",
-                                size=14,
-                                weight=ft.FontWeight.W_600,
-                                color=SkynetteTheme.TEXT_PRIMARY,
-                            ),
-                            padding=16,
-                            border=ft.border.only(bottom=ft.BorderSide(1, SkynetteTheme.BORDER)),
-                        ),
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Icon(
-                                        ft.Icons.TOUCH_APP,
-                                        size=32,
-                                        color=SkynetteTheme.TEXT_MUTED,
-                                    ),
-                                    ft.Text(
-                                        "Select a node to edit",
-                                        size=12,
-                                        color=SkynetteTheme.TEXT_MUTED,
-                                        text_align=ft.TextAlign.CENTER,
-                                    ),
-                                ],
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                spacing=8,
-                            ),
-                            expand=True,
-                            alignment=ft.alignment.Alignment(0, 0),
-                        ),
-                    ],
-                    expand=True,
+                content=ft.Text(
+                    "Select a node to configure",
+                    size=12,
+                    color=Theme.TEXT_SECONDARY,
                 ),
-                width=280,
-                bgcolor=SkynetteTheme.BG_SECONDARY,
-                border=ft.border.only(left=ft.BorderSide(1, SkynetteTheme.BORDER)),
+                padding=20,
             )
 
-        # Get node definition for property schema
-        node_def = self.node_registry.get_definition(selected_node.type)
+        node = next((n for n in self.current_workflow.nodes if n.id == self.selected_node_id), None)
+        if not node:
+            return ft.Container(content=ft.Text("Node not found"))
 
-        # Build property editors
-        property_controls = []
-
-        # Node name editor
-        property_controls.append(
-            ft.TextField(
-                label="Node Name",
-                value=selected_node.name,
-                on_change=lambda e: self._update_node_name(selected_node.id, e.control.value),
-                text_size=13,
-            )
-        )
-
-        # Node-specific config fields
-        if node_def and node_def.inputs:
-            for input_def in node_def.inputs:
-                current_value = selected_node.config.get(input_def.name, input_def.default or "")
-
-                if input_def.type == "boolean":
-                    property_controls.append(
-                        ft.Checkbox(
-                            label=input_def.name.replace("_", " ").title(),
-                            value=bool(current_value),
-                            on_change=lambda e, name=input_def.name: self._update_node_config(
-                                selected_node.id, name, e.control.value
-                            ),
-                        )
-                    )
-                elif input_def.type == "select" and input_def.options:
-                    dropdown = ft.Dropdown(
-                        label=input_def.name.replace("_", " ").title(),
-                        value=str(current_value),
-                        options=[ft.dropdown.Option(opt) for opt in input_def.options],
-                        text_size=13,
-                    )
-                    dropdown.on_change = lambda e, name=input_def.name: self._update_node_config(
-                        selected_node.id, name, e.control.value
-                    )
-                    property_controls.append(dropdown)
-                elif input_def.type == "text" or input_def.type == "code":
-                    property_controls.append(
-                        ft.TextField(
-                            label=input_def.name.replace("_", " ").title(),
-                            value=str(current_value) if current_value else "",
-                            multiline=input_def.type == "code",
-                            min_lines=1 if input_def.type != "code" else 3,
-                            max_lines=10,
-                            on_change=lambda e, name=input_def.name: self._update_node_config(
-                                selected_node.id, name, e.control.value
-                            ),
-                            text_size=13,
-                            hint_text=f"{{{{$prev.data}}}} for expressions" if input_def.type == "code" else None,
-                        )
-                    )
-                else:
-                    # Default text field for other types
-                    property_controls.append(
-                        ft.TextField(
-                            label=input_def.name.replace("_", " ").title(),
-                            value=str(current_value) if current_value else "",
-                            on_change=lambda e, name=input_def.name: self._update_node_config(
-                                selected_node.id, name, e.control.value
-                            ),
-                            text_size=13,
-                        )
-                    )
-
-        # Connection controls
-        property_controls.append(ft.Divider(height=20))
-        property_controls.append(self._build_connection_selector(selected_node))
-
-        # Delete button
-        property_controls.append(ft.Divider(height=20))
-        property_controls.append(
-            ft.ElevatedButton(
-                "Delete Node",
-                icon=ft.Icons.DELETE,
-                bgcolor=SkynetteTheme.ERROR,
-                color=SkynetteTheme.TEXT_PRIMARY,
-                on_click=lambda e: self._delete_node(selected_node.id),
-            )
-        )
+        node_def = self.node_registry.get_definition(node.type)
 
         return ft.Container(
             content=ft.Column(
                 controls=[
+                    # Header
                     ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                ft.Text(
-                                    "Properties",
-                                    size=14,
-                                    weight=ft.FontWeight.W_600,
-                                    color=SkynetteTheme.TEXT_PRIMARY,
-                                ),
-                                ft.Container(expand=True),
-                                ft.IconButton(
-                                    icon=ft.Icons.CLOSE,
-                                    icon_size=16,
-                                    icon_color=SkynetteTheme.TEXT_SECONDARY,
-                                    on_click=lambda e: self._deselect_node(),
-                                ),
-                            ],
-                        ),
-                        padding=12,
-                        border=ft.border.only(bottom=ft.BorderSide(1, SkynetteTheme.BORDER)),
+                        content=ft.Column([
+                            ft.Text(
+                                node_def.name if node_def else node.type,
+                                size=14,
+                                weight=ft.FontWeight.W_600,
+                            ),
+                            ft.Text(
+                                node_def.description if node_def else "",
+                                size=11,
+                                color=Theme.TEXT_SECONDARY,
+                            ) if node_def and node_def.description else ft.Container(),
+                        ]),
+                        padding=16,
+                        bgcolor=Theme.BG_SECONDARY,
                     ),
+
+                    # Configuration fields
                     ft.Container(
                         content=ft.Column(
-                            controls=property_controls,
+                            controls=self._build_node_config_fields(node),
                             scroll=ft.ScrollMode.AUTO,
                             spacing=12,
                         ),
-                        padding=12,
+                        padding=16,
                         expand=True,
                     ),
+
+                    # Connection selector
+                    ft.Container(
+                        content=self._build_connection_selector(node),
+                        padding=16,
+                        border=ft.border.only(top=ft.BorderSide(1, Theme.BORDER)),
+                    ),
                 ],
-                expand=True,
                 spacing=0,
+                expand=True,
             ),
-            width=280,
-            bgcolor=SkynetteTheme.BG_SECONDARY,
-            border=ft.border.only(left=ft.BorderSide(1, SkynetteTheme.BORDER)),
+            width=320,
+            bgcolor=Theme.BG_PRIMARY,
+            border=ft.border.only(left=ft.BorderSide(1, Theme.BORDER)),
         )
 
     def _select_node(self, node_id: str):
@@ -1741,12 +1630,74 @@ class SkynetteApp:
             if node:
                 node.name = new_name
 
-    def _update_node_config(self, node_id: str, config_key: str, value):
+    def _build_node_config_fields(self, node):
+        """Build configuration fields for a node based on its definition."""
+        from src.ui.theme import Theme
+
+        node_def = self.node_registry.get_definition(node.type)
+        if not node_def or not node_def.inputs:
+            return [ft.Text("No configuration needed", size=12, color=Theme.TEXT_SECONDARY)]
+
+        fields = []
+
+        for field in node_def.inputs:
+            # Get current value from node config
+            current_value = node.config.get(field.name, field.default)
+
+            # Create appropriate input widget based on field type
+            field_type = field.type.value if hasattr(field.type, 'value') else str(field.type)
+
+            if field_type in ["string", "text"]:
+                widget = ft.TextField(
+                    label=field.label or field.name,
+                    value=str(current_value) if current_value is not None else "",
+                    hint_text=field.description or field.placeholder,
+                    multiline=field_type == "text",
+                    min_lines=3 if field_type == "text" else 1,
+                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, e.control.value),
+                )
+            elif field_type == "number":
+                widget = ft.TextField(
+                    label=field.label or field.name,
+                    value=str(current_value) if current_value is not None else "",
+                    hint_text=field.description,
+                    keyboard_type=ft.KeyboardType.NUMBER,
+                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, float(e.control.value) if e.control.value and '.' in e.control.value else int(e.control.value) if e.control.value else 0),
+                )
+            elif field_type == "boolean":
+                widget = ft.Checkbox(
+                    label=field.label or field.name,
+                    value=bool(current_value) if current_value is not None else False,
+                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, e.control.value),
+                )
+            elif field_type == "select":
+                widget = ft.Dropdown(
+                    label=field.label or field.name,
+                    value=current_value,
+                    options=[ft.dropdown.Option(key=opt.get("value", opt), text=opt.get("label", opt)) for opt in (field.options or [])],
+                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, e.control.value),
+                )
+            else:
+                # Default to text field, handle code/expression/json types
+                is_code = field_type in ["expression", "json"]
+                widget = ft.TextField(
+                    label=field.label or field.name,
+                    value=str(current_value) if current_value is not None else "",
+                    multiline=is_code,
+                    min_lines=3 if is_code else 1,
+                    hint_text=field.description or field.placeholder,
+                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, e.control.value),
+                )
+
+            fields.append(widget)
+
+        return fields
+
+    def _update_node_config(self, node_id: str, field_name: str, value):
         """Update a node's configuration."""
-        if self.current_workflow:
-            node = self.current_workflow.get_node(node_id)
-            if node:
-                node.config[config_key] = value
+        node = next((n for n in self.current_workflow.nodes if n.id == node_id), None)
+        if node:
+            node.config[field_name] = value
 
     def _add_connection(self, source_id: str, target_id: str):
         """Add a connection between two nodes."""
