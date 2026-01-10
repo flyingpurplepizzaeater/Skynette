@@ -64,6 +64,27 @@ class SkynetteApp:
         self.chat_input_field = None
         self.chat_is_loading = False
 
+        # Loading state
+        self.loading_overlay = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.ProgressRing(color=SkynetteTheme.PRIMARY),
+                    ft.Container(height=16),
+                    ft.Text(
+                        "Loading...",
+                        size=14,
+                        color=SkynetteTheme.TEXT_SECONDARY,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
+            alignment=ft.alignment.center,
+            bgcolor=SkynetteTheme.BG_PRIMARY + "E6",  # Semi-transparent
+            visible=False,
+            expand=True,
+        )
+
     def initialize(self):
         """Initialize the application."""
         # Initialize AI providers
@@ -88,24 +109,30 @@ class SkynetteApp:
 
     def _build_layout(self) -> ft.Control:
         """Build the main application layout."""
-        return ft.Row(
+        return ft.Stack(
             controls=[
-                # Sidebar Navigation
-                self._build_sidebar(),
-                # Main Content Area
-                ft.VerticalDivider(width=1, color=SkynetteTheme.BORDER),
-                ft.Column(
+                ft.Row(
                     controls=[
-                        # Top Bar
-                        self._build_top_bar(),
-                        ft.Divider(height=1, color=SkynetteTheme.BORDER),
-                        # Content + Assistant
-                        ft.Row(
+                        # Sidebar Navigation
+                        self._build_sidebar(),
+                        # Main Content Area
+                        ft.VerticalDivider(width=1, color=SkynetteTheme.BORDER),
+                        ft.Column(
                             controls=[
-                                # Main content
-                                self.content_area,
-                                # Assistant Panel
-                                self._build_assistant_panel(),
+                                # Top Bar
+                                self._build_top_bar(),
+                                ft.Divider(height=1, color=SkynetteTheme.BORDER),
+                                # Content + Assistant
+                                ft.Row(
+                                    controls=[
+                                        # Main content
+                                        self.content_area,
+                                        # Assistant Panel
+                                        self._build_assistant_panel(),
+                                    ],
+                                    expand=True,
+                                    spacing=0,
+                                ),
                             ],
                             expand=True,
                             spacing=0,
@@ -114,9 +141,10 @@ class SkynetteApp:
                     expand=True,
                     spacing=0,
                 ),
+                # Loading overlay
+                self.loading_overlay,
             ],
             expand=True,
-            spacing=0,
         )
 
     def _build_sidebar(self) -> ft.Container:
@@ -1251,6 +1279,17 @@ class SkynetteApp:
         self._update_content()
         self.page.update()
 
+    def _show_loading(self, message: str = "Loading..."):
+        """Show loading overlay."""
+        self.loading_overlay.content.controls[2].value = message
+        self.loading_overlay.visible = True
+        self.page.update()
+
+    def _hide_loading(self):
+        """Hide loading overlay."""
+        self.loading_overlay.visible = False
+        self.page.update()
+
     def _create_new_workflow(self, e=None):
         """Create a new workflow."""
         # Create dialog for workflow name
@@ -1348,7 +1387,13 @@ class SkynetteApp:
     def _update_content(self):
         """Update the main content area based on current view."""
         if self.current_view == "workflows":
-            self.content_area.content = self._build_workflows_view()
+            self._show_loading("Loading workflows...")
+            try:
+                workflows = self.storage.list_workflows()
+                self.workflows_list = workflows
+                self.content_area.content = self._build_workflows_view()
+            finally:
+                self._hide_loading()
         elif self.current_view == "ai_hub":
             self.content_area.content = self._build_ai_hub_view()
         elif self.current_view == "agents":
@@ -2087,6 +2132,9 @@ class SkynetteApp:
         if not self.current_workflow:
             return
 
+        # Show loading
+        self._show_loading("Executing workflow...")
+
         # Run async execution in the event loop
         async def run_async():
             try:
@@ -2099,26 +2147,29 @@ class SkynetteApp:
                 # Show result
                 if execution.status == "completed":
                     self.page.snack_bar = ft.SnackBar(
-                        content=ft.Text(f"Workflow completed in {execution.duration_ms:.0f}ms"),
+                        content=ft.Text(f"Workflow '{self.current_workflow.name}' completed successfully"),
                         bgcolor=SkynetteTheme.SUCCESS,
                     )
                 else:
                     self.page.snack_bar = ft.SnackBar(
-                        content=ft.Text(f"Workflow failed: {execution.error}"),
-                        bgcolor=SkynetteTheme.ERROR,
+                        content=ft.Text(f"Workflow execution {execution.status}"),
+                        bgcolor=SkynetteTheme.WARNING,
                     )
+
                 self.page.snack_bar.open = True
-
-                # Refresh UI to show execution indicator
-                self._update_content()
                 self.page.update()
-
-            except Exception as ex:
+            except Exception as e:
                 self.page.snack_bar = ft.SnackBar(
-                    content=ft.Text(f"Execution error: {str(ex)}"),
+                    content=ft.Text(f"Error executing workflow: {str(e)}"),
                     bgcolor=SkynetteTheme.ERROR,
                 )
                 self.page.snack_bar.open = True
+                self.page.update()
+            finally:
+                self._hide_loading()
+
+                # Refresh UI to show execution indicator
+                self._update_content()
                 self.page.update()
 
         # Use page.run_task for async operations in Flet
