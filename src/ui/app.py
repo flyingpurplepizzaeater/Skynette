@@ -1500,80 +1500,47 @@ class SkynetteApp:
             )
         return ft.Container()
 
-    def _build_connection_lines(self) -> list[ft.Container]:
-        """Build visual connection lines between nodes."""
+    def _build_connection_lines(self):
+        """Build visual lines showing connections between nodes."""
+        if not self.current_workflow or not self.current_workflow.connections:
+            return []
+
+        from src.ui.theme import Theme
+
+        positions = self._calculate_node_positions()
         lines = []
-        if not self.current_workflow:
-            return lines
 
-        # Create a position map for nodes
-        node_positions = {}
-        for node in self.current_workflow.nodes:
-            node_positions[node.id] = {
-                "x": node.position.get("x", 0),
-                "y": node.position.get("y", 0),
-            }
-
-        # Draw connections as simple line indicators
         for conn in self.current_workflow.connections:
-            source_pos = node_positions.get(conn.source_node_id)
-            target_pos = node_positions.get(conn.target_node_id)
+            source_pos = positions.get(conn.source_node_id)
+            target_pos = positions.get(conn.target_node_id)
 
-            if source_pos and target_pos:
-                # Calculate line positions (from right of source to left of target)
-                start_x = source_pos["x"] + 180  # Node width
-                start_y = source_pos["y"] + 30   # Half node height
-                end_x = target_pos["x"]
-                end_y = target_pos["y"] + 30
+            if not source_pos or not target_pos:
+                continue
 
-                # Create a simple connector line using a container
-                mid_x = (start_x + end_x) // 2
-                lines.append(
-                    ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                ft.Container(
-                                    width=mid_x - start_x,
-                                    height=2,
-                                    bgcolor=SkynetteTheme.PRIMARY,
-                                ),
-                            ],
-                        ),
-                        left=start_x,
-                        top=start_y,
-                    )
-                )
-                # Vertical segment if needed
-                if abs(end_y - start_y) > 5:
-                    v_height = abs(end_y - start_y)
-                    v_top = min(start_y, end_y)
-                    lines.append(
-                        ft.Container(
-                            width=2,
-                            height=v_height,
-                            bgcolor=SkynetteTheme.PRIMARY,
-                            left=mid_x,
-                            top=v_top,
-                        )
-                    )
-                # Horizontal to target
-                lines.append(
-                    ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                ft.Container(
-                                    width=end_x - mid_x - 5,
-                                    height=2,
-                                    bgcolor=SkynetteTheme.PRIMARY,
-                                ),
-                                ft.Icon(ft.Icons.ARROW_RIGHT, size=12, color=SkynetteTheme.PRIMARY),
-                            ],
-                            spacing=0,
-                        ),
-                        left=mid_x,
-                        top=end_y,
-                    )
-                )
+            # Calculate line endpoints (center of nodes)
+            x1 = source_pos["x"] + 60  # Half of node width (120/2)
+            y1 = source_pos["y"] + 40  # Half of node height (80/2)
+            x2 = target_pos["x"] + 60
+            y2 = target_pos["y"] + 40
+
+            # Simple line representation (Flet doesn't have native SVG lines)
+            # Use a rotated container as a visual line
+            import math
+
+            dx = x2 - x1
+            dy = y2 - y1
+            length = math.sqrt(dx*dx + dy*dy)
+            angle = math.atan2(dy, dx)
+
+            line = ft.Container(
+                width=length,
+                height=2,
+                bgcolor=Theme.PRIMARY + "80",  # Semi-transparent
+                rotate=ft.transform.Rotate(angle),
+                left=x1,
+                top=y1,
+            )
+            lines.append(line)
 
         return lines
 
@@ -1699,21 +1666,7 @@ class SkynetteApp:
 
         # Connection controls
         property_controls.append(ft.Divider(height=20))
-        property_controls.append(
-            ft.Text("Connections", size=12, weight=ft.FontWeight.W_600, color=SkynetteTheme.TEXT_SECONDARY)
-        )
-
-        # Add connection dropdown
-        other_nodes = [n for n in self.current_workflow.nodes if n.id != selected_node.id]
-        if other_nodes:
-            connect_dropdown = ft.Dropdown(
-                label="Connect to...",
-                hint_text="Select target node",
-                options=[ft.dropdown.Option(key=n.id, text=n.name) for n in other_nodes],
-                text_size=13,
-            )
-            connect_dropdown.on_change = lambda e: self._add_connection(selected_node.id, e.control.value)
-            property_controls.append(connect_dropdown)
+        property_controls.append(self._build_connection_selector(selected_node))
 
         # Delete button
         property_controls.append(ft.Divider(height=20))
@@ -1835,6 +1788,72 @@ class SkynetteApp:
         self._update_content()
         self.page.update()
 
+    def _build_connection_selector(self, node):
+        """Build UI for selecting node connections."""
+        from src.ui.theme import Theme
+
+        # Get available target nodes (all except current and already connected)
+        available_targets = [
+            n for n in self.current_workflow.nodes
+            if n.id != node.id
+        ]
+
+        # Find current connections from this node
+        current_targets = [
+            conn.target_node_id
+            for conn in self.current_workflow.connections
+            if conn.source_node_id == node.id
+        ]
+
+        def add_connection_to(target_id):
+            from src.core.workflow.models import WorkflowConnection
+
+            # Check if connection already exists
+            exists = any(
+                conn.source_node_id == node.id and conn.target_node_id == target_id
+                for conn in self.current_workflow.connections
+            )
+
+            if not exists:
+                conn = WorkflowConnection(
+                    source_node_id=node.id,
+                    target_node_id=target_id,
+                )
+                self.current_workflow.connections.append(conn)
+                self._update_content()
+                self.page.update()
+
+        return ft.Column(
+            controls=[
+                ft.Text("Connections", size=12, weight=ft.FontWeight.W_600),
+                ft.Dropdown(
+                    label="Connect to",
+                    options=[
+                        ft.dropdown.Option(key=n.id, text=n.name or n.type)
+                        for n in available_targets
+                    ],
+                    on_change=lambda e: add_connection_to(e.control.value) if e.control.value else None,
+                ),
+                # Show current connections
+                *[
+                    ft.Text(
+                        f"→ {self._get_node_name(target_id)}",
+                        size=11,
+                        color=Theme.TEXT_SECONDARY,
+                    )
+                    for target_id in current_targets
+                ]
+            ],
+            spacing=8,
+        )
+
+    def _get_node_name(self, node_id):
+        """Get display name for a node."""
+        node = next((n for n in self.current_workflow.nodes if n.id == node_id), None)
+        if node:
+            return node.name or node.type
+        return "Unknown"
+
     def _show_execution_details(self):
         """Show detailed execution results."""
         if not self.last_execution_result:
@@ -1899,70 +1918,35 @@ class SkynetteApp:
 
     def _build_canvas(self):
         """Build the visual workflow canvas."""
-        from src.ui.theme import Theme
-
         if not self.current_workflow:
-            return ft.Container(
-                content=ft.Text("No workflow loaded"),
-                expand=True,
-            )
+            return ft.Container(content=ft.Text("No workflow loaded"), expand=True)
 
-        # Calculate positions (not actively used yet, but available for grid layout)
         positions = self._calculate_node_positions()
 
-        # Create node widgets with positioning
-        node_widgets = []
-        for node in self.current_workflow.nodes:
-            node_widget = self._build_canvas_node(node)
-            node_widgets.append(node_widget)
-
-        # Build connection lines
+        # Build connection lines first (render behind nodes)
         connection_lines = self._build_connection_lines()
 
-        # Stack all nodes with connections
-        stack_controls = [
-            # Grid background
-            ft.Container(
-                bgcolor=Theme.BG_PRIMARY,
-                expand=True,
-                on_click=lambda e: self._deselect_node(),
-            ),
-        ]
-        # Add connection lines
-        stack_controls.extend(connection_lines)
-        # Add nodes
-        stack_controls.extend(node_widgets)
-        # Add empty state hint
-        stack_controls.append(
-            ft.Container(
-                content=ft.Column(
-                    controls=[
-                        ft.Text(
-                            "Click nodes in the palette to add them",
-                            size=14,
-                            color=Theme.TEXT_MUTED,
-                        ),
-                        ft.Text(
-                            "Click a node to select and edit its properties",
-                            size=12,
-                            color=Theme.TEXT_MUTED,
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=4,
-                ),
-                alignment=ft.alignment.Alignment(0, 0),
-                expand=True,
-                visible=len(self.current_workflow.nodes) == 0 if self.current_workflow else True,
+        # Build node widgets
+        node_widgets = []
+        for node in self.current_workflow.nodes:
+            pos = positions.get(node.id, {"x": 0, "y": 0})
+            node_widgets.append(
+                ft.Container(
+                    content=self._build_canvas_node(node),
+                    left=pos["x"],
+                    top=pos["y"],
+                )
             )
-        )
+
+        # Combine connections and nodes
+        all_elements = connection_lines + node_widgets
+
+        from src.ui.theme import Theme
 
         return ft.Container(
-            content=ft.Stack(
-                controls=stack_controls,
-                expand=True,
-            ),
+            content=ft.Stack(controls=all_elements if all_elements else [
+                ft.Text("No nodes", color=Theme.TEXT_SECONDARY)
+            ]),
             expand=True,
             bgcolor=Theme.BG_PRIMARY,
         )
@@ -2042,8 +2026,6 @@ class SkynetteApp:
             border=ft.border.all(2, color),
             border_radius=Theme.RADIUS_MD,
             padding=12,
-            left=node.position.get("x", 0),
-            top=node.position.get("y", 0),
             data=node.id,  # Store node ID for click handling
             on_click=lambda e: self._select_canvas_node(node.id),
         )
