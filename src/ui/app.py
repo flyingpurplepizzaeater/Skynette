@@ -1302,44 +1302,6 @@ class SkynetteApp:
         if not self.current_workflow:
             return self._build_workflows_view()
 
-        # Get node definitions from registry
-        node_definitions = self.node_registry.get_all_definitions()
-        categories = {}
-        for node_def in node_definitions:
-            cat = node_def.category
-            if cat not in categories:
-                categories[cat] = []
-            categories[cat].append(node_def)
-
-        # Build node palette
-        palette_items = []
-        for cat_name, nodes in sorted(categories.items()):
-            node_buttons = []
-            for node_def in sorted(nodes, key=lambda n: n.name):
-                node_buttons.append(
-                    ft.ListTile(
-                        title=ft.Text(node_def.name, size=12),
-                        leading=ft.Icon(ft.Icons.CIRCLE, size=8, color=SkynetteTheme.PRIMARY),
-                        dense=True,
-                        on_click=lambda e, nd=node_def: self._add_node_to_workflow(nd),
-                    )
-                )
-
-            palette_items.append(
-                ft.ExpansionTile(
-                    title=ft.Text(cat_name.title(), size=13, weight=ft.FontWeight.W_500),
-                    expanded=cat_name.lower() in ["triggers", "trigger"],
-                    controls=node_buttons,
-                    tile_padding=ft.padding.symmetric(horizontal=8),
-                )
-            )
-
-        # Build canvas with existing nodes and connection lines
-        canvas_nodes = []
-        connection_lines = self._build_connection_lines()
-        for node in self.current_workflow.nodes:
-            canvas_nodes.append(self._build_canvas_node(node))
-
         return ft.Column(
             controls=[
                 # Toolbar
@@ -1407,7 +1369,7 @@ class SkynetteApp:
                     border=ft.border.only(bottom=ft.BorderSide(1, SkynetteTheme.BORDER)),
                 ),
                 # Editor area - Simple or Advanced based on mode
-                self._build_simple_editor_content() if self.simple_mode else self._build_advanced_editor_content(palette_items, connection_lines, canvas_nodes),
+                self._build_simple_editor_content() if self.simple_mode else self._build_advanced_editor_content(),
             ],
             expand=True,
             spacing=0,
@@ -1426,8 +1388,38 @@ class SkynetteApp:
             padding=20,
         )
 
-    def _build_advanced_editor_content(self, palette_items, connection_lines, canvas_nodes) -> ft.Control:
+    def _build_advanced_editor_content(self) -> ft.Control:
         """Build advanced visual canvas editor content."""
+        # Build node palette
+        categories = {}
+        for node_def in self.node_registry.get_all_definitions():
+            cat = node_def.category or "other"
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(node_def)
+
+        palette_items = []
+        for cat_name, nodes in sorted(categories.items()):
+            node_buttons = []
+            for node_def in sorted(nodes, key=lambda n: n.name):
+                node_buttons.append(
+                    ft.ListTile(
+                        title=ft.Text(node_def.name, size=12),
+                        leading=ft.Icon(ft.Icons.CIRCLE, size=8, color=SkynetteTheme.PRIMARY),
+                        dense=True,
+                        on_click=lambda e, nd=node_def: self._add_node_to_workflow(nd),
+                    )
+                )
+
+            palette_items.append(
+                ft.ExpansionTile(
+                    title=ft.Text(cat_name.title(), size=13, weight=ft.FontWeight.W_500),
+                    expanded=cat_name.lower() in ["triggers", "trigger"],
+                    controls=node_buttons,
+                    tile_padding=ft.padding.symmetric(horizontal=8),
+                )
+            )
+
         return ft.Row(
             controls=[
                 # Node Palette
@@ -1457,47 +1449,7 @@ class SkynetteApp:
                     border=ft.border.only(right=ft.BorderSide(1, SkynetteTheme.BORDER)),
                 ),
                 # Canvas
-                ft.Container(
-                    content=ft.Stack(
-                        controls=[
-                            # Grid background
-                            ft.Container(
-                                bgcolor=SkynetteTheme.BG_PRIMARY,
-                                expand=True,
-                                on_click=lambda e: self._deselect_node(),
-                            ),
-                            # Connection lines
-                            *connection_lines,
-                            # Nodes
-                            *canvas_nodes,
-                            # Empty state hint
-                            ft.Container(
-                                content=ft.Column(
-                                    controls=[
-                                        ft.Text(
-                                            "Click nodes in the palette to add them",
-                                            size=14,
-                                            color=SkynetteTheme.TEXT_MUTED,
-                                        ),
-                                        ft.Text(
-                                            "Click a node to select and edit its properties",
-                                            size=12,
-                                            color=SkynetteTheme.TEXT_MUTED,
-                                        ),
-                                    ],
-                                    alignment=ft.MainAxisAlignment.CENTER,
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                    spacing=4,
-                                ),
-                                alignment=ft.alignment.Alignment(0, 0),
-                                expand=True,
-                                visible=len(self.current_workflow.nodes) == 0,
-                            ),
-                        ],
-                        expand=True,
-                    ),
-                    expand=True,
-                ),
+                self._build_canvas(),
                 # Properties Panel
                 self._build_properties_panel(),
             ],
@@ -1945,59 +1897,155 @@ class SkynetteApp:
         dialog.open = True
         self.page.update()
 
-    def _build_canvas_node(self, node: WorkflowNode) -> ft.Container:
-        """Build a visual node for the canvas."""
-        # Determine node color based on type
-        color = SkynetteTheme.PRIMARY
-        if "trigger" in node.type:
-            color = SkynetteTheme.WARNING
-        elif "ai" in node.type:
-            color = "#8B5CF6"  # Purple for AI
-        elif "http" in node.type:
-            color = SkynetteTheme.INFO
+    def _build_canvas(self):
+        """Build the visual workflow canvas."""
+        from src.ui.theme import Theme
 
-        # Check if this node is selected
-        is_selected = self.selected_node_id == node.id
-        border_width = 3 if is_selected else 2
-        shadow_blur = 12 if is_selected else 8
+        if not self.current_workflow:
+            return ft.Container(
+                content=ft.Text("No workflow loaded"),
+                expand=True,
+            )
+
+        # Calculate positions (not actively used yet, but available for grid layout)
+        positions = self._calculate_node_positions()
+
+        # Create node widgets with positioning
+        node_widgets = []
+        for node in self.current_workflow.nodes:
+            node_widget = self._build_canvas_node(node)
+            node_widgets.append(node_widget)
+
+        # Build connection lines
+        connection_lines = self._build_connection_lines()
+
+        # Stack all nodes with connections
+        stack_controls = [
+            # Grid background
+            ft.Container(
+                bgcolor=Theme.BG_PRIMARY,
+                expand=True,
+                on_click=lambda e: self._deselect_node(),
+            ),
+        ]
+        # Add connection lines
+        stack_controls.extend(connection_lines)
+        # Add nodes
+        stack_controls.extend(node_widgets)
+        # Add empty state hint
+        stack_controls.append(
+            ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            "Click nodes in the palette to add them",
+                            size=14,
+                            color=Theme.TEXT_MUTED,
+                        ),
+                        ft.Text(
+                            "Click a node to select and edit its properties",
+                            size=12,
+                            color=Theme.TEXT_MUTED,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=4,
+                ),
+                alignment=ft.alignment.Alignment(0, 0),
+                expand=True,
+                visible=len(self.current_workflow.nodes) == 0 if self.current_workflow else True,
+            )
+        )
+
+        return ft.Container(
+            content=ft.Stack(
+                controls=stack_controls,
+                expand=True,
+            ),
+            expand=True,
+            bgcolor=Theme.BG_PRIMARY,
+        )
+
+    def _calculate_node_positions(self):
+        """Calculate positions for nodes in a grid layout."""
+        if not self.current_workflow or not self.current_workflow.nodes:
+            return {}
+
+        positions = {}
+        nodes_per_row = 4
+        x_spacing = 150
+        y_spacing = 120
+        x_offset = 50
+        y_offset = 50
+
+        for i, node in enumerate(self.current_workflow.nodes):
+            row = i // nodes_per_row
+            col = i % nodes_per_row
+            positions[node.id] = {
+                "x": x_offset + (col * x_spacing),
+                "y": y_offset + (row * y_spacing),
+            }
+
+        return positions
+
+    def _select_canvas_node(self, node_id):
+        """Select a node on the canvas."""
+        self.selected_node_id = node_id
+        self._update_content()  # Refresh to show properties panel
+        self.page.update()
+
+    def _build_canvas_node(self, node: WorkflowNode) -> ft.Container:
+        """Render a single node on the canvas."""
+        from src.ui.theme import Theme
+
+        # Get node definition for styling
+        node_def = self.node_registry.get_definition(node.type)
+
+        # Determine color by category
+        color_map = {
+            "trigger": Theme.WARNING,
+            "action": Theme.PRIMARY,
+            "flow": Theme.INFO,
+            "http": Theme.SUCCESS,
+        }
+        color = color_map.get(node_def.category if node_def else "action", Theme.PRIMARY)
 
         return ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Icon(ft.Icons.CIRCLE, size=12, color=color),
-                            ft.Text(
-                                node.name,
-                                size=12,
-                                weight=ft.FontWeight.W_500,
-                                color=SkynetteTheme.TEXT_PRIMARY,
-                            ),
-                        ],
-                        spacing=8,
+                    ft.Icon(
+                        ft.Icons.CIRCLE,
+                        size=16,
+                        color=color,
                     ),
                     ft.Text(
-                        node.type.replace("_", " ").title(),
+                        node.name or node_def.name if node_def else node.type,
+                        size=12,
+                        weight=ft.FontWeight.W_600,
+                        color=Theme.TEXT_PRIMARY,
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    ft.Text(
+                        node_def.name if node_def else node.type,
                         size=10,
-                        color=SkynetteTheme.TEXT_SECONDARY,
+                        color=Theme.TEXT_SECONDARY,
+                        text_align=ft.TextAlign.CENTER,
                     ),
                 ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=4,
             ),
-            bgcolor=SkynetteTheme.BG_SECONDARY,
-            border_radius=SkynetteTheme.RADIUS_SM,
-            border=ft.border.all(border_width, color),
+            width=120,
+            height=80,
+            bgcolor=Theme.BG_SECONDARY,
+            border=ft.border.all(2, color),
+            border_radius=Theme.RADIUS_MD,
             padding=12,
-            width=180,
-            left=node.position.get("x", 100),
-            top=node.position.get("y", 100),
-            shadow=ft.BoxShadow(
-                spread_radius=0,
-                blur_radius=shadow_blur,
-                color=f"{color}60" if is_selected else "#00000040",
-                offset=ft.Offset(0, 2),
-            ),
-            on_click=lambda e, n=node: self._select_node(n.id),
+            left=node.position.get("x", 0),
+            top=node.position.get("y", 0),
+            data=node.id,  # Store node ID for click handling
+            on_click=lambda e: self._select_canvas_node(node.id),
         )
 
     def _add_node_to_workflow(self, node_def):
