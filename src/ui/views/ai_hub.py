@@ -26,7 +26,7 @@ class AIHubView(ft.Column):
         providers_tab = ft.Tab(label="My Providers", icon=ft.Icons.CLOUD)
         providers_tab.content = self._build_providers_tab()
 
-        library_tab = ft.Tab(label="Model Library", icon=ft.Icons.INVENTORY)
+        library_tab = ft.Tab(label="Model Library", icon=ft.Icons.FOLDER)
         library_tab.content = self._build_model_library_tab()
 
         return ft.Column(
@@ -67,25 +67,7 @@ class AIHubView(ft.Column):
     def _build_wizard_tab(self):
         """Setup wizard tab - placeholder for AI setup wizard."""
         return ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Icon(ft.Icons.ROCKET_LAUNCH, size=64, color=Theme.PRIMARY),
-                    ft.Text(
-                        "AI Setup Wizard",
-                        size=24,
-                        weight=ft.FontWeight.BOLD,
-                        color=Theme.TEXT_PRIMARY,
-                    ),
-                    ft.Text(
-                        "Coming soon: Step-by-step AI provider setup",
-                        size=14,
-                        color=Theme.TEXT_SECONDARY,
-                    ),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=Theme.SPACING_MD,
-            ),
-            padding=Theme.SPACING_XL,
+            content=ft.Text("Wizard placeholder"),
             expand=True,
         )
 
