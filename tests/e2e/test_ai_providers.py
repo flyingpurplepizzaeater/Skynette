@@ -34,3 +34,15 @@ def test_providers_show_configured_status(page: ft.Page):
             delete_api_key("openai")
         except Exception:
             pass
+
+
+def test_provider_config_dialog_opens(page: ft.Page):
+    """Test provider configuration dialog can open."""
+    ai_hub = AIHubView(page=page)
+    provider = {"id": "openai", "name": "OpenAI", "requires_key": True}
+
+    dialog = ai_hub._build_provider_config_dialog(provider)
+
+    assert dialog is not None
+    assert dialog.title is not None
+    assert "OpenAI" in dialog.title.value

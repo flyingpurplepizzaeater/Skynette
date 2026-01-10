@@ -501,5 +501,95 @@ class AIHubView(ft.Column):
 
     def _open_provider_config_dialog(self, provider: dict):
         """Open provider configuration dialog."""
-        # TODO: Implement modal dialog
-        print(f"Opening config for: {provider['name']}")
+        dialog = self._build_provider_config_dialog(provider)
+        if self._page:
+            self._page.overlay.append(dialog)
+            dialog.open = True
+            self._page.update()
+
+    def _build_provider_config_dialog(self, provider: dict):
+        """Build provider configuration dialog."""
+        from src.ai.security import get_api_key, store_api_key, delete_api_key
+
+        # Get existing API key if configured
+        existing_key = get_api_key(provider["id"]) if provider.get("requires_key") else None
+        masked_key = f"{existing_key[:8]}...{existing_key[-4:]}" if existing_key else ""
+
+        api_key_field = ft.TextField(
+            label="API Key",
+            password=True,
+            can_reveal_password=True,
+            value=existing_key or "",
+            hint_text="Enter your API key",
+        )
+
+        status_text = ft.Text("", size=12)
+
+        def save_config(e):
+            """Save provider configuration."""
+            try:
+                api_key = api_key_field.value
+                if api_key:
+                    store_api_key(provider["id"], api_key)
+                    status_text.value = "✓ API key saved successfully"
+                    status_text.color = Theme.SUCCESS
+                else:
+                    delete_api_key(provider["id"])
+                    status_text.value = "API key removed"
+                    status_text.color = Theme.TEXT_SECONDARY
+
+                if self._page:
+                    self._page.update()
+                    # Refresh providers tab
+                    # Close dialog after 1 second
+                    import time
+                    time.sleep(1)
+                    close_dialog(e)
+            except Exception as ex:
+                status_text.value = f"Error: {ex}"
+                status_text.color = Theme.ERROR
+                if self._page:
+                    self._page.update()
+
+        def close_dialog(e):
+            """Close the dialog."""
+            if self._page:
+                dialog.open = False
+                self._page.update()
+                # Rebuild providers tab to show updated status
+                # (Parent will handle this)
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(f"Configure {provider['name']}"),
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            "API Key Configuration",
+                            size=14,
+                            weight=ft.FontWeight.W_600,
+                        ),
+                        api_key_field,
+                        ft.Container(height=4),
+                        ft.Text(
+                            "Your API key is stored securely in your system keyring.",
+                            size=11,
+                            color=Theme.TEXT_MUTED,
+                            italic=True,
+                        ),
+                        ft.Container(height=8),
+                        status_text,
+                    ],
+                    tight=True,
+                ),
+                width=400,
+            ),
+            actions=[
+                ft.TextButton("Cancel", on_click=close_dialog),
+                ft.ElevatedButton("Save", bgcolor=Theme.PRIMARY, on_click=save_config),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        return dialog
