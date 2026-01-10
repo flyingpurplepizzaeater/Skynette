@@ -1,0 +1,34 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(C:\\Users\\karlt\\OneDrive\\Desktop\\Claude\\skynette-repo/**)",
+      "Write(C:\\Users\\karlt\\OneDrive\\Desktop\\Claude\\skynette-repo/**)",
+      "Edit(C:\\Users\\karlt\\OneDrive\\Desktop\\Claude\\skynette-repo/**)",
+      "Glob(C:\\Users\\karlt\\OneDrive\\Desktop\\Claude\\skynette-repo/**)",
+      "Grep(C:\\Users\\karlt\\OneDrive\\Desktop\\Claude\\skynette-repo/**)",
+      "Read(C:\\Users\\karlt\\OneDrive\\Desktop\\Claude\\skynette-repo\\.auto-claude\\specs\\001-extensively-test-and-debug-the-project-be-sure-to-/**)",
+      "Write(C:\\Users\\karlt\\OneDrive\\Desktop\\Claude\\skynette-repo\\.auto-claude\\specs\\001-extensively-test-and-debug-the-project-be-sure-to-/**)",
+      "Edit(C:\\Users\\karlt\\OneDrive\\Desktop\\Claude\\skynette-repo\\.auto-claude\\specs\\001-extensively-test-and-debug-the-project-be-sure-to-/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}

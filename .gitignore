@@ -73,3 +73,6 @@ installer/
 
 # Claude Code settings (optional - remove if you want to share)
 # .claude/
+
+# Auto Claude data directory
+.auto-claude/
