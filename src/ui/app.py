@@ -685,63 +685,54 @@ class SkynetteApp:
                 scroll=ft.ScrollMode.AUTO,
             )
         else:
-            content = ft.Column(
-                controls=[
-                    # Header with actions
-                    ft.Row(
-                        controls=[
-                            ft.Text(
-                                "My Workflows",
-                                size=SkynetteTheme.FONT_LG,
-                                weight=ft.FontWeight.W_500,
-                                color=SkynetteTheme.TEXT_PRIMARY,
-                            ),
-                            ft.Container(expand=True),
-                            ft.ElevatedButton(
-                                "New Workflow",
-                                icon=ft.Icons.ADD_ROUNDED,
-                                bgcolor=SkynetteTheme.PRIMARY,
-                                color=SkynetteTheme.TEXT_PRIMARY,
-                                on_click=self._create_new_workflow,
-                            ),
-                        ],
-                    ),
-                    ft.Container(height=16),
-                    # Empty state
-                    ft.Container(
-                        content=ft.Column(
-                            controls=[
-                                ft.Icon(
-                                    ft.Icons.ACCOUNT_TREE_ROUNDED,
-                                    size=64,
-                                    color=SkynetteTheme.TEXT_MUTED,
-                                ),
-                                ft.Text(
-                                    "No workflows yet",
-                                    size=SkynetteTheme.FONT_LG,
-                                    color=SkynetteTheme.TEXT_SECONDARY,
-                                ),
-                                ft.Text(
-                                    "Create your first workflow to get started",
-                                    size=SkynetteTheme.FONT_SM,
-                                    color=SkynetteTheme.TEXT_MUTED,
-                                ),
-                                ft.Container(height=16),
-                                ft.ElevatedButton(
-                                    "Create Workflow",
-                                    icon=ft.Icons.ADD_ROUNDED,
-                                    bgcolor=SkynetteTheme.PRIMARY,
-                                    color=SkynetteTheme.TEXT_PRIMARY,
-                                    on_click=self._create_new_workflow,
-                                ),
-                            ],
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=8,
+            content = ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Icon(
+                            ft.Icons.FOLDER_OPEN_OUTLINED,
+                            size=64,
+                            color=SkynetteTheme.TEXT_MUTED,
                         ),
-                        expand=True,
-                        alignment=ft.alignment.Alignment(0, 0),
-                    ),
-                ],
+                        ft.Container(height=16),
+                        ft.Text(
+                            "No Workflows Yet",
+                            size=20,
+                            weight=ft.FontWeight.W_600,
+                            color=SkynetteTheme.TEXT_PRIMARY,
+                        ),
+                        ft.Container(height=8),
+                        ft.Text(
+                            "Create your first workflow to get started",
+                            size=14,
+                            color=SkynetteTheme.TEXT_SECONDARY,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                        ft.Container(height=24),
+                        ft.ElevatedButton(
+                            "Create Workflow",
+                            icon=ft.Icons.ADD,
+                            bgcolor=SkynetteTheme.PRIMARY,
+                            color=SkynetteTheme.TEXT_PRIMARY,
+                            on_click=lambda e: self._create_new_workflow(e),
+                        ),
+                        ft.Container(height=16),
+                        ft.Container(
+                            content=ft.Column([
+                                ft.Text("💡 Quick Tips:", size=12, weight=ft.FontWeight.W_600),
+                                ft.Text("• Use Simple Mode for step-by-step creation", size=11),
+                                ft.Text("• Use Advanced Mode for visual editing", size=11),
+                                ft.Text("• All workflows are saved automatically", size=11),
+                            ], spacing=4),
+                            padding=12,
+                            bgcolor=SkynetteTheme.BG_SECONDARY,
+                            border_radius=SkynetteTheme.RADIUS_MD,
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+                expand=True,
+                alignment=ft.alignment.center,
             )
 
         return ft.Container(
@@ -2043,10 +2034,45 @@ class SkynetteApp:
 
         from src.ui.theme import Theme
 
+        # Add empty state if no nodes
+        if len(self.current_workflow.nodes) == 0:
+            empty_state = ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Icon(
+                            ft.Icons.TOUCH_APP_OUTLINED,
+                            size=48,
+                            color=SkynetteTheme.TEXT_MUTED,
+                        ),
+                        ft.Container(height=12),
+                        ft.Text(
+                            "Add Nodes to Your Workflow",
+                            size=16,
+                            weight=ft.FontWeight.W_600,
+                            color=SkynetteTheme.TEXT_PRIMARY,
+                        ),
+                        ft.Container(height=8),
+                        ft.Text(
+                            "Click nodes in the palette to add them to the canvas",
+                            size=12,
+                            color=SkynetteTheme.TEXT_SECONDARY,
+                        ),
+                        ft.Text(
+                            "Then click a node to configure its properties",
+                            size=12,
+                            color=SkynetteTheme.TEXT_SECONDARY,
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=4,
+                ),
+                alignment=ft.alignment.center,
+                expand=True,
+            )
+            all_elements.append(empty_state)
+
         return ft.Container(
-            content=ft.Stack(controls=all_elements if all_elements else [
-                ft.Text("No nodes", color=Theme.TEXT_SECONDARY)
-            ]),
+            content=ft.Stack(controls=all_elements if all_elements else []),
             expand=True,
             bgcolor=Theme.BG_PRIMARY,
         )
