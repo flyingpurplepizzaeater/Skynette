@@ -142,7 +142,7 @@ class TestDownloadTab:
         download_tab = ai_hub._build_download_tab()
 
         # Should have download button (might be in recommended model cards)
-        buttons = _find_controls_by_type(download_tab, ft.ElevatedButton)
+        buttons = _find_controls_by_type(download_tab, ft.Button)
         # At least one button should exist (either Download or in cards)
         assert len(buttons) >= 1
 
@@ -195,7 +195,7 @@ class TestProvidersTab:
         ai_hub = AIHubView(page=None)
         providers_tab = ai_hub._build_providers_tab()
 
-        buttons = _find_controls_by_type(providers_tab, ft.ElevatedButton)
+        buttons = _find_controls_by_type(providers_tab, ft.Button)
 
         # Should have at least 3 buttons (one per provider)
         assert len(buttons) >= 3
@@ -288,8 +288,8 @@ class TestProviderConfiguration:
         assert len(dialog.actions) >= 2
 
         # Actions should be buttons
-        assert isinstance(dialog.actions[0], (ft.TextButton, ft.ElevatedButton))
-        assert isinstance(dialog.actions[1], (ft.TextButton, ft.ElevatedButton))
+        assert isinstance(dialog.actions[0], (ft.TextButton, ft.Button))
+        assert isinstance(dialog.actions[1], (ft.TextButton, ft.Button))
 
 
 class TestProviderStatusPersistence:
@@ -414,7 +414,7 @@ class TestUIComponentsPresence:
         header = ai_hub._build_header()
 
         # Should have icon in refresh button
-        buttons = _find_controls_by_type(header, ft.ElevatedButton)
+        buttons = _find_controls_by_type(header, ft.Button)
         assert len(buttons) >= 1
 
     def test_providers_tab_has_icons_for_providers(self):

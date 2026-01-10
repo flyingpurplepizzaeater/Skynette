@@ -33,7 +33,7 @@ class RunsView(ft.Column):
                         color=Theme.TEXT_PRIMARY,
                     ),
                     ft.Container(expand=True),
-                    ft.ElevatedButton(
+                    ft.Button(
                         "Clear History",
                         icon=ft.Icons.DELETE_OUTLINE,
                         bgcolor=Theme.SURFACE,
@@ -163,7 +163,7 @@ class RunsView(ft.Column):
                                     weight=ft.FontWeight.BOLD,
                                     color=config["color"],
                                 ),
-                                padding=ft.padding.symmetric(horizontal=8, vertical=2),
+                                padding=ft.Padding.symmetric(horizontal=8, vertical=2),
                                 border_radius=4,
                                 bgcolor=f"{config['color']}20",
                             ),
@@ -218,7 +218,7 @@ class RunsView(ft.Column):
                             spacing=8,
                         ),
                         visible=run["status"] == "failed",
-                        padding=ft.padding.only(top=8),
+                        padding=ft.Padding.only(top=8),
                     ),
                 ],
                 spacing=4,
@@ -226,7 +226,7 @@ class RunsView(ft.Column):
             bgcolor=Theme.SURFACE,
             padding=Theme.SPACING_MD,
             border_radius=Theme.RADIUS_MD,
-            border=ft.border.all(1, Theme.BORDER),
+            border=ft.Border.all(1, Theme.BORDER),
             on_click=lambda e, r=run: self._view_run_details(r),
             ink=True,
         )

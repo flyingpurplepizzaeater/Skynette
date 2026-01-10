@@ -36,7 +36,7 @@ class WorkflowsView(ft.Column):
                         color=Theme.TEXT_PRIMARY,
                     ),
                     ft.Container(expand=True),
-                    ft.ElevatedButton(
+                    ft.Button(
                         "New Workflow",
                         icon=ft.Icons.ADD,
                         bgcolor=Theme.PRIMARY,
@@ -46,7 +46,7 @@ class WorkflowsView(ft.Column):
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
-            padding=ft.padding.only(bottom=Theme.SPACING_SM),
+            padding=ft.Padding.only(bottom=Theme.SPACING_SM),
         )
 
     def _build_toolbar(self):
@@ -89,7 +89,7 @@ class WorkflowsView(ft.Column):
                     ),
                 ],
             ),
-            padding=ft.padding.only(bottom=Theme.SPACING_MD),
+            padding=ft.Padding.only(bottom=Theme.SPACING_MD),
         )
 
     def _build_workflow_grid(self):
@@ -157,7 +157,7 @@ class WorkflowsView(ft.Column):
                                     weight=ft.FontWeight.BOLD,
                                     color=status_color,
                                 ),
-                                padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                                padding=ft.Padding.symmetric(horizontal=8, vertical=4),
                                 border_radius=4,
                                 bgcolor=f"{status_color}20",
                             ),
@@ -199,7 +199,7 @@ class WorkflowsView(ft.Column):
             padding=Theme.SPACING_MD,
             bgcolor=Theme.SURFACE,
             border_radius=Theme.RADIUS_MD,
-            border=ft.border.all(1, Theme.BORDER),
+            border=ft.Border.all(1, Theme.BORDER),
             on_click=lambda e, w=workflow: self._on_workflow_click(w),
             on_hover=self._on_card_hover,
             ink=True,
@@ -228,7 +228,7 @@ class WorkflowsView(ft.Column):
             padding=Theme.SPACING_MD,
             bgcolor=Theme.SURFACE,
             border_radius=Theme.RADIUS_MD,
-            border=ft.border.all(2, Theme.BORDER),
+            border=ft.Border.all(2, Theme.BORDER),
             on_click=self._on_create_click,
             on_hover=self._on_card_hover,
             ink=True,
@@ -248,7 +248,7 @@ class WorkflowsView(ft.Column):
 
     def _on_card_hover(self, e):
         if e.data == "true":
-            e.control.border = ft.border.all(1, Theme.PRIMARY)
+            e.control.border = ft.Border.all(1, Theme.PRIMARY)
         else:
-            e.control.border = ft.border.all(1, Theme.BORDER)
+            e.control.border = ft.Border.all(1, Theme.BORDER)
         e.control.update()

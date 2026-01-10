@@ -11,7 +11,7 @@ def extract_text_from_control(control) -> str:
         if control.value:
             texts.append(str(control.value))
 
-    if isinstance(control, ft.ElevatedButton):
+    if isinstance(control, ft.Button):
         # ElevatedButton doesn't have 'text' attribute, just skip it
         # The button text would be in its content/controls if any
         pass

@@ -45,7 +45,7 @@ class DevToolsView(ft.Column):
                                         self.repo_url,
                                         self.issue_title,
                                         self.issue_body,
-                                        ft.ElevatedButton(
+                                        ft.Button(
                                             "Generate Fix",
                                             icon=ft.Icons.AUTO_FIX_HIGH,
                                             bgcolor=Theme.PRIMARY,
@@ -65,7 +65,7 @@ class DevToolsView(ft.Column):
                                 ),
                                 width=400,
                                 padding=Theme.SPACING_MD,
-                                border=ft.border.only(right=ft.BorderSide(1, Theme.BORDER)),
+                                border=ft.Border.only(right=ft.BorderSide(1, Theme.BORDER)),
                             ),
                             # Right Panel: Preview
                             ft.Container(
@@ -78,7 +78,7 @@ class DevToolsView(ft.Column):
                                             bgcolor=Theme.BG_TERTIARY,
                                             padding=10,
                                             border_radius=Theme.RADIUS_MD,
-                                            border=ft.border.all(1, Theme.BORDER)
+                                            border=ft.Border.all(1, Theme.BORDER)
                                         )
                                     ],
                                 ),
@@ -120,7 +120,7 @@ class DevToolsView(ft.Column):
                 ],
             ),
             padding=Theme.SPACING_MD,
-            border=ft.border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+            border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
         )
 
     def _log(self, message: str, color: str = Theme.TEXT_PRIMARY):

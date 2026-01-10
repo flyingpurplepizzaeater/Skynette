@@ -138,7 +138,7 @@ class PluginsView(ft.Column):
                             ft.Container(
                                 content=ft.Text(cat, size=12),
                                 bgcolor=Theme.SURFACE if i > 0 else Theme.PRIMARY,
-                                padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                                padding=ft.Padding.symmetric(horizontal=12, vertical=6),
                                 border_radius=16,
                                 on_click=lambda e, c=cat: self._filter_category(c),
                             )
@@ -186,7 +186,7 @@ class PluginsView(ft.Column):
                                     text_align=ft.TextAlign.CENTER,
                                 ),
                                 ft.Container(height=Theme.SPACING_MD),
-                                ft.ElevatedButton(
+                                ft.Button(
                                     "Create New Plugin",
                                     icon=ft.Icons.ADD,
                                     bgcolor=Theme.PRIMARY,
@@ -198,7 +198,7 @@ class PluginsView(ft.Column):
                         bgcolor=Theme.SURFACE,
                         padding=Theme.SPACING_XL,
                         border_radius=Theme.RADIUS_MD,
-                        border=ft.border.all(2, Theme.BORDER),
+                        border=ft.Border.all(2, Theme.BORDER),
                         alignment=ft.alignment.Alignment(0, 0),
                     ),
                     ft.Container(height=Theme.SPACING_LG),
@@ -271,7 +271,7 @@ class PluginsView(ft.Column):
                 bgcolor=Theme.SURFACE,
                 padding=Theme.SPACING_MD,
                 border_radius=Theme.RADIUS_MD,
-                border=ft.border.all(1, Theme.BORDER),
+                border=ft.Border.all(1, Theme.BORDER),
             )
         else:
             return ft.Container(
@@ -316,7 +316,7 @@ class PluginsView(ft.Column):
                                 ),
                             ],
                         ),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Install",
                             bgcolor=Theme.PRIMARY,
                             expand=True,
@@ -327,7 +327,7 @@ class PluginsView(ft.Column):
                 bgcolor=Theme.SURFACE,
                 padding=Theme.SPACING_MD,
                 border_radius=Theme.RADIUS_MD,
-                border=ft.border.all(1, Theme.BORDER),
+                border=ft.Border.all(1, Theme.BORDER),
             )
 
     def _filter_category(self, category):

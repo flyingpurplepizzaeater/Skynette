@@ -63,7 +63,7 @@ class SettingsView(ft.Column):
                         bgcolor=Theme.SURFACE,
                         padding=Theme.SPACING_MD,
                         border_radius=Theme.RADIUS_MD,
-                        border=ft.border.all(1, Theme.BORDER),
+                        border=ft.Border.all(1, Theme.BORDER),
                     ),
                 ],
                 spacing=Theme.SPACING_SM,
@@ -122,7 +122,7 @@ class SettingsView(ft.Column):
                                     height=28,
                                     bgcolor=Theme.PRIMARY,
                                     border_radius=14,
-                                    border=ft.border.all(2, Theme.TEXT_PRIMARY),
+                                    border=ft.Border.all(2, Theme.TEXT_PRIMARY),
                                 ),
                                 ft.Container(width=24, height=24, bgcolor="#10B981", border_radius=12),
                                 ft.Container(width=24, height=24, bgcolor="#F59E0B", border_radius=12),
@@ -243,7 +243,7 @@ class SettingsView(ft.Column):
                             expand=True,
                             spacing=2,
                         ),
-                        ft.ElevatedButton("Change", bgcolor=Theme.SURFACE),
+                        ft.Button("Change", bgcolor=Theme.SURFACE),
                     ],
                 ),
                 ft.Divider(height=1, color=Theme.BORDER),
@@ -261,7 +261,7 @@ class SettingsView(ft.Column):
                             expand=True,
                             spacing=2,
                         ),
-                        ft.ElevatedButton("Change", bgcolor=Theme.SURFACE),
+                        ft.Button("Change", bgcolor=Theme.SURFACE),
                     ],
                 ),
                 ft.Divider(height=1, color=Theme.BORDER),
@@ -314,7 +314,7 @@ class SettingsView(ft.Column):
                                 size=12,
                                 color=Theme.TEXT_SECONDARY,
                             ),
-                            ft.ElevatedButton(
+                            ft.Button(
                                 "Sign In",
                                 icon=ft.Icons.LOGIN,
                                 bgcolor=Theme.PRIMARY,
@@ -390,7 +390,7 @@ class SettingsView(ft.Column):
                             expand=True,
                             spacing=2,
                         ),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Reset",
                             bgcolor=Theme.ERROR,
                             color=Theme.TEXT_PRIMARY,
