@@ -11,7 +11,7 @@ class AIHubView(ft.Column):
 
     def __init__(self, page: ft.Page = None):
         super().__init__()
-        self.page = page
+        self._page = page
         self.expand = True
         self.hub = get_hub()
         self.download_cards: dict[str, ft.Container] = {}
@@ -19,27 +19,22 @@ class AIHubView(ft.Column):
         self.recommended_list = None
 
     def build(self):
+        # Create tabs
+        setup_tab = ft.Tab(label="Setup", icon=ft.Icons.ROCKET_LAUNCH)
+        setup_tab.content = self._build_wizard_tab()
+
+        providers_tab = ft.Tab(label="My Providers", icon=ft.Icons.CLOUD)
+        providers_tab.content = self._build_providers_tab()
+
+        library_tab = ft.Tab(label="Model Library", icon=ft.Icons.INVENTORY)
+        library_tab.content = self._build_model_library_tab()
+
         return ft.Column(
             controls=[
                 self._build_header(),
                 ft.Tabs(
-                    tabs=[
-                        ft.Tab(
-                            text="My Models",
-                            icon=ft.Icons.FOLDER,
-                            content=self._build_installed_tab(),
-                        ),
-                        ft.Tab(
-                            text="Download",
-                            icon=ft.Icons.DOWNLOAD,
-                            content=self._build_download_tab(),
-                        ),
-                        ft.Tab(
-                            text="Providers",
-                            icon=ft.Icons.CLOUD,
-                            content=self._build_providers_tab(),
-                        ),
-                    ],
+                    length=3,
+                    content=[setup_tab, providers_tab, library_tab],
                     expand=True,
                 ),
             ],
@@ -67,6 +62,49 @@ class AIHubView(ft.Column):
                     ),
                 ],
             ),
+        )
+
+    def _build_wizard_tab(self):
+        """Setup wizard tab - placeholder for AI setup wizard."""
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Icon(ft.Icons.ROCKET_LAUNCH, size=64, color=Theme.PRIMARY),
+                    ft.Text(
+                        "AI Setup Wizard",
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        "Coming soon: Step-by-step AI provider setup",
+                        size=14,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=Theme.SPACING_MD,
+            ),
+            padding=Theme.SPACING_XL,
+            expand=True,
+        )
+
+    def _build_model_library_tab(self):
+        """Model Library tab containing My Models and Download as subtabs."""
+        # Create subtabs for My Models and Download
+        my_models_tab = ft.Tab(label="My Models", icon=ft.Icons.FOLDER)
+        my_models_tab.content = self._build_installed_tab()
+
+        download_tab = ft.Tab(label="Download", icon=ft.Icons.DOWNLOAD)
+        download_tab.content = self._build_download_tab()
+
+        return ft.Container(
+            content=ft.Tabs(
+                length=2,
+                content=[my_models_tab, download_tab],
+                expand=True,
+            ),
+            expand=True,
         )
 
     def _build_installed_tab(self):
@@ -354,6 +392,7 @@ class AIHubView(ft.Column):
         )
 
     def _build_providers_tab(self):
+        """My Providers management tab."""
         providers = [
             {"name": "OpenAI", "icon": ft.Icons.CLOUD, "color": "#10a37f", "status": "Not configured", "configured": False},
             {"name": "Anthropic", "icon": ft.Icons.CLOUD, "color": "#d4a574", "status": "Not configured", "configured": False},
@@ -420,15 +459,15 @@ class AIHubView(ft.Column):
     def _refresh_models(self, e):
         """Refresh the model list."""
         self.hub.scan_local_models()
-        if self.page:
-            self.page.update()
+        if self._page:
+            self._page.update()
 
     def _start_download(self, model: ModelInfo):
         """Start downloading a model."""
         async def do_download():
             def on_progress(progress: DownloadProgress):
                 # Update UI
-                if model.id in self.download_cards and self.page:
+                if model.id in self.download_cards and self._page:
                     # Rebuild the card with new progress
                     new_card = self._build_recommended_model_card(model)
                     # Find and replace
@@ -438,7 +477,7 @@ class AIHubView(ft.Column):
                                 self.recommended_list.controls[i] = new_card
                                 self.download_cards[model.id] = new_card
                                 break
-                    self.page.update()
+                    self._page.update()
 
             try:
                 await self.hub.download_model(model, on_progress)
@@ -447,7 +486,7 @@ class AIHubView(ft.Column):
             except Exception as ex:
                 print(f"Download failed: {ex}")
 
-        if self.page:
+        if self._page:
             asyncio.create_task(do_download())
 
     def _delete_model(self, model: ModelInfo):
