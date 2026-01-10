@@ -2,11 +2,14 @@
 Pydantic models for AI data structures.
 """
 
-from pydantic import BaseModel, Field
-from datetime import datetime
+# Standard library
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 from uuid import uuid4
+
+# Third-party
+from pydantic import BaseModel, Field
 
 
 class ProviderConfig(BaseModel):
@@ -17,8 +20,8 @@ class ProviderConfig(BaseModel):
     enabled: bool = True
     priority: int = 0
     config: dict
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class UsageRecord(BaseModel):
@@ -29,12 +32,12 @@ class UsageRecord(BaseModel):
     node_id: Optional[str] = None
     provider: str
     model: str
-    prompt_tokens: int
-    completion_tokens: int
-    total_tokens: int
-    cost_usd: float
-    latency_ms: int
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    prompt_tokens: int = Field(ge=0)
+    completion_tokens: int = Field(ge=0)
+    total_tokens: int = Field(ge=0)
+    cost_usd: float = Field(ge=0.0)
+    latency_ms: int = Field(ge=0)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     success: bool = True
     error_message: Optional[str] = None
 
@@ -59,9 +62,9 @@ class BudgetSettings(BaseModel):
 
     id: str = 'default'
     monthly_limit_usd: Optional[float] = None
-    alert_threshold: float = 0.8
+    alert_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
     email_notifications: bool = False
     notification_email: Optional[str] = None
-    reset_day: int = 1
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    reset_day: int = Field(default=1, ge=1, le=31)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

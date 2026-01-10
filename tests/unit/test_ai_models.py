@@ -1,9 +1,10 @@
 """Tests for AI Pydantic models."""
 
-import pytest
-from datetime import datetime
+# Standard library
+from datetime import datetime, timezone
 from pathlib import Path
 
+# Third-party
 from src.ai.models.data import ProviderConfig, UsageRecord, LocalModel, BudgetSettings
 
 
@@ -104,7 +105,7 @@ class TestLocalModel:
             size_bytes=4100000000,
             quantization="Q4_K_M",
             source="recommended",
-            downloaded_at=datetime.utcnow()
+            downloaded_at=datetime.now(timezone.utc)
         )
 
         assert model.name == "Mistral 7B Instruct"
@@ -120,7 +121,7 @@ class TestLocalModel:
             quantization="Q4_K_M",
             source="huggingface",
             huggingface_repo="TheBloke/Mistral-7B-GGUF",
-            downloaded_at=datetime.utcnow()
+            downloaded_at=datetime.now(timezone.utc)
         )
 
         assert model.source == "huggingface"
