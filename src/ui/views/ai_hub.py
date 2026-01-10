@@ -11,7 +11,7 @@ class AIHubView(ft.Column):
 
     def __init__(self, page: ft.Page = None):
         super().__init__()
-        self.page = page
+        self._page = page
         self.expand = True
         self.hub = get_hub()
         self.download_cards: dict[str, ft.Container] = {}
@@ -354,61 +354,97 @@ class AIHubView(ft.Column):
         )
 
     def _build_providers_tab(self):
-        providers = [
-            {"name": "OpenAI", "icon": ft.Icons.CLOUD, "color": "#10a37f", "status": "Not configured", "configured": False},
-            {"name": "Anthropic", "icon": ft.Icons.CLOUD, "color": "#d4a574", "status": "Not configured", "configured": False},
-            {"name": "Google AI", "icon": ft.Icons.CLOUD, "color": "#4285f4", "status": "Not configured", "configured": False},
-            {"name": "Groq", "icon": ft.Icons.BOLT, "color": "#f55036", "status": "Free tier available", "configured": False},
-            {"name": "Local (llama.cpp)", "icon": ft.Icons.COMPUTER, "color": Theme.SUCCESS, "status": "Ready (Demo mode)", "configured": True},
+        """Build My Providers management tab."""
+        from src.ai.security import has_api_key
+        from src.data.storage import get_storage
+
+        storage = get_storage()
+
+        # Check which providers are configured
+        providers_data = [
+            {
+                "id": "openai",
+                "name": "OpenAI",
+                "icon": ft.Icons.CLOUD,
+                "color": "#10a37f",
+                "requires_key": True,
+            },
+            {
+                "id": "anthropic",
+                "name": "Anthropic",
+                "icon": ft.Icons.CLOUD,
+                "color": "#d4a574",
+                "requires_key": True,
+            },
+            {
+                "id": "local",
+                "name": "Local (llama.cpp)",
+                "icon": ft.Icons.COMPUTER,
+                "color": Theme.SUCCESS,
+                "requires_key": False,
+            },
         ]
+
+        provider_cards = []
+        for p in providers_data:
+            # Check if configured
+            if p["requires_key"]:
+                configured = has_api_key(p["id"])
+                status = "Configured ✓" if configured else "Not configured"
+                status_color = Theme.SUCCESS if configured else Theme.TEXT_SECONDARY
+                button_text = "Edit" if configured else "Configure"
+                button_color = Theme.SURFACE if configured else Theme.PRIMARY
+            else:
+                configured = True
+                status = "Ready (no key required)"
+                status_color = Theme.SUCCESS
+                button_text = "Settings"
+                button_color = Theme.SURFACE
+
+            provider_cards.append(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(p["icon"], size=24, color=p["color"]),
+                            ft.Column(
+                                controls=[
+                                    ft.Text(p["name"], size=14, weight=ft.FontWeight.W_500),
+                                    ft.Text(status, size=12, color=status_color),
+                                ],
+                                spacing=2,
+                                expand=True,
+                            ),
+                            ft.ElevatedButton(
+                                button_text,
+                                bgcolor=button_color,
+                                on_click=lambda e, provider=p: self._open_provider_config_dialog(provider),
+                            ),
+                        ],
+                        spacing=Theme.SPACING_MD,
+                    ),
+                    bgcolor=Theme.SURFACE,
+                    padding=Theme.SPACING_MD,
+                    border_radius=Theme.RADIUS_MD,
+                    border=ft.border.all(1, Theme.BORDER),
+                )
+            )
 
         return ft.Container(
             content=ft.Column(
                 controls=[
                     ft.Text(
-                        "AI Providers",
+                        "My AI Providers",
                         size=16,
                         weight=ft.FontWeight.W_600,
                         color=Theme.TEXT_PRIMARY,
                     ),
                     ft.Text(
-                        "Configure API keys to use cloud AI services",
+                        "Manage API keys and provider settings",
                         size=12,
                         color=Theme.TEXT_SECONDARY,
                     ),
                     ft.Container(height=Theme.SPACING_MD),
-                    *[
-                        ft.Container(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Icon(p["icon"], size=24, color=p["color"]),
-                                    ft.Column(
-                                        controls=[
-                                            ft.Text(p["name"], size=14, weight=ft.FontWeight.W_500),
-                                            ft.Text(
-                                                p["status"],
-                                                size=12,
-                                                color=Theme.SUCCESS if p["configured"] else Theme.TEXT_SECONDARY,
-                                            ),
-                                        ],
-                                        spacing=2,
-                                        expand=True,
-                                    ),
-                                    ft.ElevatedButton(
-                                        "Configure" if not p["configured"] else "Edit",
-                                        bgcolor=Theme.SURFACE if p["configured"] else Theme.PRIMARY,
-                                        on_click=lambda e, provider=p: self._configure_provider(provider),
-                                    ),
-                                ],
-                                spacing=Theme.SPACING_MD,
-                            ),
-                            bgcolor=Theme.SURFACE,
-                            padding=Theme.SPACING_MD,
-                            border_radius=Theme.RADIUS_MD,
-                            border=ft.border.all(1, Theme.BORDER),
-                        )
-                        for p in providers
-                    ],
+                    *provider_cards,
                 ],
                 scroll=ft.ScrollMode.AUTO,
                 spacing=Theme.SPACING_SM,
@@ -420,15 +456,15 @@ class AIHubView(ft.Column):
     def _refresh_models(self, e):
         """Refresh the model list."""
         self.hub.scan_local_models()
-        if self.page:
-            self.page.update()
+        if self._page:
+            self._page.update()
 
     def _start_download(self, model: ModelInfo):
         """Start downloading a model."""
         async def do_download():
             def on_progress(progress: DownloadProgress):
                 # Update UI
-                if model.id in self.download_cards and self.page:
+                if model.id in self.download_cards and self._page:
                     # Rebuild the card with new progress
                     new_card = self._build_recommended_model_card(model)
                     # Find and replace
@@ -438,7 +474,7 @@ class AIHubView(ft.Column):
                                 self.recommended_list.controls[i] = new_card
                                 self.download_cards[model.id] = new_card
                                 break
-                    self.page.update()
+                    self._page.update()
 
             try:
                 await self.hub.download_model(model, on_progress)
@@ -447,7 +483,7 @@ class AIHubView(ft.Column):
             except Exception as ex:
                 print(f"Download failed: {ex}")
 
-        if self.page:
+        if self._page:
             asyncio.create_task(do_download())
 
     def _delete_model(self, model: ModelInfo):
@@ -460,7 +496,7 @@ class AIHubView(ft.Column):
         # TODO: Implement default model setting
         print(f"Setting default: {model.name}")
 
-    def _configure_provider(self, provider: dict):
-        """Open provider configuration."""
-        # TODO: Implement provider configuration dialog
-        print(f"Configuring: {provider['name']}")
+    def _open_provider_config_dialog(self, provider: dict):
+        """Open provider configuration dialog."""
+        # TODO: Implement modal dialog
+        print(f"Opening config for: {provider['name']}")
