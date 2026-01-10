@@ -76,3 +76,6 @@ installer/
 
 # Auto Claude data directory
 .auto-claude/
+
+# Git worktrees for isolated development
+.worktrees/
