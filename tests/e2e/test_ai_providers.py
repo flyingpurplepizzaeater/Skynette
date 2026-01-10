@@ -2,23 +2,7 @@
 
 import flet as ft
 from src.ui.views.ai_hub import AIHubView
-
-
-def extract_text_from_control(control):
-    """Recursively extract all text values from a Flet control."""
-    texts = []
-
-    if hasattr(control, 'value') and isinstance(control.value, str):
-        texts.append(control.value)
-
-    if hasattr(control, 'controls'):
-        for child in control.controls:
-            texts.extend(extract_text_from_control(child))
-
-    if hasattr(control, 'content') and control.content:
-        texts.extend(extract_text_from_control(control.content))
-
-    return texts
+from tests.helpers import extract_text_from_control
 
 
 def test_providers_show_configured_status(page: ft.Page):
@@ -28,7 +12,7 @@ def test_providers_show_configured_status(page: ft.Page):
     # Clean up first in case previous test failed
     try:
         delete_api_key("openai")
-    except:
+    except Exception:
         pass
 
     # Set up - store API key for OpenAI
@@ -39,8 +23,7 @@ def test_providers_show_configured_status(page: ft.Page):
         providers_tab = ai_hub._build_providers_tab()
 
         # Extract all text from the providers tab
-        all_texts = extract_text_from_control(providers_tab)
-        all_text = " ".join(all_texts)
+        all_text = extract_text_from_control(providers_tab)
 
         # Find OpenAI provider card
         # Should show "Configured" status
@@ -49,5 +32,5 @@ def test_providers_show_configured_status(page: ft.Page):
         # Clean up - remove test API key
         try:
             delete_api_key("openai")
-        except:
+        except Exception:
             pass

@@ -356,9 +356,6 @@ class AIHubView(ft.Column):
     def _build_providers_tab(self):
         """Build My Providers management tab."""
         from src.ai.security import has_api_key
-        from src.data.storage import get_storage
-
-        storage = get_storage()
 
         # Check which providers are configured
         providers_data = [
@@ -389,7 +386,13 @@ class AIHubView(ft.Column):
         for p in providers_data:
             # Check if configured
             if p["requires_key"]:
-                configured = has_api_key(p["id"])
+                try:
+                    configured = has_api_key(p["id"])
+                except Exception as e:
+                    # If keyring fails, assume not configured and log error
+                    print(f"Warning: Failed to check API key for {p['id']}: {e}")
+                    configured = False
+
                 status = "Configured ✓" if configured else "Not configured"
                 status_color = Theme.SUCCESS if configured else Theme.TEXT_SECONDARY
                 button_text = "Edit" if configured else "Configure"
