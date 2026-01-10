@@ -1318,6 +1318,33 @@ class SkynetteApp:
         dialog.open = True
         self.page.update()
 
+    def _show_confirm_dialog(self, title: str, message: str, on_confirm, confirm_text: str = "Confirm", is_destructive: bool = False):
+        """Show a confirmation dialog."""
+        def handle_confirm(e):
+            self.page.close(dialog)
+            on_confirm()
+
+        def handle_cancel(e):
+            self.page.close(dialog)
+
+        dialog = ft.AlertDialog(
+            title=ft.Text(title, color=SkynetteTheme.ERROR if is_destructive else SkynetteTheme.TEXT_PRIMARY),
+            content=ft.Text(message, size=14),
+            actions=[
+                ft.TextButton("Cancel", on_click=handle_cancel),
+                ft.ElevatedButton(
+                    confirm_text,
+                    on_click=handle_confirm,
+                    bgcolor=SkynetteTheme.ERROR if is_destructive else SkynetteTheme.PRIMARY,
+                    color=SkynetteTheme.TEXT_PRIMARY,
+                ),
+            ],
+        )
+
+        self.page.overlay.append(dialog)
+        dialog.open = True
+        self.page.update()
+
     def _create_new_workflow(self, e=None):
         """Create a new workflow."""
         # Create dialog for workflow name
@@ -2273,56 +2300,45 @@ class SkynetteApp:
             self.storage.save_workflow(new_workflow)
             self._navigate_to("workflows")
 
+    def _update_workflows_list(self):
+        """Refresh the workflows list view."""
+        if self.current_view == "workflows":
+            self._navigate_to("workflows")
+
     def _delete_workflow(self, workflow_id: str, workflow_name: str = None):
         """Delete a workflow with confirmation."""
         # Get workflow name if not provided
         if not workflow_name:
-            workflow = self.storage.load_workflow(workflow_id)
-            workflow_name = workflow.name if workflow else "Unknown"
+            try:
+                workflow = self.storage.load_workflow(workflow_id)
+                workflow_name = workflow.name if workflow else "Unknown Workflow"
+            except:
+                workflow_name = "Unknown Workflow"
 
-        def confirm_delete(e):
+        def do_delete():
             try:
                 self.storage.delete_workflow(workflow_id)
-                dialog.open = False
-                self.page.update()
-                self._navigate_to("workflows")
+                self._update_workflows_list()
                 self.page.snack_bar = ft.SnackBar(
                     content=ft.Text(f"Workflow '{workflow_name}' deleted"),
                     bgcolor=SkynetteTheme.SUCCESS,
                 )
                 self.page.snack_bar.open = True
                 self.page.update()
-            except Exception as ex:
-                dialog.open = False
-                self.page.update()
+            except Exception as e:
                 self._show_error_dialog(
                     "Delete Failed",
                     f"Could not delete workflow '{workflow_name}'.",
-                    f"Error: {str(ex)}\n\nWorkflow may be in use or database may be locked."
+                    f"Error: {str(e)}\n\nWorkflow may be in use or database may be locked."
                 )
 
-        def cancel(e):
-            dialog.open = False
-            self.page.update()
-
-        dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Delete Workflow?"),
-            content=ft.Text("This action cannot be undone."),
-            actions=[
-                ft.TextButton("Cancel", on_click=cancel),
-                ft.ElevatedButton(
-                    "Delete",
-                    bgcolor=SkynetteTheme.ERROR,
-                    color=SkynetteTheme.TEXT_PRIMARY,
-                    on_click=confirm_delete,
-                ),
-            ],
-            actions_alignment=ft.MainAxisAlignment.End,
+        self._show_confirm_dialog(
+            "Delete Workflow?",
+            f"Are you sure you want to delete '{workflow_name}'? This action cannot be undone.",
+            on_confirm=do_delete,
+            confirm_text="Delete",
+            is_destructive=True,
         )
-        self.page.overlay.append(dialog)
-        dialog.open = True
-        self.page.update()
 
     def _use_example_prompt(self, text: str):
         """Use an example prompt in the assistant."""
