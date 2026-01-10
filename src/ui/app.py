@@ -19,6 +19,11 @@ from src.ui.views.agents import AgentsView
 from src.ui.views.devtools import DevToolsView
 
 
+class WorkflowExecutionError(Exception):
+    """Exception raised when workflow execution fails."""
+    pass
+
+
 class SkynetteApp:
     """Main application class for Skynette."""
 
@@ -1290,6 +1295,38 @@ class SkynetteApp:
         self.loading_overlay.visible = False
         self.page.update()
 
+    def _show_error_dialog(self, title: str, message: str, details: str = None):
+        """Show a detailed error dialog with actionable guidance."""
+        controls = [
+            ft.Text(message, size=14, color=SkynetteTheme.TEXT_PRIMARY),
+        ]
+
+        if details:
+            controls.extend([
+                ft.Container(height=12),
+                ft.Container(
+                    content=ft.Column([
+                        ft.Text("Details:", size=12, weight=ft.FontWeight.W_600),
+                        ft.Text(details, size=11, color=SkynetteTheme.TEXT_SECONDARY),
+                    ]),
+                    padding=12,
+                    bgcolor=SkynetteTheme.BG_TERTIARY,
+                    border_radius=SkynetteTheme.RADIUS_MD,
+                ),
+            ])
+
+        dialog = ft.AlertDialog(
+            title=ft.Text(title, color=SkynetteTheme.ERROR),
+            content=ft.Column(controls, tight=True, spacing=8),
+            actions=[
+                ft.TextButton("Close", on_click=lambda e: self.page.close(dialog)),
+            ],
+        )
+
+        self.page.overlay.append(dialog)
+        dialog.open = True
+        self.page.update()
+
     def _create_new_workflow(self, e=None):
         """Create a new workflow."""
         # Create dialog for workflow name
@@ -2119,13 +2156,20 @@ class SkynetteApp:
     def _save_current_workflow(self):
         """Save the current workflow."""
         if self.current_workflow:
-            self.storage.save_workflow(self.current_workflow)
-            self.page.snack_bar = ft.SnackBar(
-                content=ft.Text(f"Workflow '{self.current_workflow.name}' saved"),
-                bgcolor=SkynetteTheme.SUCCESS,
-            )
-            self.page.snack_bar.open = True
-            self.page.update()
+            try:
+                self.storage.save_workflow(self.current_workflow)
+                self.page.snack_bar = ft.SnackBar(
+                    content=ft.Text(f"Workflow '{self.current_workflow.name}' saved"),
+                    bgcolor=SkynetteTheme.SUCCESS,
+                )
+                self.page.snack_bar.open = True
+                self.page.update()
+            except Exception as e:
+                self._show_error_dialog(
+                    "Save Failed",
+                    f"Could not save workflow '{self.current_workflow.name}'.",
+                    f"Error: {str(e)}\n\nCheck file permissions and disk space."
+                )
 
     def _run_current_workflow(self):
         """Run the current workflow."""
@@ -2158,13 +2202,18 @@ class SkynetteApp:
 
                 self.page.snack_bar.open = True
                 self.page.update()
-            except Exception as e:
-                self.page.snack_bar = ft.SnackBar(
-                    content=ft.Text(f"Error executing workflow: {str(e)}"),
-                    bgcolor=SkynetteTheme.ERROR,
+            except WorkflowExecutionError as e:
+                self._show_error_dialog(
+                    "Workflow Execution Failed",
+                    f"The workflow '{self.current_workflow.name}' failed during execution.",
+                    f"Error: {str(e)}\n\nCheck node configurations and connections."
                 )
-                self.page.snack_bar.open = True
-                self.page.update()
+            except Exception as e:
+                self._show_error_dialog(
+                    "Unexpected Error",
+                    "An unexpected error occurred during workflow execution.",
+                    f"Error: {str(e)}\n\nPlease check logs for more details."
+                )
             finally:
                 self._hide_loading()
 
@@ -2198,13 +2247,33 @@ class SkynetteApp:
             self.storage.save_workflow(new_workflow)
             self._navigate_to("workflows")
 
-    def _delete_workflow(self, workflow_id: str):
+    def _delete_workflow(self, workflow_id: str, workflow_name: str = None):
         """Delete a workflow with confirmation."""
+        # Get workflow name if not provided
+        if not workflow_name:
+            workflow = self.storage.load_workflow(workflow_id)
+            workflow_name = workflow.name if workflow else "Unknown"
+
         def confirm_delete(e):
-            self.storage.delete_workflow(workflow_id)
-            dialog.open = False
-            self.page.update()
-            self._navigate_to("workflows")
+            try:
+                self.storage.delete_workflow(workflow_id)
+                dialog.open = False
+                self.page.update()
+                self._navigate_to("workflows")
+                self.page.snack_bar = ft.SnackBar(
+                    content=ft.Text(f"Workflow '{workflow_name}' deleted"),
+                    bgcolor=SkynetteTheme.SUCCESS,
+                )
+                self.page.snack_bar.open = True
+                self.page.update()
+            except Exception as ex:
+                dialog.open = False
+                self.page.update()
+                self._show_error_dialog(
+                    "Delete Failed",
+                    f"Could not delete workflow '{workflow_name}'.",
+                    f"Error: {str(ex)}\n\nWorkflow may be in use or database may be locked."
+                )
 
         def cancel(e):
             dialog.open = False
@@ -2223,7 +2292,7 @@ class SkynetteApp:
                     on_click=confirm_delete,
                 ),
             ],
-            actions_alignment=ft.MainAxisAlignment.END,
+            actions_alignment=ft.MainAxisAlignment.End,
         )
         self.page.overlay.append(dialog)
         dialog.open = True
