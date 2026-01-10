@@ -8,7 +8,7 @@ import flet as ft
 import asyncio
 from src.ui.theme import SkynetteTheme
 from src.updater import Updater, UpdateInfo
-from src.data.storage import get_storage
+from src.data.storage import WorkflowStorage
 from src.core.workflow.models import Workflow, WorkflowNode
 from src.core.workflow.executor import WorkflowExecutor
 from src.core.nodes.registry import NodeRegistry
@@ -34,7 +34,7 @@ class SkynetteApp:
         self.view_title_text = None  # Reference to title text for updates
 
         # Core services
-        self.storage = get_storage()
+        self.storage = WorkflowStorage()
         self.node_registry = NodeRegistry()
         self.executor = WorkflowExecutor()
 
