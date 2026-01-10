@@ -262,6 +262,59 @@ class SkynetteApp:
             padding=ft.padding.symmetric(horizontal=4, vertical=8),
         )
 
+    def _build_provider_status_bar(self) -> ft.Container:
+        """Build provider status indicator for top bar."""
+        from src.ai.security import has_api_key
+
+        # Count configured cloud providers
+        providers = ["openai", "anthropic"]
+        configured_count = sum(1 for p in providers if has_api_key(p))
+
+        # Always count local as available
+        total_available = configured_count + 1  # +1 for local
+
+        # Determine color and icon based on status
+        if configured_count > 0:
+            # Multiple providers (cloud + local)
+            color = SkynetteTheme.SUCCESS  # Green
+            icon = ft.Icons.CLOUD_DONE
+            status_text = f"{total_available} AI Providers"
+        elif configured_count == 0:
+            # Local only
+            color = SkynetteTheme.WARNING  # Yellow
+            icon = ft.Icons.COMPUTER
+            status_text = "Local AI Only"
+        else:
+            # None configured (shouldn't happen since we always have local)
+            color = SkynetteTheme.TEXT_SECONDARY  # Gray
+            icon = ft.Icons.CLOUD_OFF
+            status_text = "No AI Providers"
+
+        # Create clickable status bar
+        status_bar = ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(icon, color=color, size=16),
+                    ft.Text(
+                        status_text,
+                        size=12,
+                        color=color,
+                        weight=ft.FontWeight.W_500,
+                    ),
+                ],
+                spacing=4,
+                tight=True,
+            ),
+            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+            border_radius=6,
+            bgcolor=f"{color}22",  # 22 = 13% opacity
+            tooltip=f"{configured_count} cloud provider(s) + 1 local provider configured",
+            on_click=lambda e: self._show_ai_hub(),
+            ink=True,
+        )
+
+        return status_bar
+
     def _build_top_bar(self) -> ft.Container:
         """Build the top bar with title and actions."""
         # Create title text with reference for dynamic updates
@@ -277,6 +330,8 @@ class SkynetteApp:
                     # View Title
                     self.view_title_text,
                     ft.Container(expand=True),
+                    # Provider Status Bar
+                    self._build_provider_status_bar(),
                     # Action Buttons
                     ft.IconButton(
                         icon=ft.Icons.CHAT_ROUNDED,
@@ -639,6 +694,10 @@ class SkynetteApp:
             self.view_title_text.value = self._get_view_title()
         self._update_content()
         self.page.update()
+
+    def _show_ai_hub(self):
+        """Navigate to AI Hub view."""
+        self._navigate_to("ai_hub")
 
     def _build_workflows_view(self) -> ft.Control:
         """Build the workflows list view."""
