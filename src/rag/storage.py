@@ -205,16 +205,21 @@ class RAGStorage:
         ]
 
     def save_document(self, document: Document) -> None:
-        """Save or update document."""
+        """Save or update document using UPSERT to avoid cascade deletes."""
         try:
             conn = self._get_connection()
             cursor = conn.cursor()
 
             cursor.execute("""
-                INSERT OR REPLACE INTO rag_documents
+                INSERT INTO rag_documents
                 (id, collection_id, source_path, file_type, file_hash, file_size,
                  chunk_count, indexed_at, last_updated, status, error)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    status = excluded.status,
+                    error = excluded.error,
+                    chunk_count = excluded.chunk_count,
+                    last_updated = excluded.last_updated
             """, (
                 document.id,
                 document.collection_id,

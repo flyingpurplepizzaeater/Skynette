@@ -245,29 +245,27 @@ class RAGService:
 
     async def get_collection_stats(self, collection_id: str) -> Dict[str, Any]:
         """Get statistics for a collection."""
-        # Get documents count
-        with self.storage as storage:
-            # Count documents
-            documents = storage.get_collection_documents(collection_id)
-            document_count = len(documents)
+        # Get documents (don't use context manager - it closes shared connection)
+        documents = self.storage.get_collection_documents(collection_id)
+        document_count = len(documents)
 
-            # Count chunks
-            chunk_count = 0
-            storage_size_bytes = 0
-            last_updated = None
+        # Count chunks
+        chunk_count = 0
+        storage_size_bytes = 0
+        last_updated = None
 
-            for doc in documents:
-                chunks = storage.get_document_chunks(doc.id)
-                chunk_count += len(chunks)
+        for doc in documents:
+            chunks = self.storage.get_document_chunks(doc.id)
+            chunk_count += len(chunks)
 
-                # Estimate storage (chunk content length)
-                for chunk in chunks:
-                    storage_size_bytes += len(chunk.content.encode('utf-8'))
+            # Estimate storage (chunk content length)
+            for chunk in chunks:
+                storage_size_bytes += len(chunk.content.encode('utf-8'))
 
-                # Track latest update
-                if doc.last_updated:
-                    if not last_updated or doc.last_updated > last_updated:
-                        last_updated = doc.last_updated
+            # Track latest update
+            if doc.last_updated:
+                if not last_updated or doc.last_updated > last_updated:
+                    last_updated = doc.last_updated
 
         return {
             "document_count": document_count,
