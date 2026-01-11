@@ -2,6 +2,7 @@
 
 import flet as ft
 from typing import List, Optional
+from datetime import datetime, timezone
 from src.ui.theme import Theme
 from src.ui.models.knowledge_bases import CollectionCardData
 from src.ui.components.collection_card import CollectionCard
@@ -147,9 +148,31 @@ class KnowledgeBasesView(ft.Column):
         await self._load_collections()
 
     async def _load_collections(self):
-        """Load collections from backend."""
+        """Load collections from backend with stats."""
         collections = await self.rag_service.list_collections()
-        # TODO: Convert to CollectionCardData in next step
-        # For now, just refresh
+
+        # Convert to CollectionCardData with stats
+        self.collections = []
+        for collection in collections:
+            # Get stats for this collection
+            stats = await self.rag_service.get_collection_stats(collection.id)
+
+            card_data = CollectionCardData(
+                id=collection.id,
+                name=collection.name,
+                description=collection.description or "",
+                document_count=stats.get("document_count", 0),
+                chunk_count=stats.get("chunk_count", 0),
+                last_updated=stats.get("last_updated", datetime.now(timezone.utc)),
+                storage_size_bytes=stats.get("storage_size_bytes", 0),
+                embedding_model=collection.embedding_model,
+            )
+            self.collections.append(card_data)
+
+        # Rebuild UI
         if self._page:
+            self.controls = [
+                self._build_header(),
+                self._build_collections_grid(),
+            ]
             self._page.update()

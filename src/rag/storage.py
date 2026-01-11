@@ -173,6 +173,37 @@ class RAGStorage:
 
     # Document methods
 
+    def get_collection_documents(self, collection_id: str) -> List[Document]:
+        """Get all documents in a collection."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, collection_id, source_path, file_type, file_hash, file_size,
+                   chunk_count, indexed_at, last_updated, status, error
+            FROM rag_documents
+            WHERE collection_id = ?
+        """, (collection_id,))
+
+        rows = cursor.fetchall()
+
+        return [
+            Document(
+                id=row[0],
+                collection_id=row[1],
+                source_path=row[2],
+                file_type=row[3],
+                file_hash=row[4],
+                file_size=row[5],
+                chunk_count=row[6],
+                indexed_at=datetime.fromisoformat(row[7]) if row[7] else None,
+                last_updated=datetime.fromisoformat(row[8]) if row[8] else None,
+                status=row[9],
+                error=row[10],
+            )
+            for row in rows
+        ]
+
     def save_document(self, document: Document) -> None:
         """Save or update document."""
         try:

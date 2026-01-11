@@ -1,6 +1,8 @@
 import pytest
+from unittest.mock import AsyncMock, patch
 import flet as ft
 from src.ui.views.knowledge_bases import KnowledgeBasesView
+from src.rag.models import Collection
 
 
 class TestKnowledgeBasesView:
@@ -55,3 +57,41 @@ class TestKnowledgeBasesView:
         inner_column = empty_state.content
         has_button = any(isinstance(c, ft.Button) for c in inner_column.controls)
         assert has_button
+
+
+class TestKnowledgeBasesViewLoading:
+    @pytest.mark.asyncio
+    async def test_load_collections(self):
+        """_load_collections should fetch and convert collections."""
+        from unittest.mock import MagicMock
+
+        # Create mock RAGService
+        mock_service = MagicMock()
+        view = KnowledgeBasesView(rag_service=mock_service)
+
+        # Mock RAGService methods
+        with patch.object(mock_service, 'list_collections', new_callable=AsyncMock) as mock_list:
+            mock_list.return_value = [
+                Collection(
+                    id="coll-1",
+                    name="Test1",
+                    description="",
+                    embedding_model="local",
+                    chunk_size=1024,
+                    chunk_overlap=128,
+                    max_chunk_size=2048,
+                ),
+            ]
+
+            with patch.object(mock_service, 'get_collection_stats', new_callable=AsyncMock) as mock_stats:
+                mock_stats.return_value = {
+                    "document_count": 10,
+                    "chunk_count": 50,
+                    "storage_size_bytes": 1024 * 1024,
+                }
+
+                await view._load_collections()
+
+                assert len(view.collections) == 1
+                assert view.collections[0].name == "Test1"
+                assert view.collections[0].document_count == 10

@@ -244,29 +244,36 @@ class RAGService:
                 cursor.connection.commit()
 
     async def get_collection_stats(self, collection_id: str) -> Dict[str, Any]:
-        """Get collection statistics."""
-        # Get documents
-        import sqlite3
-        with sqlite3.connect(str(self.storage.db_path)) as conn:
-            cursor = conn.cursor()
-
+        """Get statistics for a collection."""
+        # Get documents count
+        with self.storage as storage:
             # Count documents
-            cursor.execute(
-                "SELECT COUNT(*) FROM rag_documents WHERE collection_id = ?",
-                (collection_id,)
-            )
-            doc_count = cursor.fetchone()[0]
+            documents = storage.get_collection_documents(collection_id)
+            document_count = len(documents)
 
             # Count chunks
-            cursor.execute(
-                "SELECT SUM(chunk_count) FROM rag_documents WHERE collection_id = ?",
-                (collection_id,)
-            )
-            chunk_count = cursor.fetchone()[0] or 0
+            chunk_count = 0
+            storage_size_bytes = 0
+            last_updated = None
+
+            for doc in documents:
+                chunks = storage.get_document_chunks(doc.id)
+                chunk_count += len(chunks)
+
+                # Estimate storage (chunk content length)
+                for chunk in chunks:
+                    storage_size_bytes += len(chunk.content.encode('utf-8'))
+
+                # Track latest update
+                if doc.last_updated:
+                    if not last_updated or doc.last_updated > last_updated:
+                        last_updated = doc.last_updated
 
         return {
-            "document_count": doc_count,
-            "chunk_count": chunk_count
+            "document_count": document_count,
+            "chunk_count": chunk_count,
+            "storage_size_bytes": storage_size_bytes,
+            "last_updated": last_updated or datetime.now(timezone.utc),
         }
 
     def _compute_file_hash(self, file_path: str) -> str:
