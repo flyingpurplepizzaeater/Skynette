@@ -5,9 +5,9 @@ Pydantic models for RAG collections, documents, and chunks.
 """
 
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Literal
 from uuid import uuid4
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Collection(BaseModel):
@@ -16,7 +16,7 @@ class Collection(BaseModel):
     id: str = Field(default_factory=lambda: f"coll-{uuid4().hex[:12]}")
     name: str = Field(..., min_length=1, max_length=100)
     description: str = ""
-    embedding_model: str = "local"  # "local", "openai", "cohere"
+    embedding_model: Literal["local", "openai", "cohere"] = "local"
     chunk_size: int = 1024  # Target tokens per chunk
     chunk_overlap: int = 128  # Overlap tokens
     max_chunk_size: int = 2048  # Maximum tokens
@@ -37,20 +37,28 @@ class Collection(BaseModel):
             raise ValueError("chunk_overlap must be non-negative")
         return v
 
+    @model_validator(mode='after')
+    def validate_chunk_sizes(self):
+        if self.chunk_overlap >= self.chunk_size:
+            raise ValueError("chunk_overlap must be less than chunk_size")
+        if self.max_chunk_size < self.chunk_size:
+            raise ValueError("max_chunk_size must be >= chunk_size")
+        return self
+
 
 class Document(BaseModel):
     """Document metadata for RAG indexing."""
 
     id: str = Field(default_factory=lambda: f"doc-{uuid4().hex[:12]}")
     collection_id: str
-    source_path: str
-    file_type: str  # "markdown", "text", "python", etc.
-    file_hash: str  # SHA256 for change detection
+    source_path: str = Field(..., min_length=1)
+    file_type: str = Field(..., min_length=1)
+    file_hash: str = Field(..., min_length=1)
     file_size: int = 0
     chunk_count: int = 0
     indexed_at: Optional[datetime] = None
     last_updated: Optional[datetime] = None
-    status: str = "queued"  # "queued", "processing", "indexed", "failed"
+    status: Literal["queued", "processing", "indexed", "failed"] = "queued"
     error: Optional[str] = None
 
 
@@ -59,7 +67,7 @@ class Chunk(BaseModel):
 
     id: str = Field(default_factory=lambda: f"chunk-{uuid4().hex[:12]}")
     document_id: str
-    chunk_index: int
+    chunk_index: int = Field(..., ge=0)
     content: str
     embedding_hash: Optional[str] = None  # For cache lookup
     metadata: Dict[str, Any] = Field(default_factory=dict)
