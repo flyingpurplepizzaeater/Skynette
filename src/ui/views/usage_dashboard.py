@@ -71,12 +71,11 @@ class UsageDashboardView(ft.Column):
 
     async def _load_dashboard_data(self):
         """Load all dashboard data asynchronously."""
-        # Fetch data in parallel
-        usage_task = self._fetch_usage_data()
-        budget_task = self._fetch_budget_data()
-
-        usage_stats = await usage_task
-        budget_settings = await budget_task
+        # Fetch data in parallel using asyncio.gather
+        usage_stats, budget_settings = await asyncio.gather(
+            self._fetch_usage_data(),
+            self._fetch_budget_data()
+        )
 
         # Update UI with fetched data
         self._update_metrics_with_data(usage_stats, budget_settings)
