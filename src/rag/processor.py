@@ -15,6 +15,8 @@ from src.rag.models import Chunk
 class DocumentProcessor:
     """Process documents and create chunks."""
 
+    TOKENS_PER_WORD = 1.3  # Estimation ratio for token counting
+
     def __init__(
         self,
         chunk_size: int = 1024,
@@ -28,7 +30,17 @@ class DocumentProcessor:
 
     def process_file(self, file_path: str, file_type: str) -> List[Chunk]:
         """Process file and return chunks."""
-        content = Path(file_path).read_text(encoding='utf-8')
+        try:
+            content = Path(file_path).read_text(encoding='utf-8')
+        except FileNotFoundError:
+            raise ValueError(f"File not found: {file_path}")
+        except UnicodeDecodeError as e:
+            raise ValueError(f"Cannot decode file {file_path}: {e}")
+        except Exception as e:
+            raise ValueError(f"Error reading file {file_path}: {e}")
+
+        if not content.strip():
+            return []  # Empty file returns empty list
 
         if file_type == "markdown":
             return self.chunk_markdown(content)
@@ -52,7 +64,7 @@ class DocumentProcessor:
         current_section = []
         chunk_index = 0
 
-        for i, part in enumerate(parts):
+        for part in parts:
             if not part.strip():
                 continue
 
@@ -81,8 +93,17 @@ class DocumentProcessor:
                 section_text = '\n'.join(current_section)
                 token_count = self.count_tokens(section_text)
 
-                if token_count >= self.chunk_size:
-                    # Create chunk and reset
+                # Enforce max chunk size by falling back to text chunking
+                if token_count >= self.max_chunk_size:
+                    # Section too large, use text chunking
+                    text_chunks = self.chunk_text(section_text)
+                    for text_chunk in text_chunks:
+                        text_chunk.chunk_index = chunk_index
+                        chunk_index += 1
+                    chunks.extend(text_chunks)
+                    current_section = []
+                elif token_count >= self.chunk_size:
+                    # Normal chunking logic
                     chunk = Chunk(
                         document_id="",
                         chunk_index=chunk_index,
@@ -158,7 +179,7 @@ class DocumentProcessor:
 
                 # Start new chunk with overlap - use word-level overlap
                 chunk_words = chunk_text.split()
-                overlap_word_count = int(self.chunk_overlap / 1.3)  # Convert tokens to words
+                overlap_word_count = int(self.chunk_overlap / self.TOKENS_PER_WORD)  # Convert tokens to words
                 overlap_words = chunk_words[-overlap_word_count:] if len(chunk_words) > overlap_word_count else chunk_words
 
                 # Rebuild current_chunk with overlapping words
@@ -190,8 +211,24 @@ class DocumentProcessor:
                 chunks.append(chunk)
                 chunk_index += 1
 
-                current_chunk = []
-                current_tokens = 0
+                # Start new chunk with overlap - use word-level overlap
+                chunk_words = chunk_text.split()
+                overlap_word_count = int(self.chunk_overlap / self.TOKENS_PER_WORD)  # Convert tokens to words
+                overlap_words = chunk_words[-overlap_word_count:] if len(chunk_words) > overlap_word_count else chunk_words
+
+                # Rebuild current_chunk with overlapping words
+                overlap_text = ' '.join(overlap_words)
+                # Re-split overlap into sentences for consistency
+                overlap_sentences = re.split(r'(?<=[.!?])\s+', overlap_text)
+                if len(overlap_sentences) == 1 and len(overlap_text.split()) > 20:
+                    # Recreate pseudo-sentences
+                    overlap_words_list = overlap_text.split()
+                    overlap_sentences = []
+                    for i in range(0, len(overlap_words_list), 20):
+                        overlap_sentences.append(' '.join(overlap_words_list[i:i+20]))
+
+                current_chunk = overlap_sentences
+                current_tokens = self.count_tokens(overlap_text)
 
         # Add remaining content
         if current_chunk:
@@ -213,6 +250,5 @@ class DocumentProcessor:
         Sprint 1: Simple word-based estimation.
         Future: Use tiktoken for accurate counts.
         """
-        # Simple estimation: ~1.3 tokens per word
         words = len(text.split())
-        return int(words * 1.3)
+        return int(words * self.TOKENS_PER_WORD)

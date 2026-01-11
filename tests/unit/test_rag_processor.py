@@ -113,3 +113,30 @@ Content 2.
 
         # Should be reasonable estimate (5-10 words ≈ 7-12 tokens)
         assert 5 <= token_count <= 15
+
+    def test_unsupported_file_type(self, tmp_path):
+        """Should raise error for unsupported file type."""
+        processor = DocumentProcessor()
+
+        file = tmp_path / "test.pdf"
+        file.write_text("content")
+
+        with pytest.raises(ValueError, match="Unsupported file type"):
+            processor.process_file(str(file), "pdf")
+
+    def test_empty_file(self, tmp_path):
+        """Should handle empty files gracefully."""
+        processor = DocumentProcessor()
+
+        empty_file = tmp_path / "empty.txt"
+        empty_file.write_text("")
+
+        chunks = processor.process_file(str(empty_file), "text")
+        assert len(chunks) == 0
+
+    def test_file_not_found(self):
+        """Should raise error for non-existent file."""
+        processor = DocumentProcessor()
+
+        with pytest.raises(ValueError, match="File not found"):
+            processor.process_file("/nonexistent/file.txt", "text")
