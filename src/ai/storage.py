@@ -383,6 +383,37 @@ class AIStorage:
             updated_at=datetime.fromisoformat(row[7])
         )
 
+    async def check_budget_alert(self, current_cost: float) -> Optional[Dict[str, Any]]:
+        """
+        Check if current cost triggers budget alert.
+
+        Returns:
+            None if no alert, or dict with alert details:
+            {"type": "threshold|exceeded", "percentage": float, "limit": float, "current": float}
+        """
+        budget = await self.get_budget_settings()
+        if not budget or budget.monthly_limit_usd <= 0:
+            return None
+
+        percentage = current_cost / budget.monthly_limit_usd
+
+        if percentage >= 1.0:
+            return {
+                "type": "exceeded",
+                "percentage": percentage,
+                "limit": budget.monthly_limit_usd,
+                "current": current_cost,
+            }
+        elif percentage >= budget.alert_threshold:
+            return {
+                "type": "threshold",
+                "percentage": percentage,
+                "limit": budget.monthly_limit_usd,
+                "current": current_cost,
+            }
+
+        return None
+
     async def update_budget_settings(self, settings: BudgetSettings) -> None:
         """Save or update budget settings."""
         with sqlite3.connect(self.db_path) as conn:

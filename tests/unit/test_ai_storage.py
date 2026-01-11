@@ -250,3 +250,58 @@ class TestAIStorage:
         loaded = await storage.get_budget_settings()
         assert loaded is not None
         assert loaded.monthly_limit_usd == 10.0
+
+
+@pytest.mark.asyncio
+class TestBudgetAlerts:
+    """Tests for budget alert system."""
+
+    @pytest.fixture
+    def storage(self, tmp_path):
+        """Create AIStorage instance with temp database."""
+        # Initialize WorkflowStorage first to create tables
+        WorkflowStorage(data_dir=str(tmp_path))
+        return AIStorage(db_path=str(tmp_path / "skynette.db"))
+
+    async def test_check_budget_alert_below_threshold(self, storage):
+        """Should return no alert when below threshold."""
+        from src.ai.models.data import BudgetSettings
+
+        # Set budget: $100 limit, 80% threshold
+        budget = BudgetSettings(monthly_limit_usd=100.0, alert_threshold=0.8, reset_day=1)
+        await storage.update_budget_settings(budget)
+
+        # Check with $50 spent (50%)
+        alert = await storage.check_budget_alert(50.0)
+
+        assert alert is None  # No alert yet
+
+    async def test_check_budget_alert_at_threshold(self, storage):
+        """Should return threshold alert at 80%."""
+        from src.ai.models.data import BudgetSettings
+
+        # Set budget: $100 limit, 80% threshold
+        budget = BudgetSettings(monthly_limit_usd=100.0, alert_threshold=0.8, reset_day=1)
+        await storage.update_budget_settings(budget)
+
+        # Check with $80 spent (80%)
+        alert = await storage.check_budget_alert(80.0)
+
+        assert alert is not None
+        assert alert["type"] == "threshold"
+        assert alert["percentage"] >= 0.8
+
+    async def test_check_budget_alert_exceeded(self, storage):
+        """Should return exceeded alert at 100%."""
+        from src.ai.models.data import BudgetSettings
+
+        # Set budget: $100 limit, 80% threshold
+        budget = BudgetSettings(monthly_limit_usd=100.0, alert_threshold=0.8, reset_day=1)
+        await storage.update_budget_settings(budget)
+
+        # Check with $105 spent (105%)
+        alert = await storage.check_budget_alert(105.0)
+
+        assert alert is not None
+        assert alert["type"] == "exceeded"
+        assert alert["percentage"] >= 1.0

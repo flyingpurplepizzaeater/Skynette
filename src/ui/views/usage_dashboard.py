@@ -121,6 +121,12 @@ class UsageDashboardView(ft.Column):
         # Update UI with fetched data
         self._update_metrics_with_data(usage_stats, budget_settings, provider_breakdown, workflow_costs)
 
+        # Check for budget alerts
+        self.budget_alert = await self._check_budget_alert()
+
+        if self._page:
+            self._page.update()
+
     def _update_metrics_with_data(self, usage_stats: Dict[str, Any], budget_settings, provider_breakdown: Dict[str, float] = None, workflow_costs: Dict[str, float] = None):
         """Update metrics cards with fetched data."""
         # Store data for rendering
@@ -132,6 +138,15 @@ class UsageDashboardView(ft.Column):
         # Trigger UI update
         if self._page:
             self._page.update()
+
+    async def _check_budget_alert(self):
+        """Check if budget alert should be shown."""
+        if not self.usage_stats or not self.budget_settings:
+            return None
+
+        current_cost = self.usage_stats.get("total_cost", 0.0)
+        alert = await self.ai_storage.check_budget_alert(current_cost)
+        return alert
 
     def build(self):
         """Build the usage dashboard layout."""
@@ -148,17 +163,29 @@ class UsageDashboardView(ft.Column):
         if self._page:
             asyncio.create_task(self._load_dashboard_data())
 
+        # Build controls list with optional alert banner
+        controls = [
+            self._build_time_range_selector(),
+        ]
+
+        # Add alert banner if present
+        alert_banner = self._build_alert_banner()
+        if alert_banner:
+            controls.insert(0, alert_banner)
+
+        # Add remaining dashboard components
+        controls.extend([
+            self._build_metrics_cards(),
+            self._build_provider_breakdown(),
+            self._build_workflow_breakdown(),
+        ])
+
         return ft.Column(
             controls=[
                 self._build_header(),
                 ft.Container(
                     content=ft.Column(
-                        controls=[
-                            self._build_time_range_selector(),
-                            self._build_metrics_cards(),
-                            self._build_provider_breakdown(),
-                            self._build_workflow_breakdown(),
-                        ],
+                        controls=controls,
                         scroll=ft.ScrollMode.AUTO,
                     ),
                     expand=True,
@@ -202,6 +229,36 @@ class UsageDashboardView(ft.Column):
             ),
             padding=Theme.SPACING_MD,
             border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+        )
+
+    def _build_alert_banner(self) -> Optional[ft.Container]:
+        """Build budget alert banner if alert is active."""
+        alert = getattr(self, 'budget_alert', None)
+        if not alert:
+            return None
+
+        # Determine color and message
+        if alert["type"] == "exceeded":
+            bgcolor = Theme.ERROR
+            icon = ft.Icons.ERROR
+            message = f"🚨 Monthly budget exceeded! ${alert['current']:.2f} spent of ${alert['limit']:.2f} limit"
+        else:  # threshold
+            bgcolor = Theme.WARNING
+            icon = ft.Icons.WARNING
+            percentage = int(alert['percentage'] * 100)
+            message = f"⚠️ You've used {percentage}% of your monthly AI budget (${alert['current']:.2f} of ${alert['limit']:.2f})"
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(icon, color=ft.Colors.WHITE, size=20),
+                    ft.Text(message, color=ft.Colors.WHITE, weight=ft.FontWeight.W_500, size=13),
+                ],
+                spacing=12,
+            ),
+            padding=12,
+            bgcolor=bgcolor,
+            border_radius=Theme.RADIUS_SM,
         )
 
     def _build_time_range_selector(self) -> ft.Container:

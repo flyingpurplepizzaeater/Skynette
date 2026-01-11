@@ -101,6 +101,9 @@ class TestUsageDashboardDataFetching:
              patch.object(view, '_fetch_workflow_breakdown',
                           new_callable=AsyncMock,
                           return_value=mock_workflow_costs) as mock_workflow_fetch, \
+             patch.object(view, '_check_budget_alert',
+                          new_callable=AsyncMock,
+                          return_value=None) as mock_check_alert, \
              patch.object(view, '_update_metrics_with_data') as mock_update:
 
             await view._load_dashboard_data()
@@ -109,6 +112,7 @@ class TestUsageDashboardDataFetching:
             mock_budget_fetch.assert_called_once()
             mock_provider_fetch.assert_called_once()
             mock_workflow_fetch.assert_called_once()
+            mock_check_alert.assert_called_once()
             mock_update.assert_called_once_with(mock_stats, mock_budget, mock_provider_breakdown, mock_workflow_costs)
 
     def test_update_metrics_with_data_stores_and_updates(self):
