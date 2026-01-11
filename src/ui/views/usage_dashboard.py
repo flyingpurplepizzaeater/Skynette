@@ -69,22 +69,36 @@ class UsageDashboardView(ft.Column):
             print(f"Error fetching budget data: {e}")
             return None
 
+    async def _fetch_provider_breakdown(self) -> Dict[str, float]:
+        """Fetch provider cost breakdown for current time range."""
+        try:
+            # Get month and year from end_date (current period)
+            month = self.end_date.month
+            year = self.end_date.year
+            provider_costs = await self.ai_storage.get_cost_by_provider(month, year)
+            return provider_costs
+        except Exception as e:
+            print(f"Error fetching provider breakdown: {e}")
+            return {}
+
     async def _load_dashboard_data(self):
         """Load all dashboard data asynchronously."""
         # Fetch data in parallel using asyncio.gather
-        usage_stats, budget_settings = await asyncio.gather(
+        usage_stats, budget_settings, provider_breakdown = await asyncio.gather(
             self._fetch_usage_data(),
-            self._fetch_budget_data()
+            self._fetch_budget_data(),
+            self._fetch_provider_breakdown()
         )
 
         # Update UI with fetched data
-        self._update_metrics_with_data(usage_stats, budget_settings)
+        self._update_metrics_with_data(usage_stats, budget_settings, provider_breakdown)
 
-    def _update_metrics_with_data(self, usage_stats: Dict[str, Any], budget_settings):
+    def _update_metrics_with_data(self, usage_stats: Dict[str, Any], budget_settings, provider_breakdown: Dict[str, float] = None):
         """Update metrics cards with fetched data."""
         # Store data for rendering
         self.usage_stats = usage_stats
         self.budget_settings = budget_settings
+        self.provider_breakdown = provider_breakdown if provider_breakdown else {}
 
         # Trigger UI update
         if self._page:
@@ -98,6 +112,7 @@ class UsageDashboardView(ft.Column):
         # Initialize data
         self.usage_stats = None
         self.budget_settings = None
+        self.provider_breakdown = {}
 
         # Trigger async data loading
         if self._page:
@@ -111,6 +126,7 @@ class UsageDashboardView(ft.Column):
                         controls=[
                             self._build_time_range_selector(),
                             self._build_metrics_cards(),
+                            self._build_provider_breakdown(),
                         ],
                         scroll=ft.ScrollMode.AUTO,
                     ),
@@ -305,4 +321,128 @@ class UsageDashboardView(ft.Column):
             border_radius=Theme.RADIUS_MD,
             border=ft.Border.all(1, Theme.BORDER),
             width=200,
+        )
+
+    def _build_provider_breakdown(self) -> ft.Container:
+        """Build provider cost breakdown chart."""
+        # Provider color scheme
+        provider_colors = {
+            "openai": "#10a37f",
+            "anthropic": "#d4a574",
+            "local": "#6b7280",
+            "groq": "#f55036",
+            "google": "#4285f4",
+        }
+
+        # Get provider data
+        provider_data = self.provider_breakdown if hasattr(self, 'provider_breakdown') else {}
+
+        # Calculate total cost
+        total_cost = sum(provider_data.values()) if provider_data else 0.0
+
+        # Build provider bars or empty state
+        if total_cost > 0:
+            # Sort providers by cost (descending)
+            sorted_providers = sorted(provider_data.items(), key=lambda x: x[1], reverse=True)
+
+            provider_bars = [
+                self._build_provider_bar(
+                    provider_name=provider_name,
+                    cost=cost,
+                    total=total_cost,
+                    color=provider_colors.get(provider_name.lower(), "#6b7280")
+                )
+                for provider_name, cost in sorted_providers
+            ]
+        else:
+            # Empty state
+            provider_bars = [
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Icon(ft.Icons.PIE_CHART_OUTLINE, size=48, color=Theme.TEXT_MUTED),
+                            ft.Text(
+                                "No provider usage data",
+                                size=14,
+                                color=Theme.TEXT_SECONDARY,
+                            ),
+                            ft.Text(
+                                "Start using AI nodes to see provider breakdown",
+                                size=12,
+                                color=Theme.TEXT_MUTED,
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=8,
+                    ),
+                    padding=32,
+                )
+            ]
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "Cost by Provider",
+                        size=16,
+                        weight=ft.FontWeight.BOLD,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Container(
+                        content=ft.Column(
+                            controls=provider_bars,
+                            spacing=8,
+                        ),
+                        padding=Theme.SPACING_MD,
+                        bgcolor=Theme.SURFACE,
+                        border_radius=Theme.RADIUS_MD,
+                        border=ft.Border.all(1, Theme.BORDER),
+                    ),
+                ],
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=ft.Padding.only(bottom=Theme.SPACING_MD),
+        )
+
+    def _build_provider_bar(self, provider_name: str, cost: float, total: float, color: str) -> ft.Container:
+        """Build a single provider bar chart element."""
+        percentage = (cost / total) * 100 if total > 0 else 0
+        bar_width = (cost / total) * 400 if total > 0 else 0  # Max width 400px
+
+        # Provider icon mapping
+        provider_icons = {
+            "openai": ft.Icons.SMART_TOY,
+            "anthropic": ft.Icons.PSYCHOLOGY,
+            "local": ft.Icons.COMPUTER,
+            "groq": ft.Icons.FLASH_ON,
+            "google": ft.Icons.CLOUD,
+        }
+
+        icon = provider_icons.get(provider_name.lower(), ft.Icons.HELP_OUTLINE)
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(icon, size=16, color=color),
+                    ft.Text(
+                        provider_name.capitalize(),
+                        width=100,
+                        size=12,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Container(
+                        width=bar_width,
+                        height=24,
+                        bgcolor=color,
+                        border_radius=4,
+                    ),
+                    ft.Text(
+                        f"${cost:.2f} ({percentage:.0f}%)",
+                        size=12,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                ],
+                spacing=8,
+            ),
+            padding=ft.Padding.symmetric(vertical=4),
         )

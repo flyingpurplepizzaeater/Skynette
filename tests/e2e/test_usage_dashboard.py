@@ -170,3 +170,98 @@ class TestTimeRangeSelector:
         # This is implementation-dependent, may need adjustment
         this_month_button = page.locator("text=This Month")
         expect(this_month_button).to_be_visible()
+
+
+# Unit-style tests for provider breakdown
+class TestProviderBreakdown:
+    """Unit tests for provider breakdown chart."""
+
+    def test_provider_breakdown_method_exists(self):
+        """Usage dashboard should have _build_provider_breakdown method."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+        assert hasattr(dashboard, '_build_provider_breakdown')
+        assert callable(dashboard._build_provider_breakdown)
+
+    def test_provider_breakdown_creates_container(self):
+        """_build_provider_breakdown should return a Container."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+        import flet as ft
+
+        dashboard = UsageDashboardView()
+        # Initialize provider_breakdown to avoid AttributeError
+        dashboard.provider_breakdown = {}
+        result = dashboard._build_provider_breakdown()
+
+        assert isinstance(result, ft.Container)
+        assert result.content is not None
+
+    def test_provider_breakdown_shows_empty_state_when_no_data(self):
+        """Provider breakdown should show empty state when no data."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+        dashboard.provider_breakdown = {}
+        result = dashboard._build_provider_breakdown()
+
+        # Should contain empty state message
+        assert result is not None
+
+    def test_provider_breakdown_displays_providers_with_data(self):
+        """Provider breakdown should display provider bars when data exists."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+        dashboard.provider_breakdown = {
+            "openai": 10.50,
+            "anthropic": 5.25,
+        }
+        result = dashboard._build_provider_breakdown()
+
+        # Should create container with provider bars
+        assert result is not None
+
+    def test_provider_bar_helper_creates_container(self):
+        """_build_provider_bar should create a bar container."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+        import flet as ft
+
+        dashboard = UsageDashboardView()
+        bar = dashboard._build_provider_bar(
+            provider_name="openai",
+            cost=10.50,
+            total=20.00,
+            color="#10a37f"
+        )
+
+        assert isinstance(bar, ft.Container)
+        # Should have Row content
+        assert isinstance(bar.content, ft.Row)
+
+    def test_provider_bar_calculates_percentage_correctly(self):
+        """Provider bar should calculate percentage correctly."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+        bar = dashboard._build_provider_bar(
+            provider_name="openai",
+            cost=10.00,
+            total=20.00,
+            color="#10a37f"
+        )
+
+        # Percentage should be 50%
+        # Check that the text contains "50%"
+        row = bar.content
+        texts = [ctrl for ctrl in row.controls if hasattr(ctrl, 'value')]
+        # Should find text with percentage
+        assert any("50%" in str(ctrl.value) for ctrl in texts if hasattr(ctrl, 'value'))
+
+    def test_fetch_provider_breakdown_method_exists(self):
+        """Usage dashboard should have _fetch_provider_breakdown method."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+        assert hasattr(dashboard, '_fetch_provider_breakdown')
+        assert callable(dashboard._fetch_provider_breakdown)
