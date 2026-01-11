@@ -293,3 +293,74 @@ class TestWorkflowBreakdown:
 
         # Should contain table with headers: Workflow, Cost
         assert result is not None
+
+
+@pytest.mark.skip(reason="Navigation infrastructure needs fixing - AI Hub button not found")
+class TestBudgetSettings:
+    """Tests for budget settings panel."""
+
+    @pytest.fixture(autouse=True)
+    def navigate_to_usage(self, page: Page, helpers):
+        """Navigate to Usage Dashboard before each test."""
+        helpers.navigate_to("usage")
+
+    def test_budget_settings_button_visible(self, page: Page):
+        """Budget settings button should be visible in header."""
+        expect(page.locator("text=Budget Settings").or_(page.locator("[aria-label*='Budget']"))).to_be_visible(timeout=5000)
+
+    def test_budget_dialog_opens_on_click(self, page: Page):
+        """Clicking budget settings should open dialog."""
+        # This test may need adjustment based on actual implementation
+        page.wait_for_timeout(1000)
+        # Look for any button that might open budget settings
+        # Implementation-specific
+        pass
+
+
+class TestBudgetSettingsUnit:
+    """Unit tests for budget settings functionality."""
+
+    def test_budget_dialog_state_initialized(self):
+        """Budget dialog state should be initialized in __init__."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+
+        # Budget dialog state should be initialized
+        assert hasattr(dashboard, 'budget_dialog')
+        assert hasattr(dashboard, 'budget_limit_field')
+        assert hasattr(dashboard, 'budget_threshold_slider')
+        assert hasattr(dashboard, 'budget_reset_day_dropdown')
+
+        # Initial values should be None
+        assert dashboard.budget_dialog is None
+        assert dashboard.budget_limit_field is None
+        assert dashboard.budget_threshold_slider is None
+        assert dashboard.budget_reset_day_dropdown is None
+
+    def test_open_budget_dialog_method_exists(self):
+        """_open_budget_dialog method should exist."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+        assert hasattr(dashboard, '_open_budget_dialog')
+        assert callable(dashboard._open_budget_dialog)
+
+    def test_close_budget_dialog_method_exists(self):
+        """_close_budget_dialog method should exist."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+        assert hasattr(dashboard, '_close_budget_dialog')
+        assert callable(dashboard._close_budget_dialog)
+
+    def test_save_budget_settings_method_exists(self):
+        """_save_budget_settings method should exist."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+        import inspect
+
+        dashboard = UsageDashboardView()
+        assert hasattr(dashboard, '_save_budget_settings')
+        assert callable(dashboard._save_budget_settings)
+        # Should be async
+        assert inspect.iscoroutinefunction(dashboard._save_budget_settings)

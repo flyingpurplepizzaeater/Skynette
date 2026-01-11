@@ -26,6 +26,12 @@ class UsageDashboardView(ft.Column):
         self.start_date: Optional[date] = None
         self.end_date: Optional[date] = None
 
+        # Budget dialog state
+        self.budget_dialog = None
+        self.budget_limit_field = None
+        self.budget_threshold_slider = None
+        self.budget_reset_day_dropdown = None
+
     def _calculate_time_range(self, range_type: str) -> Tuple[date, date]:
         """Calculate start and end dates for time range."""
         today = date.today()
@@ -182,6 +188,13 @@ class UsageDashboardView(ft.Column):
                             ),
                         ],
                         spacing=2,
+                    ),
+                    ft.Container(expand=True),  # Spacer
+                    ft.IconButton(
+                        icon=ft.Icons.SETTINGS,
+                        tooltip="Budget Settings",
+                        on_click=lambda e: self._open_budget_dialog(),
+                        icon_color=Theme.TEXT_SECONDARY,
                     ),
                 ],
             ),
@@ -573,3 +586,119 @@ class UsageDashboardView(ft.Column):
             ),
             padding=ft.Padding.only(bottom=Theme.SPACING_MD),
         )
+
+    def _open_budget_dialog(self):
+        """Open budget settings dialog."""
+        # Load current budget settings
+        budget = self.budget_settings if hasattr(self, 'budget_settings') else None
+        if budget:
+            initial_limit = str(budget.monthly_limit_usd)
+            initial_threshold = budget.alert_threshold
+            initial_reset_day = budget.reset_day
+        else:
+            initial_limit = "50.00"
+            initial_threshold = 0.8
+            initial_reset_day = 1
+
+        # Create form fields
+        self.budget_limit_field = ft.TextField(
+            label="Monthly Limit (USD)",
+            value=initial_limit,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            width=300,
+        )
+
+        self.budget_threshold_slider = ft.Slider(
+            min=0.5,
+            max=1.0,
+            value=initial_threshold,
+            divisions=10,
+            label="{value}%",
+            width=300,
+        )
+
+        self.budget_reset_day_dropdown = ft.Dropdown(
+            label="Reset Day (of month)",
+            value=str(initial_reset_day),
+            options=[ft.dropdown.Option(str(i)) for i in range(1, 32)],
+            width=300,
+        )
+
+        # Create dialog
+        self.budget_dialog = ft.AlertDialog(
+            title=ft.Text("Budget Settings"),
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        self.budget_limit_field,
+                        ft.Text("Alert Threshold:", size=12, color=Theme.TEXT_SECONDARY),
+                        self.budget_threshold_slider,
+                        ft.Text(
+                            f"{int(self.budget_threshold_slider.value * 100)}% of monthly limit",
+                            size=11,
+                            color=Theme.TEXT_SECONDARY,
+                        ),
+                        self.budget_reset_day_dropdown,
+                    ],
+                    spacing=16,
+                    tight=True,
+                ),
+                width=400,
+            ),
+            actions=[
+                ft.TextButton("Cancel", on_click=lambda e: self._close_budget_dialog()),
+                ft.ElevatedButton(
+                    "Save",
+                    on_click=lambda e: asyncio.create_task(self._save_budget_settings())
+                ),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        if self._page:
+            self._page.overlay.append(self.budget_dialog)
+            self.budget_dialog.open = True
+            self._page.update()
+
+    def _close_budget_dialog(self):
+        """Close budget settings dialog."""
+        if self.budget_dialog and self._page:
+            self.budget_dialog.open = False
+            self._page.update()
+
+    async def _save_budget_settings(self):
+        """Save budget settings to database."""
+        try:
+            # Parse form values
+            limit_str = self.budget_limit_field.value
+            monthly_limit = float(limit_str) if limit_str else 50.0
+
+            if monthly_limit <= 0:
+                # Show error
+                print("Monthly limit must be greater than 0")
+                return
+
+            threshold = self.budget_threshold_slider.value
+            reset_day = int(self.budget_reset_day_dropdown.value)
+
+            # Create budget settings object
+            from src.ai.models import BudgetSettings
+            budget = BudgetSettings(
+                monthly_limit_usd=monthly_limit,
+                alert_threshold=threshold,
+                reset_day=reset_day,
+            )
+
+            # Save to database
+            await self.ai_storage.update_budget_settings(budget)
+
+            # Reload dashboard data
+            await self._load_dashboard_data()
+
+            # Close dialog
+            self._close_budget_dialog()
+
+        except ValueError as e:
+            print(f"Invalid budget settings: {e}")
+        except Exception as e:
+            print(f"Error saving budget settings: {e}")
