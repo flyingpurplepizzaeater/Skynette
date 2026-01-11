@@ -5,7 +5,7 @@ Visualizes AI usage metrics, costs, and budget tracking.
 
 import flet as ft
 from datetime import date, datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 from src.ui.theme import Theme
 from src.ai.storage import get_ai_storage
 
@@ -25,23 +25,47 @@ class UsageDashboardView(ft.Column):
         self.start_date: Optional[date] = None
         self.end_date: Optional[date] = None
 
+    def _calculate_time_range(self, range_type: str) -> Tuple[date, date]:
+        """Calculate start and end dates for time range."""
+        today = date.today()
+
+        if range_type == "last_7d":
+            return today - timedelta(days=7), today
+        elif range_type == "last_30d":
+            return today - timedelta(days=30), today
+        elif range_type == "this_month":
+            return date(today.year, today.month, 1), today
+        elif range_type == "last_month":
+            # First day of last month
+            first_this_month = date(today.year, today.month, 1)
+            last_month_end = first_this_month - timedelta(days=1)
+            last_month_start = date(last_month_end.year, last_month_end.month, 1)
+            return last_month_start, last_month_end
+        else:
+            # Default to this month
+            return date(today.year, today.month, 1), today
+
     def build(self):
         """Build the usage dashboard layout."""
+        # Set default time range
+        self.start_date, self.end_date = self._calculate_time_range(self.current_time_range)
+
         return ft.Column(
             controls=[
                 self._build_header(),
                 ft.Container(
-                    content=ft.Text(
-                        "Usage Dashboard - Coming Soon",
-                        size=16,
-                        color=Theme.TEXT_SECONDARY,
+                    content=ft.Column(
+                        controls=[
+                            self._build_metrics_cards(),
+                        ],
+                        scroll=ft.ScrollMode.AUTO,
                     ),
                     expand=True,
-                    alignment=ft.alignment.Alignment(0, 0),
+                    padding=Theme.SPACING_MD,
                 ),
             ],
             expand=True,
-            spacing=Theme.SPACING_MD,
+            spacing=0,
         )
 
     def _build_header(self):
@@ -70,4 +94,113 @@ class UsageDashboardView(ft.Column):
             ),
             padding=Theme.SPACING_MD,
             border=ft.border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+        )
+
+    def _build_metrics_cards(self) -> ft.Container:
+        """Build metrics cards displaying key statistics."""
+        # Placeholder data (will fetch from AIStorage in async method)
+        total_cost = 0.0
+        total_calls = 0
+        total_tokens = 0
+        budget_percentage = 0.0
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    self._build_metric_card(
+                        "Total Cost",
+                        f"${total_cost:.2f}",
+                        ft.Icons.ATTACH_MONEY,
+                        Theme.PRIMARY,
+                    ),
+                    self._build_metric_card(
+                        "API Calls",
+                        f"{total_calls:,}",
+                        ft.Icons.API,
+                        Theme.INFO,
+                    ),
+                    self._build_metric_card(
+                        "Total Tokens",
+                        f"{total_tokens:,}",
+                        ft.Icons.TOKEN,
+                        Theme.SUCCESS,
+                    ),
+                    self._build_budget_card(budget_percentage),
+                ],
+                spacing=Theme.SPACING_MD,
+                wrap=True,
+            ),
+            padding=ft.padding.only(bottom=Theme.SPACING_MD),
+        )
+
+    def _build_metric_card(
+        self, label: str, value: str, icon: str, color: str
+    ) -> ft.Container:
+        """Build a single metric card."""
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(icon, size=20, color=color),
+                            ft.Text(label, size=12, color=Theme.TEXT_SECONDARY),
+                        ],
+                        spacing=8,
+                    ),
+                    ft.Text(
+                        value,
+                        size=28,
+                        weight=ft.FontWeight.BOLD,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                ],
+                spacing=8,
+            ),
+            padding=16,
+            bgcolor=Theme.SURFACE,
+            border_radius=Theme.RADIUS_MD,
+            border=ft.border.all(1, Theme.BORDER),
+            width=200,
+        )
+
+    def _build_budget_card(self, percentage: float) -> ft.Container:
+        """Build budget usage card with progress bar."""
+        # Determine color based on percentage
+        if percentage >= 1.0:
+            color = Theme.ERROR
+        elif percentage >= 0.8:
+            color = Theme.WARNING
+        else:
+            color = Theme.SUCCESS
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.ACCOUNT_BALANCE_WALLET, size=20, color=color),
+                            ft.Text("Budget", size=12, color=Theme.TEXT_SECONDARY),
+                        ],
+                        spacing=8,
+                    ),
+                    ft.Text(
+                        f"{percentage * 100:.0f}%",
+                        size=28,
+                        weight=ft.FontWeight.BOLD,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.ProgressBar(
+                        value=min(percentage, 1.0),
+                        color=color,
+                        bgcolor=Theme.BG_TERTIARY,
+                        height=8,
+                    ),
+                ],
+                spacing=8,
+            ),
+            padding=16,
+            bgcolor=Theme.SURFACE,
+            border_radius=Theme.RADIUS_MD,
+            border=ft.border.all(1, Theme.BORDER),
+            width=200,
         )
