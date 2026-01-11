@@ -378,6 +378,44 @@ class UsageDashboardView(ft.Column):
 
     def _build_budget_card(self, percentage: float) -> ft.Container:
         """Build budget usage card with progress bar."""
+        # Check if budget is configured
+        if not self.budget_settings or self.budget_settings.monthly_limit_usd <= 0:
+            # Budget not set - show setup prompt
+            return ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Icon(
+                            ft.Icons.ACCOUNT_BALANCE_WALLET_OUTLINED,
+                            size=32,
+                            color=Theme.TEXT_SECONDARY,
+                        ),
+                        ft.Text(
+                            "Set Budget",
+                            size=14,
+                            weight=ft.FontWeight.BOLD,
+                            color=Theme.TEXT_PRIMARY,
+                        ),
+                        ft.Text(
+                            "Configure monthly\nspending limit",
+                            size=11,
+                            color=Theme.TEXT_SECONDARY,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                        ft.TextButton(
+                            "Set Up →",
+                            on_click=lambda e: self._open_budget_dialog(),
+                        ),
+                    ],
+                    spacing=8,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                padding=16,
+                bgcolor=Theme.SURFACE,
+                border_radius=Theme.RADIUS_MD,
+                border=ft.Border.all(1, Theme.BORDER),
+                width=200,
+            )
+
         # Determine color based on percentage
         if percentage >= 1.0:
             color = Theme.ERROR
@@ -873,3 +911,25 @@ class UsageDashboardView(ft.Column):
                     self._page.overlay.append(snackbar)
                     snackbar.open = True
                     self._page.update()
+
+    def _show_error_snackbar(self, message: str):
+        """Show error snackbar notification."""
+        if self._page:
+            snackbar = ft.SnackBar(
+                ft.Text(message),
+                bgcolor=Theme.ERROR,
+            )
+            self._page.overlay.append(snackbar)
+            snackbar.open = True
+            self._page.update()
+
+    def _show_success_snackbar(self, message: str):
+        """Show success snackbar notification."""
+        if self._page:
+            snackbar = ft.SnackBar(
+                ft.Text(message),
+                bgcolor=Theme.SUCCESS,
+            )
+            self._page.overlay.append(snackbar)
+            snackbar.open = True
+            self._page.update()

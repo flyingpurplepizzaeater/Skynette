@@ -224,7 +224,9 @@ class TestUsageDashboardDataFetching:
     def test_build_budget_card_under_threshold(self):
         """_build_budget_card should show success color when under threshold."""
         import flet as ft
+        from src.ai.models.data import BudgetSettings
         view = UsageDashboardView()
+        view.budget_settings = BudgetSettings(monthly_limit_usd=100.0, alert_threshold=0.8, reset_day=1)
 
         result = view._build_budget_card(0.5)  # 50% usage
 
@@ -233,7 +235,9 @@ class TestUsageDashboardDataFetching:
     def test_build_budget_card_at_warning_threshold(self):
         """_build_budget_card should show warning color at 80%."""
         import flet as ft
+        from src.ai.models.data import BudgetSettings
         view = UsageDashboardView()
+        view.budget_settings = BudgetSettings(monthly_limit_usd=100.0, alert_threshold=0.8, reset_day=1)
 
         result = view._build_budget_card(0.85)  # 85% usage
 
@@ -242,7 +246,9 @@ class TestUsageDashboardDataFetching:
     def test_build_budget_card_over_limit(self):
         """_build_budget_card should show error color when over limit."""
         import flet as ft
+        from src.ai.models.data import BudgetSettings
         view = UsageDashboardView()
+        view.budget_settings = BudgetSettings(monthly_limit_usd=100.0, alert_threshold=0.8, reset_day=1)
 
         result = view._build_budget_card(1.2)  # 120% usage
 
