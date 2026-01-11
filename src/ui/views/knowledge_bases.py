@@ -14,7 +14,7 @@ class KnowledgeBasesView(ft.Column):
         super().__init__()
         self._page = page
         self.expand = True
-        self.spacing = 16
+        self.spacing = Theme.SPACING_MD
 
         # State
         self.rag_service = rag_service
@@ -75,7 +75,7 @@ class KnowledgeBasesView(ft.Column):
                         size=14,
                         color=Theme.TEXT_SECONDARY,
                     ),
-                    ft.Container(height=16),
+                    ft.Container(height=Theme.SPACING_MD),
                     ft.Button(
                         "Create Your First Collection",
                         icon=ft.Icons.ADD,
@@ -83,9 +83,9 @@ class KnowledgeBasesView(ft.Column):
                     ),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=8,
+                spacing=Theme.SPACING_SM,
             ),
-            alignment=ft.alignment.Alignment.CENTER,
+            alignment=ft.alignment.Alignment(0, 0),
             expand=True,
         )
 
