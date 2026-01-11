@@ -69,16 +69,39 @@ class UsageDashboardView(ft.Column):
             print(f"Error fetching budget data: {e}")
             return None
 
+    async def _fetch_provider_breakdown(self) -> Dict[str, float]:
+        """Fetch cost breakdown by provider for current time range."""
+        try:
+            # For monthly ranges, use get_cost_by_provider
+            if self.current_time_range in ["this_month", "last_month"]:
+                month = self.start_date.month
+                year = self.start_date.year
+                return await self.ai_storage.get_cost_by_provider(month, year)
+            else:
+                # For custom ranges, aggregate from usage stats
+                # For now, return empty dict (will enhance later if needed)
+                return {}
+        except Exception as e:
+            print(f"Error fetching provider breakdown: {e}")
+            return {}
+
     async def _load_dashboard_data(self):
         """Load all dashboard data asynchronously."""
-        # Fetch data in parallel using asyncio.gather
-        usage_stats, budget_settings = await asyncio.gather(
-            self._fetch_usage_data(),
-            self._fetch_budget_data()
-        )
+        # Fetch data in parallel
+        usage_task = self._fetch_usage_data()
+        budget_task = self._fetch_budget_data()
+        provider_task = self._fetch_provider_breakdown()
+
+        usage_stats = await usage_task
+        budget_settings = await budget_task
+        provider_costs = await provider_task
 
         # Update UI with fetched data
         self._update_metrics_with_data(usage_stats, budget_settings)
+        self.provider_costs = provider_costs
+
+        if self._page:
+            self._page.update()
 
     def _update_metrics_with_data(self, usage_stats: Dict[str, Any], budget_settings):
         """Update metrics cards with fetched data."""
@@ -111,6 +134,7 @@ class UsageDashboardView(ft.Column):
                         controls=[
                             self._build_time_range_selector(),
                             self._build_metrics_cards(),
+                            self._build_provider_breakdown(),
                         ],
                         scroll=ft.ScrollMode.AUTO,
                     ),
@@ -305,4 +329,119 @@ class UsageDashboardView(ft.Column):
             border_radius=Theme.RADIUS_MD,
             border=ft.Border.all(1, Theme.BORDER),
             width=200,
+        )
+
+    def _build_provider_breakdown(self) -> ft.Container:
+        """Build provider cost breakdown visualization."""
+        provider_costs = getattr(self, 'provider_costs', {})
+
+        if not provider_costs or sum(provider_costs.values()) == 0:
+            # Empty state
+            return ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.PIE_CHART, size=16, color=Theme.TEXT_SECONDARY),
+                                ft.Text("Cost by Provider", weight=ft.FontWeight.BOLD, size=16),
+                            ],
+                            spacing=8,
+                        ),
+                        ft.Container(
+                            content=ft.Text(
+                                "No provider usage data for this time range",
+                                size=14,
+                                color=Theme.TEXT_SECONDARY,
+                                italic=True,
+                            ),
+                            alignment=ft.alignment.center,
+                            padding=40,
+                        ),
+                    ],
+                    spacing=Theme.SPACING_SM,
+                ),
+                padding=16,
+                bgcolor=Theme.SURFACE,
+                border_radius=Theme.RADIUS_MD,
+                border=ft.Border.all(1, Theme.BORDER),
+            )
+
+        # Calculate total for percentages
+        total_cost = sum(provider_costs.values())
+
+        # Provider colors mapping
+        provider_colors = {
+            "openai": "#10a37f",
+            "anthropic": "#d4a574",
+            "local": "#6b7280",
+            "groq": "#f55036",
+            "google": "#4285f4",
+        }
+
+        # Build bars for each provider
+        provider_bars = []
+        for provider_id, cost in sorted(provider_costs.items(), key=lambda x: x[1], reverse=True):
+            percentage = (cost / total_cost) * 100
+            color = provider_colors.get(provider_id.lower(), Theme.INFO)
+
+            provider_bars.append(
+                self._build_provider_bar(provider_id, cost, total_cost, color)
+            )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.PIE_CHART, size=16, color=Theme.PRIMARY),
+                            ft.Text("Cost by Provider", weight=ft.FontWeight.BOLD, size=16),
+                        ],
+                        spacing=8,
+                    ),
+                    ft.Column(
+                        controls=provider_bars,
+                        spacing=8,
+                    ),
+                ],
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=16,
+            bgcolor=Theme.SURFACE,
+            border_radius=Theme.RADIUS_MD,
+            border=ft.Border.all(1, Theme.BORDER),
+        )
+
+    def _build_provider_bar(
+        self, provider_name: str, cost: float, total_cost: float, color: str
+    ) -> ft.Container:
+        """Build a single provider bar in the breakdown."""
+        percentage = (cost / total_cost) * 100
+        bar_width = (cost / total_cost) * 400  # Max width 400px
+
+        # Capitalize provider name
+        display_name = provider_name.capitalize()
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Text(display_name, size=13, weight=ft.FontWeight.W_500),
+                        width=100,
+                    ),
+                    ft.Container(
+                        width=max(bar_width, 20),  # Minimum 20px even for tiny values
+                        height=24,
+                        bgcolor=color,
+                        border_radius=4,
+                    ),
+                    ft.Text(
+                        f"${cost:.2f} ({percentage:.0f}%)",
+                        size=12,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                ],
+                spacing=12,
+                alignment=ft.MainAxisAlignment.START,
+            ),
+            padding=ft.Padding.symmetric(vertical=4),
         )
