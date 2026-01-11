@@ -1,7 +1,8 @@
 """Collection card component for Knowledge Bases."""
 
 import flet as ft
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
+from typing import Callable
 from src.ui.theme import Theme
 from src.ui.models.knowledge_bases import CollectionCardData
 
@@ -12,8 +13,8 @@ class CollectionCard(ft.Container):
     def __init__(
         self,
         data: CollectionCardData,
-        on_query,
-        on_manage,
+        on_query: Callable[[str], None],
+        on_manage: Callable[[str], None],
     ):
         super().__init__()
         self.data = data
@@ -91,14 +92,19 @@ class CollectionCard(ft.Container):
         """Format datetime as relative time."""
         now = datetime.now(timezone.utc)
         delta = now - dt
+        total_seconds = delta.total_seconds()
 
-        if delta.seconds < 60:
+        # Handle future dates (clock skew or bad data)
+        if total_seconds < 0:
             return "just now"
-        elif delta.seconds < 3600:
-            minutes = delta.seconds // 60
+
+        if total_seconds < 60:
+            return "just now"
+        elif total_seconds < 3600:
+            minutes = int(total_seconds // 60)
             return f"{minutes}m ago"
-        elif delta.days == 0:
-            hours = delta.seconds // 3600
+        elif total_seconds < 86400:  # Less than 1 day
+            hours = int(total_seconds // 3600)
             return f"{hours}h ago"
         elif delta.days < 30:
             return f"{delta.days}d ago"
