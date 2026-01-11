@@ -54,7 +54,7 @@ class SimpleModeView(ft.Column):
                                     weight=ft.FontWeight.W_600,
                                     color=Theme.TEXT_PRIMARY,
                                 ),
-                                padding=ft.padding.only(left=16, top=16, bottom=8),
+                                padding=ft.Padding.only(left=16, top=16, bottom=8),
                             ),
                             self._steps_column,
                             self._build_add_step_button(),
@@ -70,7 +70,7 @@ class SimpleModeView(ft.Column):
                     content=self._properties_container,
                     width=320,
                     bgcolor=Theme.BG_SECONDARY,
-                    border=ft.border.only(left=ft.BorderSide(1, Theme.BORDER)),
+                    border=ft.Border.only(left=ft.BorderSide(1, Theme.BORDER)),
                 ),
             ],
             expand=True,
@@ -129,7 +129,7 @@ class SimpleModeView(ft.Column):
                 bgcolor=Theme.BG_SECONDARY,
                 border_radius=Theme.RADIUS_MD,
                 margin=ft.margin.all(16),
-                border=ft.border.all(1, Theme.WARNING + "40"),
+                border=ft.Border.all(1, Theme.WARNING + "40"),
             )
         else:
             return ft.Container(
@@ -152,7 +152,7 @@ class SimpleModeView(ft.Column):
                             color=Theme.TEXT_SECONDARY,
                         ),
                         ft.Container(height=8),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Choose Trigger",
                             icon=ft.Icons.BOLT,
                             bgcolor=Theme.PRIMARY,
@@ -167,7 +167,7 @@ class SimpleModeView(ft.Column):
                 bgcolor=Theme.BG_SECONDARY,
                 border_radius=Theme.RADIUS_MD,
                 margin=ft.margin.all(16),
-                border=ft.border.all(2, Theme.BORDER),
+                border=ft.Border.all(2, Theme.BORDER),
                 alignment=ft.Alignment(0, 0),
             )
 
@@ -297,7 +297,7 @@ class SimpleModeView(ft.Column):
                             spacing=12,
                         ),
                         bgcolor=Theme.BG_SECONDARY if is_selected else Theme.BG_PRIMARY,
-                        border=ft.border.all(
+                        border=ft.Border.all(
                             2 if is_selected else 1,
                             Theme.PRIMARY if is_selected else Theme.BORDER,
                         ),
@@ -310,7 +310,7 @@ class SimpleModeView(ft.Column):
                 spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.START,
             ),
-            padding=ft.padding.symmetric(horizontal=16, vertical=4),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=4),
         )
 
     def _build_add_step_button(self):
@@ -325,7 +325,7 @@ class SimpleModeView(ft.Column):
                 ),
                 on_click=lambda e: self._show_step_picker(),
             ),
-            padding=ft.padding.all(16),
+            padding=ft.Padding.all(16),
             alignment=ft.Alignment(0, 0),
         )
 
@@ -342,7 +342,7 @@ class SimpleModeView(ft.Column):
                             color=Theme.TEXT_PRIMARY,
                         ),
                         padding=16,
-                        border=ft.border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+                        border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
                     ),
                     ft.Container(
                         content=ft.Column(
@@ -407,7 +407,7 @@ class SimpleModeView(ft.Column):
                         ],
                     ),
                     padding=16,
-                    border=ft.border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+                    border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
                 ),
                 ft.Container(
                     content=ft.Column(

@@ -104,7 +104,7 @@ class WorkflowEditorView(ft.Column):
                         ),
                         bgcolor=Theme.SURFACE,
                         border_radius=Theme.RADIUS_SM,
-                        padding=ft.padding.symmetric(horizontal=4, vertical=2),
+                        padding=ft.Padding.symmetric(horizontal=4, vertical=2),
                     ),
                     ft.Container(width=Theme.SPACING_MD),
                     ft.IconButton(
@@ -117,7 +117,7 @@ class WorkflowEditorView(ft.Column):
                         tooltip="Execute workflow",
                         icon_color=Theme.SUCCESS,
                     ),
-                    ft.ElevatedButton(
+                    ft.Button(
                         "Save",
                         icon=ft.Icons.SAVE,
                         bgcolor=Theme.PRIMARY,
@@ -127,8 +127,8 @@ class WorkflowEditorView(ft.Column):
                 ],
             ),
             bgcolor=Theme.SURFACE,
-            padding=ft.padding.symmetric(horizontal=Theme.SPACING_MD, vertical=Theme.SPACING_SM),
-            border=ft.border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+            padding=ft.Padding.symmetric(horizontal=Theme.SPACING_MD, vertical=Theme.SPACING_SM),
+            border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
         )
 
     def _build_node_palette(self):
@@ -175,7 +175,7 @@ class WorkflowEditorView(ft.Column):
                         )
                         for node in cat["nodes"]
                     ],
-                    tile_padding=ft.padding.symmetric(horizontal=8),
+                    tile_padding=ft.Padding.symmetric(horizontal=8),
                 )
             )
 
@@ -202,7 +202,7 @@ class WorkflowEditorView(ft.Column):
             ),
             width=220,
             bgcolor=Theme.SURFACE,
-            border=ft.border.only(right=ft.BorderSide(1, Theme.BORDER)),
+            border=ft.Border.only(right=ft.BorderSide(1, Theme.BORDER)),
         )
 
     def _build_canvas(self):
@@ -268,14 +268,14 @@ class WorkflowEditorView(ft.Column):
                     ),
                     ft.Container(
                         content=ft.Text("Click to run", size=10, color=Theme.TEXT_SECONDARY),
-                        padding=ft.padding.only(left=24),
+                        padding=ft.Padding.only(left=24),
                     ),
                 ],
                 spacing=4,
             ),
             bgcolor=Theme.SURFACE,
             border_radius=Theme.RADIUS_SM,
-            border=ft.border.all(2, Theme.WARNING),
+            border=ft.Border.all(2, Theme.WARNING),
             padding=Theme.SPACING_SM,
             width=180,
             shadow=ft.BoxShadow(
@@ -298,7 +298,7 @@ class WorkflowEditorView(ft.Column):
                             color=Theme.TEXT_PRIMARY,
                         ),
                         padding=Theme.SPACING_MD,
-                        border=ft.border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+                        border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
                     ),
                     ft.Container(
                         content=ft.Column(
@@ -322,7 +322,7 @@ class WorkflowEditorView(ft.Column):
             ),
             width=280,
             bgcolor=Theme.SURFACE,
-            border=ft.border.only(left=ft.BorderSide(1, Theme.BORDER)),
+            border=ft.Border.only(left=ft.BorderSide(1, Theme.BORDER)),
         )
 
     def _toggle_mode(self, simple):

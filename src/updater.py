@@ -310,12 +310,12 @@ class UpdateDialog:
         self.updater = Updater(on_progress=self._on_progress)
         self.progress_text = ft.Text("", size=14)
         self.progress_bar = ft.ProgressBar(width=400, value=0)
-        self.update_button = ft.ElevatedButton(
+        self.update_button = ft.Button(
             "Check for Updates",
             icon=ft.Icons.REFRESH,
             on_click=self._check_updates
         )
-        self.download_button = ft.ElevatedButton(
+        self.download_button = ft.Button(
             "Download & Install",
             icon=ft.Icons.DOWNLOAD,
             on_click=self._download_update,
@@ -370,7 +370,7 @@ class UpdateDialog:
                 content=self.ft.Text("Skynette has been updated. Restart now?"),
                 actions=[
                     self.ft.TextButton("Later", on_click=close_dialog),
-                    self.ft.ElevatedButton("Restart Now", on_click=restart_app),
+                    self.ft.Button("Restart Now", on_click=restart_app),
                 ],
             )
             self.page.overlay.append(dialog)
