@@ -2,7 +2,7 @@
 
 import flet as ft
 import re
-from typing import Optional, Callable
+from typing import Optional, Callable, Awaitable
 from src.ui.theme import Theme
 from src.rag.service import RAGService
 
@@ -14,7 +14,7 @@ class CollectionDialog(ft.AlertDialog):
         self,
         rag_service: RAGService,
         collection_id: Optional[str] = None,
-        on_save: Optional[Callable] = None,
+        on_save: Optional[Callable[[], Awaitable[None]]] = None,
     ):
         super().__init__()
         self.rag_service = rag_service
@@ -159,6 +159,12 @@ class CollectionDialog(ft.AlertDialog):
 
     async def _on_save_click(self, e):
         """Handle Save button click."""
+        # Clear previous errors
+        self.name_field.error_text = None
+        self.chunk_size_field.error_text = None
+        self.chunk_overlap_field.error_text = None
+        self.max_chunk_field.error_text = None
+
         # Validate
         errors = self._validate_fields()
         if errors:

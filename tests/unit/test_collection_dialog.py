@@ -51,3 +51,31 @@ class TestCollectionDialog:
 
         assert dialog._validate_chunk_size(100) == False  # too small
         assert dialog._validate_chunk_size(5000) == False  # too large
+
+    def test_edit_mode_title(self, rag_service):
+        """Edit mode should show 'Edit Collection' title."""
+        dialog = CollectionDialog(rag_service=rag_service, collection_id="coll-123")
+        assert "Edit" in dialog.title.value
+
+    def test_validate_fields_integration(self, rag_service):
+        """_validate_fields should validate all fields together."""
+        dialog = CollectionDialog(rag_service=rag_service)
+        dialog.name_field.value = ""  # Invalid
+        dialog.chunk_size_field.value = "100"  # Invalid (too small)
+
+        errors = dialog._validate_fields()
+
+        assert 'name' in errors
+        assert 'chunk_size' in errors
+
+    def test_validate_fields_all_valid(self, rag_service):
+        """_validate_fields should return empty dict when all valid."""
+        dialog = CollectionDialog(rag_service=rag_service)
+        dialog.name_field.value = "TestCollection"
+        dialog.chunk_size_field.value = "1024"
+        dialog.chunk_overlap_field.value = "128"
+        dialog.max_chunk_field.value = "2048"
+
+        errors = dialog._validate_fields()
+
+        assert errors == {}
