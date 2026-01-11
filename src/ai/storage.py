@@ -7,7 +7,7 @@ Handles all AI-related database operations.
 import sqlite3
 import json
 from pathlib import Path
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 from typing import Optional, List, Dict, Any
 
 from src.ai.models.data import ProviderConfig, UsageRecord, LocalModel, BudgetSettings

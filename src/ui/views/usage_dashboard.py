@@ -4,8 +4,10 @@ Visualizes AI usage metrics, costs, and budget tracking.
 """
 
 import asyncio
+import csv
 import flet as ft
 from datetime import date, datetime, timedelta
+from io import StringIO
 from typing import Optional, Dict, Any, Tuple
 from src.ui.theme import Theme
 from src.ai.storage import get_ai_storage
@@ -85,20 +87,39 @@ class UsageDashboardView(ft.Column):
             print(f"Error fetching provider breakdown: {e}")
             return {}
 
+    async def _fetch_workflow_breakdown(self) -> Dict[str, float]:
+        """Fetch cost breakdown by workflow for current time range."""
+        try:
+            # For monthly ranges, use get_cost_by_workflow
+            if self.current_time_range in ["this_month", "last_month"]:
+                month = self.start_date.month
+                year = self.start_date.year
+                return await self.ai_storage.get_cost_by_workflow(month, year)
+            else:
+                # For custom ranges, aggregate from usage stats
+                # For now, return empty dict (will enhance later if needed)
+                return {}
+        except Exception as e:
+            print(f"Error fetching workflow breakdown: {e}")
+            return {}
+
     async def _load_dashboard_data(self):
         """Load all dashboard data asynchronously."""
         # Fetch data in parallel
         usage_task = self._fetch_usage_data()
         budget_task = self._fetch_budget_data()
         provider_task = self._fetch_provider_breakdown()
+        workflow_task = self._fetch_workflow_breakdown()
 
         usage_stats = await usage_task
         budget_settings = await budget_task
         provider_costs = await provider_task
+        workflow_costs = await workflow_task
 
         # Update UI with fetched data
         self._update_metrics_with_data(usage_stats, budget_settings)
         self.provider_costs = provider_costs
+        self.workflow_costs = workflow_costs
 
         if self._page:
             self._page.update()
@@ -135,6 +156,7 @@ class UsageDashboardView(ft.Column):
                             self._build_time_range_selector(),
                             self._build_metrics_cards(),
                             self._build_provider_breakdown(),
+                            self._build_workflow_breakdown(),
                         ],
                         scroll=ft.ScrollMode.AUTO,
                     ),
@@ -445,3 +467,226 @@ class UsageDashboardView(ft.Column):
             ),
             padding=ft.Padding.symmetric(vertical=4),
         )
+
+    def _build_workflow_breakdown(self) -> ft.Container:
+        """Build workflow cost breakdown visualization."""
+        workflow_costs = getattr(self, 'workflow_costs', {})
+
+        if not workflow_costs or sum(workflow_costs.values()) == 0:
+            # Empty state
+            return ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.TABLE_CHART, size=16, color=Theme.TEXT_SECONDARY),
+                                ft.Text("Top Workflows by Cost", weight=ft.FontWeight.BOLD, size=16),
+                            ],
+                            spacing=8,
+                        ),
+                        ft.Container(
+                            content=ft.Text(
+                                "No workflow usage data for this time range",
+                                size=14,
+                                color=Theme.TEXT_SECONDARY,
+                                italic=True,
+                            ),
+                            alignment=ft.alignment.center,
+                            padding=40,
+                        ),
+                    ],
+                    spacing=Theme.SPACING_SM,
+                ),
+                padding=16,
+                bgcolor=Theme.SURFACE,
+                border_radius=Theme.RADIUS_MD,
+                border=ft.Border.all(1, Theme.BORDER),
+            )
+
+        # Calculate total for percentages
+        total_cost = sum(workflow_costs.values())
+
+        # Build bars for each workflow
+        workflow_bars = []
+        for workflow_id, cost in sorted(workflow_costs.items(), key=lambda x: x[1], reverse=True):
+            percentage = (cost / total_cost) * 100
+
+            workflow_bars.append(
+                self._build_workflow_bar(workflow_id, cost, total_cost)
+            )
+
+        # Header row with export button
+        header_row = ft.Row(
+            controls=[
+                ft.Icon(ft.Icons.TABLE_CHART, size=16, color=Theme.PRIMARY),
+                ft.Text("Top Workflows by Cost", weight=ft.FontWeight.BOLD, size=16),
+                ft.Container(expand=True),  # Spacer
+                ft.IconButton(
+                    icon=ft.Icons.DOWNLOAD,
+                    tooltip="Export CSV",
+                    on_click=lambda e: asyncio.create_task(self._export_csv()),
+                    icon_size=20,
+                ),
+            ],
+            spacing=8,
+        )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    header_row,
+                    ft.Column(
+                        controls=workflow_bars,
+                        spacing=8,
+                    ),
+                ],
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=16,
+            bgcolor=Theme.SURFACE,
+            border_radius=Theme.RADIUS_MD,
+            border=ft.Border.all(1, Theme.BORDER),
+        )
+
+    def _build_workflow_bar(
+        self, workflow_name: str, cost: float, total_cost: float
+    ) -> ft.Container:
+        """Build a single workflow bar in the breakdown."""
+        percentage = (cost / total_cost) * 100
+        bar_width = (cost / total_cost) * 400  # Max width 400px
+
+        # Use workflow name as-is
+        display_name = workflow_name
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Text(display_name, size=13, weight=ft.FontWeight.W_500),
+                        width=150,
+                    ),
+                    ft.Container(
+                        width=max(bar_width, 20),  # Minimum 20px even for tiny values
+                        height=24,
+                        bgcolor=Theme.INFO,
+                        border_radius=4,
+                    ),
+                    ft.Text(
+                        f"${cost:.2f} ({percentage:.0f}%)",
+                        size=12,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                ],
+                spacing=12,
+                alignment=ft.MainAxisAlignment.START,
+            ),
+            padding=ft.Padding.symmetric(vertical=4),
+        )
+
+    async def _build_csv_content(self) -> str:
+        """Build CSV content from usage data."""
+        # CSV Header
+        header = [
+            "Date Range",
+            "Provider",
+            "Workflow",
+            "Cost (USD)",
+            "Calls",
+            "Tokens",
+        ]
+
+        rows = []
+        rows.append(header)
+
+        # Date range string
+        date_range = f"{self.start_date} to {self.end_date}"
+
+        # Add provider costs (sorted by cost descending)
+        provider_costs = getattr(self, 'provider_costs', {})
+        for provider, cost in sorted(provider_costs.items(), key=lambda x: x[1], reverse=True):
+            rows.append([
+                date_range,
+                provider,
+                "All Workflows",
+                f"{cost:.2f}",
+                "-",
+                "-",
+            ])
+
+        # Add workflow costs (sorted by cost descending)
+        workflow_costs = getattr(self, 'workflow_costs', {})
+        for workflow, cost in sorted(workflow_costs.items(), key=lambda x: x[1], reverse=True):
+            rows.append([
+                date_range,
+                "All Providers",
+                workflow,
+                f"{cost:.2f}",
+                "-",
+                "-",
+            ])
+
+        # Convert to CSV string
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerows(rows)
+        return output.getvalue()
+
+    def _on_csv_save_result(self, e: ft.FilePickerResultEvent, csv_content: str):
+        """Handle CSV file save result."""
+        if e.path:
+            try:
+                # Write CSV to selected file
+                with open(e.path, 'w', newline='', encoding='utf-8') as f:
+                    f.write(csv_content)
+
+                # Show success snackbar
+                if self._page:
+                    snackbar = ft.SnackBar(
+                        ft.Text(f"Exported to {e.path}"),
+                        bgcolor=Theme.SUCCESS,
+                    )
+                    self._page.overlay.append(snackbar)
+                    snackbar.open = True
+                    self._page.update()
+
+            except Exception as ex:
+                print(f"Error writing CSV file: {ex}")
+                if self._page:
+                    snackbar = ft.SnackBar(ft.Text(f"Save failed: {str(ex)}"), bgcolor=Theme.ERROR)
+                    self._page.overlay.append(snackbar)
+                    snackbar.open = True
+                    self._page.update()
+
+    async def _export_csv(self):
+        """Export usage data to CSV file."""
+        try:
+            # For MVP, export current time range data
+            # Future enhancement: Add dialog to select custom range
+
+            # Build CSV content
+            csv_content = await self._build_csv_content()
+
+            # Generate filename
+            filename = f"skynette-ai-usage-{self.start_date}-to-{self.end_date}.csv"
+
+            # Use Flet's file picker to save
+            if self._page:
+                file_picker = ft.FilePicker(on_result=lambda e: self._on_csv_save_result(e, csv_content))
+                self._page.overlay.append(file_picker)
+                self._page.update()
+
+                # Open save dialog
+                file_picker.save_file(
+                    dialog_title="Export Usage Data",
+                    file_name=filename,
+                    allowed_extensions=["csv"],
+                )
+
+        except Exception as e:
+            print(f"Error exporting CSV: {e}")
+            if self._page:
+                # Show error snackbar
+                snackbar = ft.SnackBar(ft.Text(f"Export failed: {str(e)}"), bgcolor=Theme.ERROR)
+                self._page.overlay.append(snackbar)
+                snackbar.open = True
+                self._page.update()

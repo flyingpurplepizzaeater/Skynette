@@ -95,3 +95,18 @@ class TestProviderBreakdown:
         # This test will be more specific once we have test data
         provider_section = page.locator("text=Cost by Provider")
         expect(provider_section).to_be_visible()
+
+
+class TestCSVExport:
+    """Tests for CSV export functionality."""
+
+    @pytest.fixture(autouse=True)
+    def navigate_to_usage(self, page: Page, helpers):
+        """Navigate to Usage Dashboard before each test."""
+        helpers.navigate_to("usage")
+
+    def test_export_button_visible(self, page: Page):
+        """Export CSV button should be visible."""
+        page.wait_for_timeout(1000)
+        # Look for export-related button
+        expect(page.locator("text=Export").or_(page.locator("[aria-label*='Export']"))).to_be_visible(timeout=5000)
