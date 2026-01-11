@@ -405,3 +405,15 @@ class AIStorage:
             ))
 
             conn.commit()
+
+
+# Singleton instance
+_ai_storage_instance: Optional[AIStorage] = None
+
+
+def get_ai_storage() -> AIStorage:
+    """Get or create the global AIStorage instance."""
+    global _ai_storage_instance
+    if _ai_storage_instance is None:
+        _ai_storage_instance = AIStorage()
+    return _ai_storage_instance
