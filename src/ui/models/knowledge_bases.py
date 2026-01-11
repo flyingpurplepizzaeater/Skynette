@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Literal
+from typing import List, Dict, Any, Literal
 
 
 @dataclass
@@ -38,7 +38,7 @@ class UploadError:
     """Individual file upload error."""
     file_path: str
     error_message: str
-    error_type: str  # "unsupported", "permission", "corrupted", "embedding_failed"
+    error_type: Literal["unsupported", "permission", "corrupted", "embedding_failed"]
 
 
 @dataclass
@@ -51,10 +51,11 @@ class QueryResultUI:
 
     @classmethod
     def from_backend_result(cls, result: Dict[str, Any]) -> 'QueryResultUI':
-        """Convert backend result to UI model."""
+        """Convert backend result to UI model with safe defaults."""
+        metadata = result.get("metadata", {})
         return cls(
-            chunk_content=result["content"],
-            source_file=result["metadata"]["source_path"],
-            similarity=result["similarity"],
-            metadata=result["metadata"],
+            chunk_content=result.get("content", ""),
+            source_file=metadata.get("source_path", "unknown"),
+            similarity=result.get("similarity", 0.0),
+            metadata=metadata,
         )

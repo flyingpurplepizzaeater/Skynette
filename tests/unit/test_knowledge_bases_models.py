@@ -82,3 +82,17 @@ class TestQueryResultUI:
         assert result.source_file == "docs/test.md"
         assert result.similarity == 0.92
         assert result.metadata["chunk_index"] == 0
+
+    def test_from_backend_result_with_defaults(self):
+        """from_backend_result should handle missing fields gracefully."""
+        backend_result = {
+            "content": "Test content",
+            # Missing similarity and metadata
+        }
+
+        result = QueryResultUI.from_backend_result(backend_result)
+
+        assert result.chunk_content == "Test content"
+        assert result.source_file == "unknown"
+        assert result.similarity == 0.0
+        assert result.metadata == {}
