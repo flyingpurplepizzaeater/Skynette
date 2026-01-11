@@ -93,7 +93,7 @@ class UsageDashboardView(ft.Column):
                 ],
             ),
             padding=Theme.SPACING_MD,
-            border=ft.border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+            border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
         )
 
     def _build_metrics_cards(self) -> ft.Container:
@@ -130,7 +130,7 @@ class UsageDashboardView(ft.Column):
                 spacing=Theme.SPACING_MD,
                 wrap=True,
             ),
-            padding=ft.padding.only(bottom=Theme.SPACING_MD),
+            padding=ft.Padding.only(bottom=Theme.SPACING_MD),
         )
 
     def _build_metric_card(
@@ -159,7 +159,7 @@ class UsageDashboardView(ft.Column):
             padding=16,
             bgcolor=Theme.SURFACE,
             border_radius=Theme.RADIUS_MD,
-            border=ft.border.all(1, Theme.BORDER),
+            border=ft.Border.all(1, Theme.BORDER),
             width=200,
         )
 
@@ -201,6 +201,6 @@ class UsageDashboardView(ft.Column):
             padding=16,
             bgcolor=Theme.SURFACE,
             border_radius=Theme.RADIUS_MD,
-            border=ft.border.all(1, Theme.BORDER),
+            border=ft.Border.all(1, Theme.BORDER),
             width=200,
         )
