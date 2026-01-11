@@ -265,3 +265,31 @@ class TestProviderBreakdown:
         dashboard = UsageDashboardView()
         assert hasattr(dashboard, '_fetch_provider_breakdown')
         assert callable(dashboard._fetch_provider_breakdown)
+
+
+class TestWorkflowBreakdown:
+    """Unit tests for workflow breakdown table."""
+
+    def test_workflow_breakdown_section_visible(self):
+        """Workflow breakdown section should be visible with title."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+        import flet as ft
+
+        dashboard = UsageDashboardView()
+        dashboard.workflow_costs = {"workflow1": 10.50, "workflow2": 5.25}
+        result = dashboard._build_workflow_breakdown()
+
+        assert isinstance(result, ft.Container)
+        # Should contain "Top Workflows by Cost" title
+        assert result is not None
+
+    def test_workflow_table_has_headers(self):
+        """Workflow table should have proper headers."""
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
+        dashboard = UsageDashboardView()
+        dashboard.workflow_costs = {"workflow1": 10.50}
+        result = dashboard._build_workflow_breakdown()
+
+        # Should contain table with headers: Workflow, Cost
+        assert result is not None

@@ -85,24 +85,41 @@ class UsageDashboardView(ft.Column):
             print(f"Error fetching provider breakdown: {e}")
             return {}
 
+    async def _fetch_workflow_breakdown(self) -> Dict[str, float]:
+        """Fetch cost breakdown by workflow for current time range."""
+        try:
+            # For monthly ranges, use get_cost_by_workflow
+            if self.current_time_range in ["this_month", "last_month"]:
+                month = self.start_date.month
+                year = self.start_date.year
+                return await self.ai_storage.get_cost_by_workflow(month, year)
+            else:
+                # For other ranges, return empty dict
+                return {}
+        except Exception as e:
+            print(f"Error fetching workflow breakdown: {e}")
+            return {}
+
     async def _load_dashboard_data(self):
         """Load all dashboard data asynchronously."""
         # Fetch data in parallel using asyncio.gather
-        usage_stats, budget_settings, provider_breakdown = await asyncio.gather(
+        usage_stats, budget_settings, provider_breakdown, workflow_costs = await asyncio.gather(
             self._fetch_usage_data(),
             self._fetch_budget_data(),
-            self._fetch_provider_breakdown()
+            self._fetch_provider_breakdown(),
+            self._fetch_workflow_breakdown()
         )
 
         # Update UI with fetched data
-        self._update_metrics_with_data(usage_stats, budget_settings, provider_breakdown)
+        self._update_metrics_with_data(usage_stats, budget_settings, provider_breakdown, workflow_costs)
 
-    def _update_metrics_with_data(self, usage_stats: Dict[str, Any], budget_settings, provider_breakdown: Dict[str, float] = None):
+    def _update_metrics_with_data(self, usage_stats: Dict[str, Any], budget_settings, provider_breakdown: Dict[str, float] = None, workflow_costs: Dict[str, float] = None):
         """Update metrics cards with fetched data."""
         # Store data for rendering
         self.usage_stats = usage_stats
         self.budget_settings = budget_settings
         self.provider_breakdown = provider_breakdown if provider_breakdown else {}
+        self.workflow_costs = workflow_costs if workflow_costs else {}
 
         # Trigger UI update
         if self._page:
@@ -117,6 +134,7 @@ class UsageDashboardView(ft.Column):
         self.usage_stats = None
         self.budget_settings = None
         self.provider_breakdown = {}
+        self.workflow_costs = {}
 
         # Trigger async data loading
         if self._page:
@@ -131,6 +149,7 @@ class UsageDashboardView(ft.Column):
                             self._build_time_range_selector(),
                             self._build_metrics_cards(),
                             self._build_provider_breakdown(),
+                            self._build_workflow_breakdown(),
                         ],
                         scroll=ft.ScrollMode.AUTO,
                     ),
@@ -449,4 +468,108 @@ class UsageDashboardView(ft.Column):
                 spacing=8,
             ),
             padding=ft.Padding.symmetric(vertical=4),
+        )
+
+    def _build_workflow_breakdown(self) -> ft.Container:
+        """Build workflow cost breakdown table."""
+        # Get workflow data
+        workflow_data = self.workflow_costs if hasattr(self, 'workflow_costs') else {}
+
+        # Build table or empty state
+        if workflow_data:
+            # Sort workflows by cost (descending) and take top 10
+            sorted_workflows = sorted(workflow_data.items(), key=lambda x: x[1], reverse=True)[:10]
+
+            # Build table rows
+            table_rows = []
+
+            # Header row
+            table_rows.append(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Text("Workflow", width=200, size=12, weight=ft.FontWeight.BOLD, color=Theme.TEXT_SECONDARY),
+                            ft.Text("Cost", width=100, size=12, weight=ft.FontWeight.BOLD, color=Theme.TEXT_SECONDARY),
+                            ft.Text("Calls", width=100, size=12, weight=ft.FontWeight.BOLD, color=Theme.TEXT_SECONDARY),
+                            ft.Text("Tokens", width=100, size=12, weight=ft.FontWeight.BOLD, color=Theme.TEXT_SECONDARY),
+                        ],
+                        spacing=16,
+                    ),
+                    padding=ft.Padding.symmetric(vertical=8, horizontal=16),
+                    border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+                )
+            )
+
+            # Data rows
+            for workflow_name, cost in sorted_workflows:
+                table_rows.append(
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Text(workflow_name, width=200, size=12, color=Theme.TEXT_PRIMARY),
+                                ft.Text(f"${cost:.2f}", width=100, size=12, color=Theme.TEXT_PRIMARY),
+                                ft.Text("—", width=100, size=12, color=Theme.TEXT_MUTED),  # Placeholder
+                                ft.Text("—", width=100, size=12, color=Theme.TEXT_MUTED),  # Placeholder
+                            ],
+                            spacing=16,
+                        ),
+                        padding=ft.Padding.symmetric(vertical=8, horizontal=16),
+                        border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
+                    )
+                )
+
+            # Scrollable container for table
+            table_content = ft.Container(
+                content=ft.Column(
+                    controls=table_rows,
+                    spacing=0,
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                height=300,
+                padding=0,
+                bgcolor=Theme.SURFACE,
+                border_radius=Theme.RADIUS_MD,
+                border=ft.Border.all(1, Theme.BORDER),
+            )
+        else:
+            # Empty state
+            table_content = ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Icon(ft.Icons.TABLE_CHART, size=48, color=Theme.TEXT_MUTED),
+                        ft.Text(
+                            "No workflow usage data for this time range",
+                            size=14,
+                            color=Theme.TEXT_SECONDARY,
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=8,
+                ),
+                padding=32,
+                bgcolor=Theme.SURFACE,
+                border_radius=Theme.RADIUS_MD,
+                border=ft.Border.all(1, Theme.BORDER),
+            )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.TABLE_CHART, size=20, color=Theme.PRIMARY),
+                            ft.Text(
+                                "Top Workflows by Cost",
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                                color=Theme.TEXT_PRIMARY,
+                            ),
+                        ],
+                        spacing=8,
+                    ),
+                    table_content,
+                ],
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=ft.Padding.only(bottom=Theme.SPACING_MD),
         )
