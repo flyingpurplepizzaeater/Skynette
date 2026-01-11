@@ -47,5 +47,5 @@ CREATE INDEX IF NOT EXISTS idx_documents_collection ON rag_documents(collection_
 CREATE INDEX IF NOT EXISTS idx_documents_hash ON rag_documents(file_hash);
 CREATE INDEX IF NOT EXISTS idx_documents_status ON rag_documents(status);
 CREATE INDEX IF NOT EXISTS idx_documents_source_path ON rag_documents(source_path);
-CREATE INDEX IF NOT EXISTS idx_chunks_document ON rag_chunks(document_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_document_index ON rag_chunks(document_id, chunk_index);
 CREATE INDEX IF NOT EXISTS idx_chunks_embedding_hash ON rag_chunks(embedding_hash);

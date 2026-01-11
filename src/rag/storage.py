@@ -22,25 +22,64 @@ class RAGStorage:
         """Initialize storage with database path."""
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._connection = None
         self._init_db()
+
+    def _get_connection(self):
+        """Get or create database connection."""
+        if self._connection is None:
+            self._connection = sqlite3.connect(self.db_path)
+            self._connection.execute("PRAGMA foreign_keys = ON")
+        return self._connection
+
+    def close(self):
+        """Close database connection."""
+        if self._connection:
+            self._connection.close()
+            self._connection = None
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
+        self.close()
 
     def _init_db(self):
         """Initialize database schema."""
         schema_path = Path(__file__).parent / "schema.sql"
-        with open(schema_path, 'r') as f:
-            schema = f.read()
+        try:
+            with open(schema_path, 'r') as f:
+                schema = f.read()
+        except FileNotFoundError:
+            raise RuntimeError(
+                f"Database schema file not found at {schema_path}. "
+                "Ensure schema.sql is included in the package."
+            )
 
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            conn = self._get_connection()
             conn.executescript(schema)
+            conn.commit()
+        except sqlite3.Error as e:
+            raise RuntimeError(f"Failed to initialize database: {e}")
 
     # Collection methods
 
     def save_collection(self, collection: Collection) -> None:
         """Save or update collection."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            conn = self._get_connection()
             cursor = conn.cursor()
+
+            # Check for duplicate name with different ID
+            cursor.execute("""
+                SELECT id FROM rag_collections WHERE name = ?
+            """, (collection.name,))
+            existing = cursor.fetchone()
+            if existing and existing[0] != collection.id:
+                raise ValueError(f"Collection name '{collection.name}' already exists")
 
             cursor.execute("""
                 INSERT OR REPLACE INTO rag_collections
@@ -59,20 +98,27 @@ class RAGStorage:
                 collection.updated_at.isoformat()
             ))
 
+            conn.commit()
+        except sqlite3.IntegrityError as e:
+            conn.rollback()
+            raise RuntimeError(f"Database integrity error: {e}")
+        except sqlite3.Error as e:
+            conn.rollback()
+            raise RuntimeError(f"Failed to save collection: {e}")
+
     def get_collection(self, collection_id: str) -> Optional[Collection]:
         """Get collection by ID."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.cursor()
+        conn = self._get_connection()
+        cursor = conn.cursor()
 
-            cursor.execute("""
-                SELECT id, name, description, embedding_model, chunk_size, chunk_overlap,
-                       max_chunk_size, created_at, updated_at
-                FROM rag_collections
-                WHERE id = ?
-            """, (collection_id,))
+        cursor.execute("""
+            SELECT id, name, description, embedding_model, chunk_size, chunk_overlap,
+                   max_chunk_size, created_at, updated_at
+            FROM rag_collections
+            WHERE id = ?
+        """, (collection_id,))
 
-            row = cursor.fetchone()
+        row = cursor.fetchone()
 
         if not row:
             return None
@@ -91,18 +137,17 @@ class RAGStorage:
 
     def list_collections(self) -> List[Collection]:
         """List all collections."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.cursor()
+        conn = self._get_connection()
+        cursor = conn.cursor()
 
-            cursor.execute("""
-                SELECT id, name, description, embedding_model, chunk_size, chunk_overlap,
-                       max_chunk_size, created_at, updated_at
-                FROM rag_collections
-                ORDER BY created_at DESC
-            """)
+        cursor.execute("""
+            SELECT id, name, description, embedding_model, chunk_size, chunk_overlap,
+                   max_chunk_size, created_at, updated_at
+            FROM rag_collections
+            ORDER BY created_at DESC
+        """)
 
-            rows = cursor.fetchall()
+        rows = cursor.fetchall()
 
         return [
             Collection(
@@ -121,17 +166,17 @@ class RAGStorage:
 
     def delete_collection(self, collection_id: str) -> None:
         """Delete collection (cascades to documents/chunks)."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM rag_collections WHERE id = ?", (collection_id,))
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM rag_collections WHERE id = ?", (collection_id,))
+        conn.commit()
 
     # Document methods
 
     def save_document(self, document: Document) -> None:
         """Save or update document."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            conn = self._get_connection()
             cursor = conn.cursor()
 
             cursor.execute("""
@@ -153,20 +198,29 @@ class RAGStorage:
                 document.error
             ))
 
+            conn.commit()
+        except sqlite3.IntegrityError as e:
+            conn.rollback()
+            if "FOREIGN KEY constraint failed" in str(e):
+                raise ValueError(f"Collection '{document.collection_id}' does not exist")
+            raise RuntimeError(f"Database integrity error: {e}")
+        except sqlite3.Error as e:
+            conn.rollback()
+            raise RuntimeError(f"Failed to save document: {e}")
+
     def get_document(self, document_id: str) -> Optional[Document]:
         """Get document by ID."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.cursor()
+        conn = self._get_connection()
+        cursor = conn.cursor()
 
-            cursor.execute("""
-                SELECT id, collection_id, source_path, file_type, file_hash, file_size,
-                       chunk_count, indexed_at, last_updated, status, error
-                FROM rag_documents
-                WHERE id = ?
-            """, (document_id,))
+        cursor.execute("""
+            SELECT id, collection_id, source_path, file_type, file_hash, file_size,
+                   chunk_count, indexed_at, last_updated, status, error
+            FROM rag_documents
+            WHERE id = ?
+        """, (document_id,))
 
-            row = cursor.fetchone()
+        row = cursor.fetchone()
 
         if not row:
             return None
@@ -189,8 +243,8 @@ class RAGStorage:
 
     def save_chunk(self, chunk: Chunk) -> None:
         """Save chunk."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            conn = self._get_connection()
             cursor = conn.cursor()
 
             cursor.execute("""
@@ -203,23 +257,32 @@ class RAGStorage:
                 chunk.chunk_index,
                 chunk.content,
                 chunk.embedding_hash,
-                json.dumps(chunk.metadata),
+                json.dumps(chunk.metadata) if chunk.metadata else None,
                 chunk.created_at.isoformat()
             ))
 
+            conn.commit()
+        except sqlite3.IntegrityError as e:
+            conn.rollback()
+            if "FOREIGN KEY constraint failed" in str(e):
+                raise ValueError(f"Document '{chunk.document_id}' does not exist")
+            raise RuntimeError(f"Database integrity error: {e}")
+        except sqlite3.Error as e:
+            conn.rollback()
+            raise RuntimeError(f"Failed to save chunk: {e}")
+
     def get_chunk(self, chunk_id: str) -> Optional[Chunk]:
         """Get chunk by ID."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.cursor()
+        conn = self._get_connection()
+        cursor = conn.cursor()
 
-            cursor.execute("""
-                SELECT id, document_id, chunk_index, content, embedding_hash, metadata, created_at
-                FROM rag_chunks
-                WHERE id = ?
-            """, (chunk_id,))
+        cursor.execute("""
+            SELECT id, document_id, chunk_index, content, embedding_hash, metadata, created_at
+            FROM rag_chunks
+            WHERE id = ?
+        """, (chunk_id,))
 
-            row = cursor.fetchone()
+        row = cursor.fetchone()
 
         if not row:
             return None
@@ -236,18 +299,17 @@ class RAGStorage:
 
     def get_document_chunks(self, document_id: str) -> List[Chunk]:
         """Get all chunks for a document."""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
-            cursor = conn.cursor()
+        conn = self._get_connection()
+        cursor = conn.cursor()
 
-            cursor.execute("""
-                SELECT id, document_id, chunk_index, content, embedding_hash, metadata, created_at
-                FROM rag_chunks
-                WHERE document_id = ?
-                ORDER BY chunk_index
-            """, (document_id,))
+        cursor.execute("""
+            SELECT id, document_id, chunk_index, content, embedding_hash, metadata, created_at
+            FROM rag_chunks
+            WHERE document_id = ?
+            ORDER BY chunk_index
+        """, (document_id,))
 
-            rows = cursor.fetchall()
+        rows = cursor.fetchall()
 
         return [
             Chunk(

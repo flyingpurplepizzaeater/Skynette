@@ -11,7 +11,9 @@ class TestRAGStorage:
     @pytest.fixture
     def storage(self, tmp_path):
         """Create temp storage."""
-        return RAGStorage(str(tmp_path / "test.db"))
+        storage = RAGStorage(str(tmp_path / "test.db"))
+        yield storage
+        storage.close()
 
     def test_create_collection(self, storage):
         """Should create and retrieve collection."""
@@ -122,3 +124,33 @@ class TestRAGStorage:
         chunks = storage.get_document_chunks(doc.id)
         assert len(chunks) == 3
         assert chunks[0].chunk_index == 0
+
+    def test_duplicate_collection_name_raises_error(self, storage):
+        """Should reject duplicate collection names."""
+        coll1 = Collection(name="duplicate")
+        storage.save_collection(coll1)
+
+        coll2 = Collection(name="duplicate")  # Same name, different ID
+        with pytest.raises(ValueError, match="already exists"):
+            storage.save_collection(coll2)
+
+    def test_update_existing_collection(self, storage):
+        """Should update collection when saving with existing ID."""
+        coll = Collection(name="test", description="Original")
+        storage.save_collection(coll)
+
+        # Update description
+        coll.description = "Updated"
+        storage.save_collection(coll)
+
+        retrieved = storage.get_collection(coll.id)
+        assert retrieved.description == "Updated"
+
+    def test_context_manager_closes_connection(self, tmp_path):
+        """Should close connection when used as context manager."""
+        with RAGStorage(str(tmp_path / "test.db")) as storage:
+            coll = Collection(name="test")
+            storage.save_collection(coll)
+
+        # Connection should be closed
+        assert storage._connection is None
