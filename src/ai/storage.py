@@ -7,7 +7,7 @@ Handles all AI-related database operations.
 import sqlite3
 import json
 from pathlib import Path
-from datetime import datetime, date, timezone, timedelta
+from datetime import datetime, date, timezone
 from typing import Optional, List, Dict, Any
 
 from src.ai.models.data import ProviderConfig, UsageRecord, LocalModel, BudgetSettings
@@ -405,15 +405,3 @@ class AIStorage:
             ))
 
             conn.commit()
-
-
-# Global storage instance
-_ai_storage_instance: Optional[AIStorage] = None
-
-
-def get_ai_storage() -> AIStorage:
-    """Get or create the global AIStorage instance."""
-    global _ai_storage_instance
-    if _ai_storage_instance is None:
-        _ai_storage_instance = AIStorage()
-    return _ai_storage_instance
