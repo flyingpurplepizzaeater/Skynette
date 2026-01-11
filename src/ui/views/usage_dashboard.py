@@ -109,6 +109,7 @@ class UsageDashboardView(ft.Column):
                 ft.Container(
                     content=ft.Column(
                         controls=[
+                            self._build_time_range_selector(),
                             self._build_metrics_cards(),
                         ],
                         scroll=ft.ScrollMode.AUTO,
@@ -148,6 +149,45 @@ class UsageDashboardView(ft.Column):
             padding=Theme.SPACING_MD,
             border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
         )
+
+    def _build_time_range_selector(self) -> ft.Container:
+        """Build time range selector buttons."""
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Text("Time Range:", size=14, color=Theme.TEXT_SECONDARY, weight=ft.FontWeight.W_500),
+                    self._build_time_range_button("Last 7 days", "last_7d"),
+                    self._build_time_range_button("Last 30 days", "last_30d"),
+                    self._build_time_range_button("This Month", "this_month"),
+                    self._build_time_range_button("Last Month", "last_month"),
+                ],
+                spacing=8,
+            ),
+            padding=ft.Padding.only(bottom=Theme.SPACING_MD, left=0, right=0, top=0),
+        )
+
+    def _build_time_range_button(self, label: str, range_type: str) -> ft.TextButton:
+        """Build a time range selection button."""
+        is_selected = self.current_time_range == range_type
+
+        return ft.TextButton(
+            label,
+            on_click=lambda e: self._on_time_range_change(range_type),
+            style=ft.ButtonStyle(
+                bgcolor=Theme.PRIMARY if is_selected else Theme.SURFACE,
+                color=ft.Colors.WHITE if is_selected else Theme.TEXT_PRIMARY,
+            ),
+        )
+
+    def _on_time_range_change(self, range_type: str):
+        """Handle time range selection change."""
+        self.current_time_range = range_type
+        self.start_date, self.end_date = self._calculate_time_range(range_type)
+
+        # Reload data with new time range
+        if self._page:
+            asyncio.create_task(self._load_dashboard_data())
+            self._page.update()
 
     def _build_metrics_cards(self) -> ft.Container:
         """Build metrics cards displaying key statistics."""
