@@ -1,0 +1,69 @@
+import pytest
+import flet as ft
+from datetime import datetime, timezone
+from src.ui.components.collection_card import CollectionCard
+from src.ui.models.knowledge_bases import CollectionCardData
+
+
+class TestCollectionCard:
+    def test_card_creation(self):
+        """CollectionCard should create with data."""
+        data = CollectionCardData(
+            id="coll-123",
+            name="TestCollection",
+            description="Test description",
+            document_count=10,
+            chunk_count=50,
+            last_updated=datetime.now(timezone.utc),
+            storage_size_bytes=1024 * 1024,  # 1 MB
+            embedding_model="local",
+        )
+
+        card = CollectionCard(
+            data=data,
+            on_query=lambda id: None,
+            on_manage=lambda id: None,
+        )
+
+        assert card is not None
+        assert isinstance(card, ft.Container)
+
+    def test_format_time_ago_seconds(self):
+        """_format_time_ago should format seconds."""
+        from src.ui.components.collection_card import CollectionCard
+
+        data = CollectionCardData(
+            id="test",
+            name="Test",
+            description="",
+            document_count=0,
+            chunk_count=0,
+            last_updated=datetime.now(timezone.utc),
+            storage_size_bytes=0,
+            embedding_model="local",
+        )
+        card = CollectionCard(data, lambda x: None, lambda x: None)
+
+        result = card._format_time_ago(datetime.now(timezone.utc))
+        assert result == "just now"
+
+    def test_format_bytes(self):
+        """_format_bytes should format sizes correctly."""
+        from src.ui.components.collection_card import CollectionCard
+
+        data = CollectionCardData(
+            id="test",
+            name="Test",
+            description="",
+            document_count=0,
+            chunk_count=0,
+            last_updated=datetime.now(timezone.utc),
+            storage_size_bytes=0,
+            embedding_model="local",
+        )
+        card = CollectionCard(data, lambda x: None, lambda x: None)
+
+        assert card._format_bytes(512) == "512.0 B"
+        assert card._format_bytes(1024) == "1.0 KB"
+        assert card._format_bytes(1024 * 1024) == "1.0 MB"
+        assert card._format_bytes(1024 * 1024 * 1024) == "1.0 GB"

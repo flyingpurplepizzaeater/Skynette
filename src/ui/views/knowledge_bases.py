@@ -4,6 +4,7 @@ import flet as ft
 from typing import List, Optional
 from src.ui.theme import Theme
 from src.ui.models.knowledge_bases import CollectionCardData
+from src.ui.components.collection_card import CollectionCard
 from src.rag.service import RAGService
 
 
@@ -55,8 +56,29 @@ class KnowledgeBasesView(ft.Column):
         if not self.collections:
             return self._build_empty_state()
 
-        # TODO: Implement grid layout in next task
-        return ft.Column()
+        # Grid: 3 cards per row
+        rows = []
+        for i in range(0, len(self.collections), 3):
+            row_collections = self.collections[i:i+3]
+            rows.append(
+                ft.Row(
+                    controls=[
+                        CollectionCard(
+                            data=coll,
+                            on_query=self._on_query_collection,
+                            on_manage=self._on_manage_collection,
+                        )
+                        for coll in row_collections
+                    ],
+                    spacing=16,
+                    wrap=True,
+                )
+            )
+
+        return ft.Column(
+            controls=rows,
+            spacing=16,
+        )
 
     def _build_empty_state(self):
         """Build empty state when no collections exist."""
@@ -91,5 +113,15 @@ class KnowledgeBasesView(ft.Column):
 
     def _on_new_collection(self, e):
         """Handle New Collection button click."""
+        # TODO: Implement in Task 4 (CollectionDialog)
+        pass
+
+    def _on_query_collection(self, collection_id: str):
+        """Handle Query button click."""
+        # TODO: Implement in Task 7 (QueryDialog)
+        pass
+
+    def _on_manage_collection(self, collection_id: str):
+        """Handle Manage button click."""
         # TODO: Implement in Task 4 (CollectionDialog)
         pass
