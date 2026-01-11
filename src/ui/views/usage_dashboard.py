@@ -3,6 +3,7 @@ Usage Dashboard View - AI Cost Analytics & Budget Management.
 Visualizes AI usage metrics, costs, and budget tracking.
 """
 
+import asyncio
 import flet as ft
 from datetime import date, datetime, timedelta
 from typing import Optional, Dict, Any, Tuple
@@ -45,10 +46,63 @@ class UsageDashboardView(ft.Column):
             # Default to this month
             return date(today.year, today.month, 1), today
 
+    async def _fetch_usage_data(self) -> Dict[str, Any]:
+        """Fetch usage statistics for current time range."""
+        try:
+            stats = await self.ai_storage.get_usage_stats(self.start_date, self.end_date)
+            return stats
+        except Exception as e:
+            print(f"Error fetching usage data: {e}")
+            return {
+                "total_calls": 0,
+                "total_tokens": 0,
+                "total_cost": 0.0,
+                "avg_latency": 0.0,
+            }
+
+    async def _fetch_budget_data(self):
+        """Fetch budget settings."""
+        try:
+            budget = await self.ai_storage.get_budget_settings()
+            return budget
+        except Exception as e:
+            print(f"Error fetching budget data: {e}")
+            return None
+
+    async def _load_dashboard_data(self):
+        """Load all dashboard data asynchronously."""
+        # Fetch data in parallel
+        usage_task = self._fetch_usage_data()
+        budget_task = self._fetch_budget_data()
+
+        usage_stats = await usage_task
+        budget_settings = await budget_task
+
+        # Update UI with fetched data
+        self._update_metrics_with_data(usage_stats, budget_settings)
+
+    def _update_metrics_with_data(self, usage_stats: Dict[str, Any], budget_settings):
+        """Update metrics cards with fetched data."""
+        # Store data for rendering
+        self.usage_stats = usage_stats
+        self.budget_settings = budget_settings
+
+        # Trigger UI update
+        if self._page:
+            self._page.update()
+
     def build(self):
         """Build the usage dashboard layout."""
         # Set default time range
         self.start_date, self.end_date = self._calculate_time_range(self.current_time_range)
+
+        # Initialize data
+        self.usage_stats = None
+        self.budget_settings = None
+
+        # Trigger async data loading
+        if self._page:
+            asyncio.create_task(self._load_dashboard_data())
 
         return ft.Column(
             controls=[
@@ -98,11 +152,20 @@ class UsageDashboardView(ft.Column):
 
     def _build_metrics_cards(self) -> ft.Container:
         """Build metrics cards displaying key statistics."""
-        # Placeholder data (will fetch from AIStorage in async method)
-        total_cost = 0.0
-        total_calls = 0
-        total_tokens = 0
+        # Use real data if available, otherwise show zeros
+        if self.usage_stats:
+            total_cost = self.usage_stats.get("total_cost", 0.0)
+            total_calls = self.usage_stats.get("total_calls", 0)
+            total_tokens = self.usage_stats.get("total_tokens", 0)
+        else:
+            total_cost = 0.0
+            total_calls = 0
+            total_tokens = 0
+
+        # Calculate budget percentage
         budget_percentage = 0.0
+        if self.budget_settings and self.budget_settings.monthly_limit_usd > 0:
+            budget_percentage = total_cost / self.budget_settings.monthly_limit_usd
 
         return ft.Container(
             content=ft.Row(
