@@ -207,7 +207,6 @@ class AgentsView(ft.Column):
             )
         )
         if self._page:
-            if self._page:
             self._page.update()
 
         asyncio.create_task(self._run_supervisor(prompt))
@@ -220,7 +219,7 @@ class AgentsView(ft.Column):
                 ft.Row([ft.ProgressRing(width=16, height=16), ft.Text("Supervisor is planning...")])
             )
             if self._page:
-            self._page.update()
+                self._page.update()
 
             # Execute
             async for event in self.supervisor.execute(prompt):
@@ -258,7 +257,7 @@ class AgentsView(ft.Column):
                         )
 
                 if self._page:
-            self._page.update()
+                    self._page.update()
 
             # Final cleanup of loading
             if self.results_column.controls and isinstance(self.results_column.controls[-1], ft.Row):
@@ -285,4 +284,4 @@ class AgentsView(ft.Column):
             self.run_btn.disabled = False
             self.input_field.disabled = False
             if self._page:
-            self._page.update()
+                self._page.update()

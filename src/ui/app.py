@@ -192,7 +192,7 @@ class SkynetteApp:
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         spacing=4,
                     ),
-                    padding=ft.padding.symmetric(vertical=12, horizontal=8),
+                    padding=ft.Padding.symmetric(vertical=12, horizontal=8),
                     border_radius=SkynetteTheme.RADIUS_MD,
                     bgcolor=(
                         SkynetteTheme.BG_TERTIARY
@@ -219,7 +219,7 @@ class SkynetteApp:
                             ],
                             alignment=ft.MainAxisAlignment.CENTER,
                         ),
-                        padding=ft.padding.symmetric(vertical=16),
+                        padding=ft.Padding.symmetric(vertical=16),
                     ),
                     ft.Divider(height=1, color=SkynetteTheme.BORDER),
                     # Navigation Items
@@ -249,7 +249,7 @@ class SkynetteApp:
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=4,
                         ),
-                        padding=ft.padding.symmetric(vertical=12, horizontal=8),
+                        padding=ft.Padding.symmetric(vertical=12, horizontal=8),
                         border_radius=SkynetteTheme.RADIUS_MD,
                         on_click=lambda e: self._navigate_to("settings"),
                         on_hover=lambda e: self._on_nav_hover(e),
@@ -259,61 +259,52 @@ class SkynetteApp:
             ),
             width=SkynetteTheme.SIDEBAR_WIDTH,
             bgcolor=SkynetteTheme.BG_SECONDARY,
-            padding=ft.padding.symmetric(horizontal=4, vertical=8),
+            padding=ft.Padding.symmetric(horizontal=4, vertical=8),
         )
 
-    def _build_provider_status_bar(self) -> ft.Container:
-        """Build provider status indicator for top bar."""
+    def _build_provider_status_bar(self):
+        """Build provider status indicator."""
         from src.ai.security import has_api_key
 
-        # Count configured cloud providers
+        # Count configured providers
         providers = ["openai", "anthropic"]
         configured_count = sum(1 for p in providers if has_api_key(p))
 
         # Always count local as available
-        total_available = configured_count + 1  # +1 for local
+        total_available = configured_count + 1
 
-        # Determine color and icon based on status
-        if configured_count > 0:
-            # Multiple providers (cloud + local)
-            color = SkynetteTheme.SUCCESS  # Green
-            icon = ft.Icons.CLOUD_DONE
-            status_text = f"{total_available} AI Providers"
+        if total_available == 0:
+            icon_color = SkynetteTheme.TEXT_MUTED
+            tooltip = "No AI providers configured"
         elif configured_count == 0:
-            # Local only
-            color = SkynetteTheme.WARNING  # Yellow
-            icon = ft.Icons.COMPUTER
-            status_text = "Local AI Only"
+            icon_color = SkynetteTheme.WARNING
+            tooltip = f"{total_available} provider available (Local only)"
         else:
-            # None configured (shouldn't happen since we always have local)
-            color = SkynetteTheme.TEXT_SECONDARY  # Gray
-            icon = ft.Icons.CLOUD_OFF
-            status_text = "No AI Providers"
+            icon_color = SkynetteTheme.SUCCESS
+            tooltip = f"{total_available} providers available"
 
-        # Create clickable status bar
-        status_bar = ft.Container(
+        return ft.Container(
             content=ft.Row(
                 controls=[
-                    ft.Icon(icon, color=color, size=16),
+                    ft.Icon(
+                        ft.Icons.CLOUD_DONE if total_available > 1 else ft.Icons.COMPUTER,
+                        size=16,
+                        color=icon_color,
+                    ),
                     ft.Text(
-                        status_text,
+                        f"{total_available} AI",
                         size=12,
-                        color=color,
-                        weight=ft.FontWeight.W_500,
+                        color=icon_color,
                     ),
                 ],
                 spacing=4,
-                tight=True,
             ),
-            padding=ft.padding.symmetric(horizontal=12, vertical=6),
-            border_radius=6,
-            bgcolor=f"{color}22",  # 22 = 13% opacity
-            tooltip=f"{configured_count} cloud provider(s) + 1 local provider configured",
-            on_click=lambda e: self._show_ai_hub(),
-            ink=True,
+            tooltip=tooltip,
+            on_click=lambda e: self._navigate_to("ai_hub"),
+            padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+            border_radius=12,
+            bgcolor=SkynetteTheme.BG_SECONDARY,
         )
-
-        return status_bar
 
     def _build_top_bar(self) -> ft.Container:
         """Build the top bar with title and actions."""
@@ -330,7 +321,6 @@ class SkynetteApp:
                     # View Title
                     self.view_title_text,
                     ft.Container(expand=True),
-                    # Provider Status Bar
                     self._build_provider_status_bar(),
                     # Action Buttons
                     ft.IconButton(
@@ -351,7 +341,7 @@ class SkynetteApp:
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
-            padding=ft.padding.symmetric(horizontal=24, vertical=12),
+            padding=ft.Padding.symmetric(horizontal=24, vertical=12),
             bgcolor=SkynetteTheme.BG_PRIMARY,
         )
 
@@ -414,8 +404,8 @@ class SkynetteApp:
                                 ),
                             ],
                         ),
-                        padding=ft.padding.all(12),
-                        border=ft.border.only(
+                        padding=ft.Padding.all(12),
+                        border=ft.Border.only(
                             bottom=ft.BorderSide(1, SkynetteTheme.BORDER)
                         ),
                     ),
@@ -423,7 +413,7 @@ class SkynetteApp:
                     ft.Container(
                         content=self.chat_messages_column,
                         expand=True,
-                        padding=ft.padding.all(12),
+                        padding=ft.Padding.all(12),
                     ),
                     # Input Area
                     ft.Container(
@@ -439,8 +429,8 @@ class SkynetteApp:
                             ],
                             spacing=8,
                         ),
-                        padding=ft.padding.all(12),
-                        border=ft.border.only(
+                        padding=ft.Padding.all(12),
+                        border=ft.Border.only(
                             top=ft.BorderSide(1, SkynetteTheme.BORDER)
                         ),
                     ),
@@ -449,7 +439,7 @@ class SkynetteApp:
             ),
             width=320,
             bgcolor=SkynetteTheme.BG_SECONDARY,
-            border=ft.border.only(left=ft.BorderSide(1, SkynetteTheme.BORDER)),
+            border=ft.Border.only(left=ft.BorderSide(1, SkynetteTheme.BORDER)),
             visible=self.assistant_visible,
         )
         return self.assistant_panel
@@ -497,7 +487,7 @@ class SkynetteApp:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=8,
             ),
-            padding=ft.padding.all(16),
+            padding=ft.Padding.all(16),
         )
 
     def _build_chat_message(self, message: ChatMessage) -> ft.Container:
@@ -537,14 +527,14 @@ class SkynetteApp:
                             size=SkynetteTheme.FONT_SM,
                             color=SkynetteTheme.TEXT_PRIMARY,
                         ),
-                        padding=ft.padding.all(10),
+                        padding=ft.Padding.all(10),
                         bgcolor=SkynetteTheme.BG_TERTIARY if is_user else SkynetteTheme.BG_PRIMARY,
                         border_radius=SkynetteTheme.RADIUS_MD,
                     ),
                 ],
                 spacing=4,
             ),
-            padding=ft.padding.only(
+            padding=ft.Padding.only(
                 left=24 if is_user else 0,
                 right=0 if is_user else 24,
             ),
@@ -565,7 +555,7 @@ class SkynetteApp:
                 ],
                 spacing=8,
             ),
-            padding=ft.padding.all(12),
+            padding=ft.Padding.all(12),
         )
 
     def _on_chat_submit(self, e):
@@ -665,7 +655,7 @@ class SkynetteApp:
                 size=SkynetteTheme.FONT_SM,
                 color=SkynetteTheme.TEXT_SECONDARY,
             ),
-            padding=ft.padding.symmetric(horizontal=12, vertical=8),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=8),
             border_radius=SkynetteTheme.RADIUS_MD,
             bgcolor=SkynetteTheme.BG_TERTIARY,
             on_click=lambda e: self._use_example_prompt(text),
@@ -695,10 +685,6 @@ class SkynetteApp:
         self._update_content()
         self.page.update()
 
-    def _show_ai_hub(self):
-        """Navigate to AI Hub view."""
-        self._navigate_to("ai_hub")
-
     def _build_workflows_view(self) -> ft.Control:
         """Build the workflows list view."""
         # Load workflows from storage
@@ -723,7 +709,7 @@ class SkynetteApp:
                                 color=SkynetteTheme.TEXT_PRIMARY,
                             ),
                             ft.Container(expand=True),
-                            ft.ElevatedButton(
+                            ft.Button(
                                 "New Workflow",
                                 icon=ft.Icons.ADD_ROUNDED,
                                 bgcolor=SkynetteTheme.PRIMARY,
@@ -767,7 +753,7 @@ class SkynetteApp:
                             text_align=ft.TextAlign.CENTER,
                         ),
                         ft.Container(height=24),
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Create Workflow",
                             icon=ft.Icons.ADD,
                             bgcolor=SkynetteTheme.PRIMARY,
@@ -796,7 +782,7 @@ class SkynetteApp:
 
         return ft.Container(
             content=content,
-            padding=ft.padding.all(24),
+            padding=ft.Padding.all(24),
             expand=True,
         )
 
@@ -868,60 +854,25 @@ class SkynetteApp:
             ),
             width=220,
             height=160,
-            padding=ft.padding.all(16),
+            padding=ft.Padding.all(16),
             border_radius=SkynetteTheme.RADIUS_LG,
             bgcolor=SkynetteTheme.BG_SECONDARY,
-            border=ft.border.all(1, SkynetteTheme.BORDER),
+            border=ft.Border.all(1, SkynetteTheme.BORDER),
             on_click=lambda e, w=wf: self._open_workflow(w["id"]),
             on_hover=lambda e: self._on_card_hover(e),
         )
 
     def _on_card_hover(self, e):
         """Handle workflow card hover."""
-        e.control.border = ft.border.all(
+        e.control.border = ft.Border.all(
             1, SkynetteTheme.PRIMARY if e.data == "true" else SkynetteTheme.BORDER
         )
         e.control.update()
 
     def _build_ai_hub_view(self) -> ft.Control:
         """Build the AI Model Hub view."""
-        return ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "AI Model Hub",
-                        size=SkynetteTheme.FONT_LG,
-                        weight=ft.FontWeight.W_500,
-                        color=SkynetteTheme.TEXT_PRIMARY,
-                    ),
-                    ft.Container(height=16),
-                    ft.Text(
-                        "Browse, download, and manage AI models",
-                        size=SkynetteTheme.FONT_SM,
-                        color=SkynetteTheme.TEXT_SECONDARY,
-                    ),
-                    ft.Container(height=24),
-                    # Placeholder for model categories
-                    ft.Row(
-                        controls=[
-                            self._build_model_category_card(
-                                "Recommended", ft.Icons.STAR_ROUNDED, "5 models"
-                            ),
-                            self._build_model_category_card(
-                                "Trending", ft.Icons.TRENDING_UP_ROUNDED, "12 models"
-                            ),
-                            self._build_model_category_card(
-                                "My Models", ft.Icons.FOLDER_ROUNDED, "0 installed"
-                            ),
-                        ],
-                        wrap=True,
-                        spacing=16,
-                    ),
-                ],
-            ),
-            padding=ft.padding.all(24),
-            expand=True,
-        )
+        from src.ui.views.ai_hub import AIHubView
+        return AIHubView(page=self.page).build()
 
     def _build_model_category_card(
         self, title: str, icon: str, subtitle: str
@@ -947,10 +898,10 @@ class SkynetteApp:
                 spacing=8,
             ),
             width=150,
-            padding=ft.padding.all(20),
+            padding=ft.Padding.all(20),
             border_radius=SkynetteTheme.RADIUS_LG,
             bgcolor=SkynetteTheme.BG_SECONDARY,
-            border=ft.border.all(1, SkynetteTheme.BORDER),
+            border=ft.Border.all(1, SkynetteTheme.BORDER),
         )
 
     def _build_plugins_view(self) -> ft.Control:
@@ -972,7 +923,7 @@ class SkynetteApp:
                     ),
                 ],
             ),
-            padding=ft.padding.all(24),
+            padding=ft.Padding.all(24),
             expand=True,
         )
 
@@ -995,7 +946,7 @@ class SkynetteApp:
                     ),
                 ],
             ),
-            padding=ft.padding.all(24),
+            padding=ft.Padding.all(24),
             expand=True,
         )
 
@@ -1018,14 +969,14 @@ class SkynetteApp:
     def _build_settings_view(self) -> ft.Control:
         """Build the settings view."""
         # Initialize update buttons
-        self.check_update_btn = ft.ElevatedButton(
+        self.check_update_btn = ft.Button(
             "Check for Updates",
             icon=ft.Icons.REFRESH_ROUNDED,
             bgcolor=SkynetteTheme.BG_TERTIARY,
             color=SkynetteTheme.TEXT_PRIMARY,
             on_click=self._check_for_updates,
         )
-        self.download_update_btn = ft.ElevatedButton(
+        self.download_update_btn = ft.Button(
             "Download & Install",
             icon=ft.Icons.DOWNLOAD_ROUNDED,
             bgcolor=SkynetteTheme.PRIMARY,
@@ -1188,7 +1139,7 @@ class SkynetteApp:
                 ],
                 scroll=ft.ScrollMode.AUTO,
             ),
-            padding=ft.padding.all(24),
+            padding=ft.Padding.all(24),
             expand=True,
         )
 
@@ -1209,9 +1160,9 @@ class SkynetteApp:
                 spacing=0,
             ),
             bgcolor=SkynetteTheme.BG_SECONDARY,
-            padding=ft.padding.all(16),
+            padding=ft.Padding.all(16),
             border_radius=SkynetteTheme.RADIUS_LG,
-            border=ft.border.all(1, SkynetteTheme.BORDER),
+            border=ft.Border.all(1, SkynetteTheme.BORDER),
         )
 
     def _on_update_progress(self, message: str, percent: float):
@@ -1298,7 +1249,7 @@ class SkynetteApp:
             ),
             actions=[
                 ft.TextButton("Later", on_click=close_dialog),
-                ft.ElevatedButton(
+                ft.Button(
                     "Restart Now",
                     icon=ft.Icons.RESTART_ALT_ROUNDED,
                     bgcolor=SkynetteTheme.PRIMARY,
@@ -1391,7 +1342,7 @@ class SkynetteApp:
             content=ft.Text(message, size=14),
             actions=[
                 ft.TextButton("Cancel", on_click=handle_cancel),
-                ft.ElevatedButton(
+                ft.Button(
                     confirm_text,
                     on_click=handle_confirm,
                     bgcolor=SkynetteTheme.ERROR if is_destructive else SkynetteTheme.PRIMARY,
@@ -1458,7 +1409,7 @@ class SkynetteApp:
             ),
             actions=[
                 ft.TextButton("Cancel", on_click=cancel),
-                ft.ElevatedButton(
+                ft.Button(
                     "Create",
                     bgcolor=SkynetteTheme.PRIMARY,
                     color=SkynetteTheme.TEXT_PRIMARY,
@@ -1553,14 +1504,14 @@ class SkynetteApp:
                                     controls=[
                                         ft.Container(
                                             content=ft.Text("Simple", size=12, color=SkynetteTheme.TEXT_PRIMARY if self.simple_mode else SkynetteTheme.TEXT_MUTED),
-                                            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                                            padding=ft.Padding.symmetric(horizontal=12, vertical=6),
                                             bgcolor=SkynetteTheme.PRIMARY if self.simple_mode else "transparent",
                                             border_radius=4,
                                             on_click=lambda e: self._set_editor_mode(simple=True),
                                         ),
                                         ft.Container(
                                             content=ft.Text("Advanced", size=12, color=SkynetteTheme.TEXT_PRIMARY if not self.simple_mode else SkynetteTheme.TEXT_MUTED),
-                                            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                                            padding=ft.Padding.symmetric(horizontal=12, vertical=6),
                                             bgcolor=SkynetteTheme.PRIMARY if not self.simple_mode else "transparent",
                                             border_radius=4,
                                             on_click=lambda e: self._set_editor_mode(simple=False),
@@ -1581,7 +1532,7 @@ class SkynetteApp:
                                 icon_color=SkynetteTheme.SUCCESS,
                                 on_click=lambda e: self._run_current_workflow(),
                             ),
-                            ft.ElevatedButton(
+                            ft.Button(
                                 "Save",
                                 icon=ft.Icons.SAVE,
                                 bgcolor=SkynetteTheme.PRIMARY,
@@ -1591,8 +1542,8 @@ class SkynetteApp:
                         ],
                     ),
                     bgcolor=SkynetteTheme.BG_SECONDARY,
-                    padding=ft.padding.symmetric(horizontal=16, vertical=8),
-                    border=ft.border.only(bottom=ft.BorderSide(1, SkynetteTheme.BORDER)),
+                    padding=ft.Padding.symmetric(horizontal=16, vertical=8),
+                    border=ft.Border.only(bottom=ft.BorderSide(1, SkynetteTheme.BORDER)),
                 ),
                 # Editor area - Simple or Advanced based on mode
                 self._build_simple_editor_content() if self.simple_mode else self._build_advanced_editor_content(),
@@ -1624,21 +1575,8 @@ class SkynetteApp:
                 categories[cat] = []
             categories[cat].append(node_def)
 
-        # Define category ordering (AI comes after triggers and before actions)
-        category_order = ["trigger", "AI", "action", "flow", "http", "data", "apps", "utility", "coding", "database", "other"]
-
-        # Sort categories by defined order
-        def category_sort_key(cat_name):
-            cat_lower = cat_name.lower()
-            try:
-                return category_order.index(cat_lower)
-            except ValueError:
-                return len(category_order)  # Unknown categories go last
-
-        sorted_categories = sorted(categories.items(), key=lambda x: category_sort_key(x[0]))
-
         palette_items = []
-        for cat_name, nodes in sorted_categories:
+        for cat_name, nodes in sorted(categories.items()):
             node_buttons = []
             for node_def in sorted(nodes, key=lambda n: n.name):
                 node_buttons.append(
@@ -1653,9 +1591,9 @@ class SkynetteApp:
             palette_items.append(
                 ft.ExpansionTile(
                     title=ft.Text(cat_name.title(), size=13, weight=ft.FontWeight.W_500),
-                    expanded=cat_name.lower() in ["triggers", "trigger", "ai"],  # AI category also expanded by default
+                    expanded=cat_name.lower() in ["triggers", "trigger"],
                     controls=node_buttons,
-                    tile_padding=ft.padding.symmetric(horizontal=8),
+                    tile_padding=ft.Padding.symmetric(horizontal=8),
                 )
             )
 
@@ -1685,7 +1623,7 @@ class SkynetteApp:
                     ),
                     width=220,
                     bgcolor=SkynetteTheme.BG_SECONDARY,
-                    border=ft.border.only(right=ft.BorderSide(1, SkynetteTheme.BORDER)),
+                    border=ft.Border.only(right=ft.BorderSide(1, SkynetteTheme.BORDER)),
                 ),
                 # Canvas
                 self._build_canvas(),
@@ -1722,7 +1660,7 @@ class SkynetteApp:
                     ],
                     spacing=4,
                 ),
-                padding=ft.padding.symmetric(horizontal=8),
+                padding=ft.Padding.symmetric(horizontal=8),
                 on_click=lambda e: self._show_execution_details(),
             )
         elif result.status == "failed":
@@ -1734,7 +1672,7 @@ class SkynetteApp:
                     ],
                     spacing=4,
                 ),
-                padding=ft.padding.symmetric(horizontal=8),
+                padding=ft.Padding.symmetric(horizontal=8),
                 on_click=lambda e: self._show_execution_details(),
             )
         return ft.Container()
@@ -1839,7 +1777,7 @@ class SkynetteApp:
                     ft.Container(
                         content=self._build_connection_selector(node),
                         padding=16,
-                        border=ft.border.only(top=ft.BorderSide(1, Theme.BORDER)),
+                        border=ft.Border.only(top=ft.BorderSide(1, Theme.BORDER)),
                     ),
                 ],
                 spacing=0,
@@ -1847,7 +1785,7 @@ class SkynetteApp:
             ),
             width=320,
             bgcolor=Theme.BG_PRIMARY,
-            border=ft.border.only(left=ft.BorderSide(1, Theme.BORDER)),
+            border=ft.Border.only(left=ft.BorderSide(1, Theme.BORDER)),
         )
 
     def _select_node(self, node_id: str):
@@ -2217,7 +2155,6 @@ class SkynetteApp:
             "action": Theme.PRIMARY,
             "flow": Theme.INFO,
             "http": Theme.SUCCESS,
-            "AI": "#8B5CF6",  # Violet for AI nodes
         }
         color = color_map.get(node_def.category if node_def else "action", Theme.PRIMARY)
 
@@ -2249,7 +2186,7 @@ class SkynetteApp:
             width=120,
             height=80,
             bgcolor=Theme.BG_SECONDARY,
-            border=ft.border.all(2, color),
+            border=ft.Border.all(2, color),
             border_radius=Theme.RADIUS_MD,
             padding=12,
             data=node.id,  # Store node ID for click handling
