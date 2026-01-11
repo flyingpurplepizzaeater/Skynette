@@ -87,6 +87,7 @@ class TestUsageDashboardDataFetching:
         from src.ai.models.data import BudgetSettings
         mock_budget = BudgetSettings(monthly_limit_usd=50.0, alert_threshold=0.8, reset_day=1)
         mock_provider_breakdown = {"openai": 10.0, "anthropic": 2.5}
+        mock_workflow_costs = {"data_processing": 5.0, "content_generation": 3.5}
 
         with patch.object(view, '_fetch_usage_data',
                           new_callable=AsyncMock,
@@ -97,6 +98,9 @@ class TestUsageDashboardDataFetching:
              patch.object(view, '_fetch_provider_breakdown',
                           new_callable=AsyncMock,
                           return_value=mock_provider_breakdown) as mock_provider_fetch, \
+             patch.object(view, '_fetch_workflow_breakdown',
+                          new_callable=AsyncMock,
+                          return_value=mock_workflow_costs) as mock_workflow_fetch, \
              patch.object(view, '_update_metrics_with_data') as mock_update:
 
             await view._load_dashboard_data()
@@ -104,7 +108,8 @@ class TestUsageDashboardDataFetching:
             mock_usage.assert_called_once()
             mock_budget_fetch.assert_called_once()
             mock_provider_fetch.assert_called_once()
-            mock_update.assert_called_once_with(mock_stats, mock_budget, mock_provider_breakdown)
+            mock_workflow_fetch.assert_called_once()
+            mock_update.assert_called_once_with(mock_stats, mock_budget, mock_provider_breakdown, mock_workflow_costs)
 
     def test_update_metrics_with_data_stores_and_updates(self):
         """_update_metrics_with_data should store data and trigger UI update."""

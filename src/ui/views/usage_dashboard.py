@@ -4,8 +4,10 @@ Visualizes AI usage metrics, costs, and budget tracking.
 """
 
 import asyncio
+import csv
 import flet as ft
 from datetime import date, datetime, timedelta
+from io import StringIO
 from typing import Optional, Dict, Any, Tuple
 from src.ui.theme import Theme
 from src.ai.storage import get_ai_storage
@@ -577,6 +579,13 @@ class UsageDashboardView(ft.Column):
                                 weight=ft.FontWeight.BOLD,
                                 color=Theme.TEXT_PRIMARY,
                             ),
+                            ft.Container(expand=True),  # Spacer
+                            ft.IconButton(
+                                icon=ft.Icons.DOWNLOAD,
+                                tooltip="Export CSV",
+                                on_click=lambda e: asyncio.create_task(self._export_csv()),
+                                icon_size=20,
+                            ),
                         ],
                         spacing=8,
                     ),
@@ -702,3 +711,108 @@ class UsageDashboardView(ft.Column):
             print(f"Invalid budget settings: {e}")
         except Exception as e:
             print(f"Error saving budget settings: {e}")
+
+    async def _export_csv(self):
+        """Export usage data to CSV file."""
+        try:
+            # For MVP, export current time range data
+            # Future enhancement: Add dialog to select custom range
+
+            # Build CSV content
+            csv_content = await self._build_csv_content()
+
+            # Generate filename
+            filename = f"skynette-ai-usage-{self.start_date}-to-{self.end_date}.csv"
+
+            # Use Flet's file picker to save
+            if self._page:
+                file_picker = ft.FilePicker(on_result=lambda e: self._on_csv_save_result(e, csv_content))
+                self._page.overlay.append(file_picker)
+                self._page.update()
+
+                # Open save dialog
+                file_picker.save_file(
+                    dialog_title="Export Usage Data",
+                    file_name=filename,
+                    allowed_extensions=["csv"],
+                )
+
+        except Exception as e:
+            print(f"Error exporting CSV: {e}")
+            if self._page:
+                # Show error snackbar
+                snackbar = ft.SnackBar(ft.Text(f"Export failed: {str(e)}"), bgcolor=Theme.ERROR)
+                self._page.overlay.append(snackbar)
+                snackbar.open = True
+                self._page.update()
+
+    async def _build_csv_content(self) -> str:
+        """Build CSV content from usage data."""
+        # CSV Header
+        header = [
+            "Date Range",
+            "Provider",
+            "Workflow",
+            "Cost (USD)",
+            "Calls",
+            "Tokens",
+        ]
+
+        rows = []
+        rows.append(header)
+
+        # Add provider costs
+        provider_costs = getattr(self, 'provider_costs', {})
+        for provider, cost in provider_costs.items():
+            rows.append([
+                f"{self.start_date} to {self.end_date}",
+                provider,
+                "All Workflows",
+                f"{cost:.2f}",
+                "-",
+                "-",
+            ])
+
+        # Add workflow costs
+        workflow_costs = getattr(self, 'workflow_costs', {})
+        for workflow, cost in workflow_costs.items():
+            rows.append([
+                f"{self.start_date} to {self.end_date}",
+                "All Providers",
+                workflow,
+                f"{cost:.2f}",
+                "-",
+                "-",
+            ])
+
+        # Convert to CSV string
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerows(rows)
+        return output.getvalue()
+
+    def _on_csv_save_result(self, e: ft.FilePickerResultEvent, csv_content: str):
+        """Handle CSV file save result."""
+        if e.path:
+            try:
+                # Write CSV to selected file
+                with open(e.path, 'w', newline='', encoding='utf-8') as f:
+                    f.write(csv_content)
+
+                # Show success snackbar
+                if self._page:
+                    snackbar = ft.SnackBar(
+                        ft.Text(f"Exported to {e.path}"),
+                        bgcolor=Theme.SUCCESS,
+                    )
+                    self._page.overlay.append(snackbar)
+                    snackbar.open = True
+                    self._page.update()
+
+            except Exception as ex:
+                print(f"Error writing CSV file: {ex}")
+                if self._page:
+                    snackbar = ft.SnackBar(ft.Text(f"Save failed: {str(ex)}"), bgcolor=Theme.ERROR)
+                    self._page.overlay.append(snackbar)
+                    snackbar.open = True
+                    self._page.update()

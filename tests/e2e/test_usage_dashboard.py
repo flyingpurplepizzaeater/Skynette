@@ -364,3 +364,18 @@ class TestBudgetSettingsUnit:
         assert callable(dashboard._save_budget_settings)
         # Should be async
         assert inspect.iscoroutinefunction(dashboard._save_budget_settings)
+
+
+class TestCSVExport:
+    """Tests for CSV export functionality."""
+
+    @pytest.fixture(autouse=True)
+    def navigate_to_usage(self, page: Page, helpers):
+        """Navigate to Usage Dashboard before each test."""
+        helpers.navigate_to("usage")
+
+    def test_export_button_visible(self, page: Page):
+        """Export CSV button should be visible."""
+        page.wait_for_timeout(1000)
+        # Look for export-related button
+        expect(page.locator("text=Export").or_(page.locator("[aria-label*='Export']"))).to_be_visible(timeout=5000)
