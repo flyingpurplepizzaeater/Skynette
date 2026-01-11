@@ -52,8 +52,10 @@ class RAGService:
         self,
         name: str,
         description: str = "",
+        embedding_model: str = "local",
         chunk_size: int = 1024,
-        chunk_overlap: int = 128
+        chunk_overlap: int = 128,
+        max_chunk_size: int = 2048
     ) -> str:
         """
         Create new collection.
@@ -64,8 +66,10 @@ class RAGService:
         collection = Collection(
             name=name,
             description=description,
+            embedding_model=embedding_model,
             chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
+            chunk_overlap=chunk_overlap,
+            max_chunk_size=max_chunk_size
         )
 
         # Save to metadata storage
@@ -78,6 +82,15 @@ class RAGService:
         )
 
         return collection.id
+
+    async def list_collections(self) -> List[Collection]:
+        """
+        List all collections.
+
+        Returns:
+            List[Collection]: All collections
+        """
+        return self.storage.list_collections()
 
     async def ingest_document(
         self,

@@ -5,6 +5,7 @@ from typing import List, Optional
 from src.ui.theme import Theme
 from src.ui.models.knowledge_bases import CollectionCardData
 from src.ui.components.collection_card import CollectionCard
+from src.ui.dialogs.collection_dialog import CollectionDialog
 from src.rag.service import RAGService
 
 
@@ -113,8 +114,15 @@ class KnowledgeBasesView(ft.Column):
 
     def _on_new_collection(self, e):
         """Handle New Collection button click."""
-        # TODO: Implement in Task 4 (CollectionDialog)
-        pass
+        dialog = CollectionDialog(
+            rag_service=self.rag_service,
+            collection_id=None,
+            on_save=self._on_collection_saved,
+        )
+        if self._page:
+            self._page.dialog = dialog
+            dialog.open = True
+            self._page.update()
 
     def _on_query_collection(self, collection_id: str):
         """Handle Query button click."""
@@ -123,5 +131,25 @@ class KnowledgeBasesView(ft.Column):
 
     def _on_manage_collection(self, collection_id: str):
         """Handle Manage button click."""
-        # TODO: Implement in Task 4 (CollectionDialog)
-        pass
+        dialog = CollectionDialog(
+            rag_service=self.rag_service,
+            collection_id=collection_id,
+            on_save=self._on_collection_saved,
+        )
+        if self._page:
+            self._page.dialog = dialog
+            dialog.open = True
+            self._page.update()
+
+    async def _on_collection_saved(self):
+        """Handle collection save callback."""
+        # Reload collections
+        await self._load_collections()
+
+    async def _load_collections(self):
+        """Load collections from backend."""
+        collections = await self.rag_service.list_collections()
+        # TODO: Convert to CollectionCardData in next step
+        # For now, just refresh
+        if self._page:
+            self._page.update()
