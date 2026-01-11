@@ -70,13 +70,17 @@ class UsageDashboardView(ft.Column):
             return None
 
     async def _fetch_provider_breakdown(self) -> Dict[str, float]:
-        """Fetch provider cost breakdown for current time range."""
+        """Fetch cost breakdown by provider for current time range."""
         try:
-            # Get month and year from end_date (current period)
-            month = self.end_date.month
-            year = self.end_date.year
-            provider_costs = await self.ai_storage.get_cost_by_provider(month, year)
-            return provider_costs
+            # For monthly ranges, use get_cost_by_provider
+            if self.current_time_range in ["this_month", "last_month"]:
+                month = self.start_date.month
+                year = self.start_date.year
+                return await self.ai_storage.get_cost_by_provider(month, year)
+            else:
+                # For custom ranges, aggregate from usage stats
+                # For now, return empty dict (will enhance later if needed)
+                return {}
         except Exception as e:
             print(f"Error fetching provider breakdown: {e}")
             return {}
