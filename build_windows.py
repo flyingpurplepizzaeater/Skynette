@@ -165,7 +165,7 @@ hiddenimports = [
 ]
 
 a = Analysis(
-    ['main.py'],
+    ['src/main.py'],
     pathex=[project_root],
     binaries=[],
     datas=datas,
@@ -248,7 +248,7 @@ def build_executable():
     # Build command
     cmd = [
         sys.executable, "-m", "flet", "pack",
-        "main.py",
+        "src/main.py",
         "--name", "Skynette",
         "--add-data", "src;src",
     ]
