@@ -2,7 +2,6 @@
 
 import flet as ft
 import asyncio
-import os
 from pathlib import Path
 from typing import Optional, Callable, Awaitable
 from src.ui.theme import Theme
@@ -241,6 +240,7 @@ class UploadDialog(ft.AlertDialog):
 
         # Process files with concurrency limit
         semaphore = asyncio.Semaphore(5)  # Max 5 concurrent
+        upload_lock = asyncio.Lock()  # Thread-safe error collection
 
         async def process_file(file_info: dict):
             async with semaphore:
@@ -255,14 +255,15 @@ class UploadDialog(ft.AlertDialog):
                     )
 
                 except Exception as ex:
-                    # Collect error
-                    self.upload_progress.errors.append(
-                        UploadError(
-                            file_path=file_info["path"],
-                            error_message=str(ex),
-                            error_type=self._classify_error(ex),
+                    # Thread-safe error collection
+                    async with upload_lock:
+                        self.upload_progress.errors.append(
+                            UploadError(
+                                file_path=file_info["path"],
+                                error_message=str(ex),
+                                error_type=self._classify_error(ex),
+                            )
                         )
-                    )
                 finally:
                     # Count ALL files (success and error) - moved from try block
                     self.upload_progress.processed_files += 1
