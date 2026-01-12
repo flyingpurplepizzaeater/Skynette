@@ -95,3 +95,49 @@ class TestKnowledgeBasesViewLoading:
                 assert len(view.collections) == 1
                 assert view.collections[0].name == "Test1"
                 assert view.collections[0].document_count == 10
+
+
+class TestKnowledgeBasesViewCaching:
+    @pytest.mark.asyncio
+    async def test_collections_cached(self):
+        """Collections should be cached to avoid repeated fetches."""
+        from unittest.mock import MagicMock
+
+        # Create mock RAGService
+        mock_service = MagicMock()
+        view = KnowledgeBasesView(rag_service=mock_service)
+
+        with patch.object(mock_service, 'list_collections', new_callable=AsyncMock) as mock_list:
+            mock_list.return_value = []
+
+            # First load
+            await view._load_collections()
+            assert mock_list.call_count == 1
+
+            # Second load within cache TTL
+            await view._load_collections()
+            # Should still be 1 (used cache)
+            assert mock_list.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_cache_invalidated_on_create(self):
+        """Cache should invalidate when collection created."""
+        from unittest.mock import MagicMock
+
+        # Create mock RAGService
+        mock_service = MagicMock()
+        view = KnowledgeBasesView(rag_service=mock_service)
+
+        # Mock first load
+        with patch.object(mock_service, 'list_collections', new_callable=AsyncMock) as mock_list:
+            mock_list.return_value = []
+            await view._load_collections()
+
+        # Invalidate cache
+        view._invalidate_cache()
+
+        # Next load should refetch
+        with patch.object(mock_service, 'list_collections', new_callable=AsyncMock) as mock_list:
+            mock_list.return_value = []
+            await view._load_collections()
+            assert mock_list.call_count == 1

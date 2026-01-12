@@ -2,7 +2,7 @@
 
 import flet as ft
 from typing import List, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from src.ui.theme import Theme
 from src.ui.models.knowledge_bases import CollectionCardData
 from src.ui.components.collection_card import CollectionCard
@@ -23,6 +23,11 @@ class KnowledgeBasesView(ft.Column):
         # State
         self.rag_service = rag_service
         self.collections: List[CollectionCardData] = []
+
+        # Cache
+        self.collections_cache: Optional[List[CollectionCardData]] = None
+        self.cache_timestamp: Optional[datetime] = None
+        self.cache_ttl_seconds = 60  # 1 minute cache
 
     def build(self):
         """Build the view."""
@@ -157,17 +162,26 @@ class KnowledgeBasesView(ft.Column):
 
     async def _on_collection_saved(self):
         """Handle collection save callback."""
-        # Reload collections
+        self._invalidate_cache()
         await self._load_collections()
 
     async def _load_collections(self):
-        """Load collections from backend with stats."""
+        """Load collections from backend with caching."""
+        # Check cache
+        if self.collections_cache is not None and self.cache_timestamp:
+            age = (datetime.now(timezone.utc) - self.cache_timestamp).total_seconds()
+            if age < self.cache_ttl_seconds:
+                # Use cache
+                self.collections = self.collections_cache
+                self._rebuild_ui()
+                return
+
+        # Fetch from backend
         collections = await self.rag_service.list_collections()
 
         # Convert to CollectionCardData with stats
         self.collections = []
         for collection in collections:
-            # Get stats for this collection
             stats = await self.rag_service.get_collection_stats(collection.id)
 
             card_data = CollectionCardData(
@@ -182,10 +196,23 @@ class KnowledgeBasesView(ft.Column):
             )
             self.collections.append(card_data)
 
+        # Update cache
+        self.collections_cache = self.collections
+        self.cache_timestamp = datetime.now(timezone.utc)
+
         # Rebuild UI
+        self._rebuild_ui()
+
+    def _rebuild_ui(self):
+        """Rebuild UI controls."""
         if self._page:
             self.controls = [
                 self._build_header(),
                 self._build_collections_grid(),
             ]
             self._page.update()
+
+    def _invalidate_cache(self):
+        """Invalidate collections cache."""
+        self.collections_cache = None
+        self.cache_timestamp = None
