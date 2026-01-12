@@ -182,7 +182,7 @@ class QueryDialog(ft.AlertDialog):
                                 icon=ft.Icons.COPY,
                                 icon_size=16,
                                 tooltip="Copy chunk text",
-                                on_click=lambda _, text=result.chunk_content: self._copy_text(text),
+                                on_click=lambda _, r=result: self._copy_text(r.chunk_content),
                             ),
                         ],
                     ),
@@ -192,14 +192,14 @@ class QueryDialog(ft.AlertDialog):
                             font_family="monospace",
                             size=12,
                         ),
-                        bgcolor=Theme.SURFACE_VARIANT,
+                        bgcolor=Theme.BG_SECONDARY,
                         padding=12,
                         border_radius=4,
                     ),
                 ],
                 spacing=8,
             ),
-            border=ft.border.all(1, Theme.BORDER_COLOR),
+            border=ft.Border.all(1, Theme.BORDER),
             border_radius=8,
             padding=12,
             margin=ft.margin.only(bottom=8),
@@ -208,10 +208,15 @@ class QueryDialog(ft.AlertDialog):
     def _copy_text(self, text: str):
         """Copy text to clipboard."""
         if self.page:
-            self.page.set_clipboard(text)
-            self.page.show_snack_bar(
-                ft.SnackBar(content=ft.Text("Copied to clipboard"))
-            )
+            try:
+                self.page.set_clipboard(text)
+                self.page.show_snack_bar(
+                    ft.SnackBar(content=ft.Text("Copied to clipboard"))
+                )
+            except Exception as e:
+                self.page.show_snack_bar(
+                    ft.SnackBar(content=ft.Text(f"Failed to copy: {str(e)}"))
+                )
 
     def _close(self):
         """Close dialog."""
