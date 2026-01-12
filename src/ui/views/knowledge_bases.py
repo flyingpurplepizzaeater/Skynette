@@ -1,5 +1,6 @@
 """Knowledge Bases view for RAG collection management."""
 
+import asyncio
 import flet as ft
 from typing import List, Optional
 from datetime import datetime, timezone, timedelta
@@ -39,6 +40,12 @@ class KnowledgeBasesView(ft.Column):
             expand=True,
             spacing=self.spacing,
         )
+
+    def did_mount(self):
+        """Called when view is mounted."""
+        # Load collections on first mount
+        if not self.collections_cache:
+            asyncio.create_task(self._load_collections())
 
     def _build_header(self):
         """Build header with title and New Collection button."""
