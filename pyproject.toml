@@ -67,6 +67,7 @@ ai = [
     "groq>=0.5.0",
     "huggingface-hub>=0.20.0",
     "chromadb>=0.5.0",  # 0.5.0+ for Pydantic 2 compatibility
+    "sentence-transformers>=2.2.0",  # Local embeddings for RAG (Phase 5)
 ]
 dev = [
     "pytest>=8.0.0",
