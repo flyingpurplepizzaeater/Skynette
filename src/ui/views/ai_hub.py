@@ -4,6 +4,7 @@ import flet as ft
 import asyncio
 from src.ui.theme import Theme
 from src.ai.models.hub import get_hub, ModelInfo, DownloadProgress
+from src.ui.views.knowledge_bases import KnowledgeBasesView
 
 
 class AIHubView(ft.Column):
@@ -24,6 +25,9 @@ class AIHubView(ft.Column):
         self.provider_configs = {}
 
     def build(self):
+        # Import usage dashboard
+        from src.ui.views.usage_dashboard import UsageDashboardView
+
         # Create tabs
         setup_tab = ft.Tab(label="Setup", icon=ft.Icons.ROCKET_LAUNCH)
         setup_tab.content = self._build_wizard_tab()
@@ -34,12 +38,27 @@ class AIHubView(ft.Column):
         library_tab = ft.Tab(label="Model Library", icon=ft.Icons.FOLDER)
         library_tab.content = self._build_model_library_tab()
 
+        usage_tab = ft.Tab(label="Usage", icon=ft.Icons.ANALYTICS)
+        usage_dashboard = UsageDashboardView(page=self._page)
+        usage_tab.content = usage_dashboard.build()
+
+        # NEW: Knowledge Bases tab
+        knowledge_bases_tab = ft.Tab(label="Knowledge Bases", icon=ft.Icons.LIBRARY_BOOKS)
+        knowledge_bases_view = KnowledgeBasesView(page=self._page)
+        knowledge_bases_tab.content = knowledge_bases_view.build()
+
         return ft.Column(
             controls=[
                 self._build_header(),
                 ft.Tabs(
-                    length=3,
-                    content=[setup_tab, providers_tab, library_tab],
+                    length=5,  # Changed from 4
+                    content=[
+                        setup_tab,
+                        providers_tab,
+                        library_tab,
+                        usage_tab,
+                        knowledge_bases_tab,  # NEW
+                    ],
                     expand=True,
                 ),
             ],

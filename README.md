@@ -9,6 +9,15 @@ An intelligent, AI-powered workflow automation platform that rivals n8n, combini
 
 ## Features
 
+### Knowledge Bases (RAG)
+- **Create Collections**: Organize documents into searchable knowledge bases
+- **Upload Documents**: Support for markdown and text files (more formats coming)
+- **Semantic Search**: Query your documents using natural language
+- **Local Embeddings**: Free, private embedding model (all-MiniLM-L6-v2)
+- **Real-time Progress**: Track upload progress with detailed status
+
+See [User Guide](docs/user-guide/knowledge-bases.md) for details.
+
 ### Dual-Mode Workflow Editor
 - **Simple Mode**: Step-by-step wizard for beginners
 - **Advanced Mode**: Full node canvas with drag-and-drop for power users

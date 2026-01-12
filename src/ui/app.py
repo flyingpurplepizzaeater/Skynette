@@ -871,43 +871,8 @@ class SkynetteApp:
 
     def _build_ai_hub_view(self) -> ft.Control:
         """Build the AI Model Hub view."""
-        return ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "AI Model Hub",
-                        size=SkynetteTheme.FONT_LG,
-                        weight=ft.FontWeight.W_500,
-                        color=SkynetteTheme.TEXT_PRIMARY,
-                    ),
-                    ft.Container(height=16),
-                    ft.Text(
-                        "Browse, download, and manage AI models",
-                        size=SkynetteTheme.FONT_SM,
-                        color=SkynetteTheme.TEXT_SECONDARY,
-                    ),
-                    ft.Container(height=24),
-                    # Placeholder for model categories
-                    ft.Row(
-                        controls=[
-                            self._build_model_category_card(
-                                "Recommended", ft.Icons.STAR_ROUNDED, "5 models"
-                            ),
-                            self._build_model_category_card(
-                                "Trending", ft.Icons.TRENDING_UP_ROUNDED, "12 models"
-                            ),
-                            self._build_model_category_card(
-                                "My Models", ft.Icons.FOLDER_ROUNDED, "0 installed"
-                            ),
-                        ],
-                        wrap=True,
-                        spacing=16,
-                    ),
-                ],
-            ),
-            padding=ft.Padding.all(24),
-            expand=True,
-        )
+        from src.ui.views.ai_hub import AIHubView
+        return AIHubView(page=self.page).build()
 
     def _build_model_category_card(
         self, title: str, icon: str, subtitle: str
