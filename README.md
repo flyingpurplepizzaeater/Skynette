@@ -1,20 +1,31 @@
 # Skynette - Open Source Workflow Automation Platform
 
 [![CI](https://github.com/flyingpurplepizzaeater/Skynette/actions/workflows/ci.yml/badge.svg)](https://github.com/flyingpurplepizzaeater/Skynette/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/flyingpurplepizzaeater/Skynette/branch/master/graph/badge.svg)](https://codecov.io/gh/flyingpurplepizzaeater/Skynette)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![codecov](https://codecov.io/gh/flyingpurplepizzaeater/Skynette/branch/main/graph/badge.svg)](https://codecov.io/gh/flyingpurplepizzaeater/Skynette)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Release](https://img.shields.io/github/v/release/flyingpurplepizzaeater/Skynette)](https://github.com/flyingpurplepizzaeater/Skynette/releases)
 
 An intelligent, AI-powered workflow automation platform that rivals n8n, combining visual workflow building with multi-model AI capabilities. Built with Python and Flet for cross-platform desktop and mobile deployment.
 
 ## Features
 
+### AI Hub - Centralized AI Management
+- **Setup Wizard**: First-time guided configuration for AI providers
+- **Provider Management**: OpenAI, Anthropic, Google AI, Groq, and local models
+- **Model Library**: Download and manage local AI models with progress tracking
+- **Usage Dashboard**: Real-time analytics, token usage, and cost tracking across all providers
+- **Secure Storage**: API keys stored in system keyring for security
+
 ### Knowledge Bases (RAG)
 - **Create Collections**: Organize documents into searchable knowledge bases
-- **Upload Documents**: Support for markdown and text files (more formats coming)
+- **Upload Documents**: Support for markdown and text files with batch processing
+  - File picker, drag & drop, or folder upload
+  - Parallel processing (5 concurrent files) with progress tracking
 - **Semantic Search**: Query your documents using natural language
-- **Local Embeddings**: Free, private embedding model (all-MiniLM-L6-v2)
-- **Real-time Progress**: Track upload progress with detailed status
+- **Local Embeddings**: Free, private embedding model (all-MiniLM-L6-v2, 384 dimensions)
+- **ChromaDB Integration**: High-performance vector database for semantic search
+- **Collection Management**: View statistics, document counts, and storage usage
 
 See [User Guide](docs/user-guide/knowledge-bases.md) for details.
 
@@ -25,18 +36,14 @@ See [User Guide](docs/user-guide/knowledge-bases.md) for details.
 
 ### Multi-AI Model Support
 - **Local Models**: Run LLaMA, Mistral, Phi via llama.cpp (free, private)
-- **Cloud Providers**: OpenAI, Anthropic, Google AI, Mistral API
+- **Cloud Providers**: OpenAI, Anthropic, Google AI, Groq
 - **AI Gateway**: Unified interface with auto-fallback across providers
-- **Model Hub**: Download models from Hugging Face, Ollama, GitHub, or URLs
-
-### Skynet Assistant
-- AI chat agent for natural language workflow building
-- "Create a workflow that checks my email and sends Slack notifications"
-- Context-aware suggestions and debugging help
+- **Model Hub**: Download models with progress tracking and metadata
 
 ### Comprehensive Node Library
 - **Triggers**: Manual, Schedule (cron), Webhook, File Watch
-- **AI Nodes**: Text Generation, Image Generation, Embeddings, RAG
+- **AI Nodes**: Text Generation, Image Generation, Embeddings
+- **RAG Nodes**: Ingest Documents, Query Knowledge Bases
 - **Data**: Read/Write Files, JSON Transform, CSV, Database
 - **HTTP**: REST API calls, GraphQL, WebSockets
 - **Flow Control**: If/Else, Switch, Loop, Merge, Error Handler
@@ -65,8 +72,11 @@ See [User Guide](docs/user-guide/knowledge-bases.md) for details.
 All dependencies are automatically installed via pip. Key packages include:
 - **UI**: Flet 0.25+
 - **AI**: llama-cpp-python, openai, anthropic, google-generativeai
+- **RAG**: chromadb, sentence-transformers
+- **Security**: keyring (for secure API key storage)
 - **Data**: SQLAlchemy, pandas, pyyaml
 - **Workflow**: apscheduler, watchdog, jinja2
+- **Testing**: pytest, playwright (E2E tests)
 
 See [pyproject.toml](pyproject.toml) for complete list.
 
@@ -122,14 +132,17 @@ Double-click to install and launch.
    python src/main.py
    ```
 
-2. **Configure AI Provider** (Optional but recommended):
-   - Navigate to **Settings** → **AI Providers**
-   - Choose between:
-     - **Local Models**: Free, private, but requires model download
-     - **Cloud Providers**: Fast, powerful, but requires API key
-   - See [AI Provider Setup Guide](docs/AI_PROVIDERS.md) for detailed instructions
+2. **Complete AI Hub Setup Wizard** (First launch):
+   - Select AI providers to configure (OpenAI, Anthropic, Google AI, Groq, Local Models)
+   - Enter API keys (securely stored in system keyring)
+   - Or skip to configure later in **AI Hub** → **My Providers**
 
-3. **Create Your First Workflow**:
+3. **Download Models** (Optional - for local AI):
+   - Navigate to **AI Hub** → **Model Library** → **Download**
+   - Choose from recommended models or enter custom URL
+   - Track download progress in real-time
+
+4. **Create Your First Workflow**:
    - Click **New Workflow** button on the dashboard
    - Choose between Simple Mode (wizard) or Advanced Mode (canvas)
 
@@ -198,20 +211,38 @@ src/
 ├── main.py              # Application entry point
 ├── ui/
 │   ├── app.py           # Main Flet application
-│   ├── theme.py         # UI theme and styling
-│   └── views/           # View components
+│   ├── theme.py         # UI theme and styling (light/dark mode)
+│   ├── views/           # View components
+│   │   ├── ai_hub.py    # AI Hub (5 tabs: Setup, Providers, Library, Usage, Knowledge Bases)
+│   │   ├── knowledge_bases.py  # RAG collection management
+│   │   └── usage_dashboard.py  # Usage analytics and cost tracking
+│   ├── components/      # Reusable UI components
+│   ├── dialogs/         # Modal dialogs (upload, query, collection)
+│   └── models/          # UI data models
 ├── core/
 │   ├── workflow/        # Workflow models and executor
 │   ├── nodes/           # Node implementations
+│   │   └── rag/         # RAG workflow nodes (ingest, query)
 │   ├── expressions/     # Expression parser ({{$prev.data}})
 │   └── errors/          # Error handling
 ├── ai/
 │   ├── gateway.py       # Unified AI interface
-│   ├── providers/       # Provider adapters
-│   └── models/          # Local model management
+│   ├── providers/       # Provider adapters (OpenAI, Anthropic, etc.)
+│   ├── models/          # Local model management
+│   └── security.py      # Secure API key storage (keyring)
+├── rag/                 # RAG (Retrieval Augmented Generation)
+│   ├── service.py       # High-level RAG service
+│   ├── chromadb_client.py  # Vector database client
+│   ├── embeddings.py    # Local embedding model manager
+│   ├── processor.py     # Document processing and chunking
+│   ├── storage.py       # SQLite metadata storage
+│   └── models.py        # RAG data models
 ├── plugins/             # Plugin system
 ├── data/                # Database and storage
-└── cloud/               # Cloud sync services
+└── tests/               # Comprehensive test suite (299 tests)
+    ├── unit/            # Unit tests (279 tests)
+    ├── integration/     # Integration tests (20 tests)
+    └── e2e/             # Playwright E2E tests
 ```
 
 ## Node Development
@@ -245,41 +276,72 @@ class MyCustomNode(BaseNode):
 Settings stored in `~/.skynette/config.yaml`:
 
 ```yaml
-theme: dark
+theme: dark  # or light
 ai:
   default_provider: local
-  openai_key: sk-...
-  anthropic_key: sk-ant-...
+  # API keys now stored securely in system keyring via AI Hub
 storage:
   workflows_dir: ~/skynette/workflows
   models_dir: ~/skynette/models
+  rag_storage: ~/.skynette/rag  # ChromaDB and embeddings
+rag:
+  embedding_model: all-MiniLM-L6-v2  # Local embedding model
+  chunk_size: 1000  # Characters per chunk
+  chunk_overlap: 200  # Overlap between chunks
+  max_concurrent_uploads: 5  # Parallel processing limit
 cloud:
   enabled: false
   sync_interval: 300
 ```
 
+**Security Note**: API keys are stored in your system's secure keyring (Windows Credential Manager, macOS Keychain, Linux Secret Service), not in plain text config files.
+
 ## Roadmap
 
-- [x] Phase 1: Core foundation (workflow engine, basic nodes)
-- [ ] Phase 2: AI integration (local models, cloud providers)
-- [ ] Phase 3: App integrations (30+ connectors)
-- [ ] Phase 4: Cloud features (sync, sharing, marketplace)
-- [ ] Phase 5: Mobile apps (iOS, Android via Flet)
+### Completed ✅
+- [x] **Phase 1**: Core foundation (workflow engine, basic nodes)
+- [x] **Phase 2**: Advanced workflow editor (simple/advanced modes)
+- [x] **Phase 3**: UI polish and production readiness
+- [x] **Phase 4**: AI Integration
+  - [x] Sprint 1: AI core, providers, security
+  - [x] Sprint 2: AI Hub UI, model management
+  - [x] Sprint 3: Usage dashboard and cost analytics
+- [x] **Phase 5**: RAG Integration
+  - [x] Sprint 1: RAG core (ChromaDB, embeddings, document processing)
+  - [x] Sprint 4: Knowledge Bases UI and polish
+
+### In Progress 🚧
+- [ ] **Phase 6**: App integrations and workflow nodes
+  - [ ] Email (Gmail, Outlook)
+  - [ ] Communication (Slack, Discord, Teams)
+  - [ ] File storage (Google Drive, Dropbox, OneDrive)
+  - [ ] Databases (PostgreSQL, MySQL, MongoDB)
+  - [ ] And 20+ more integrations
+
+### Planned 📋
+- [ ] **Phase 7**: Cloud features (sync, sharing, marketplace)
+- [ ] **Phase 8**: Mobile apps (iOS, Android via Flet)
+- [ ] **Phase 9**: Enterprise features (SSO, audit logs, roles)
+
+See [docs/plans/](docs/plans/) for detailed implementation plans.
 
 ## Documentation
 
-### Guides
-- **[AI Provider Setup](docs/AI_PROVIDERS.md)**: Configure OpenAI, Anthropic, Google AI, local models, and more
+### User Guides
+- **[Knowledge Bases User Guide](docs/user-guide/knowledge-bases.md)**: Creating collections, uploading documents, semantic search
+- **[AI Provider Setup](docs/AI_PROVIDERS.md)**: Configure OpenAI, Anthropic, Google AI, Groq, and local models
+
+### Developer Documentation
+- **[RAG UI Architecture](docs/development/rag-ui-architecture.md)**: Component hierarchy, data flows, and testing
 - **[Contributing Guide](CONTRIBUTING.md)**: How to contribute to Skynette
-- **[Architecture Overview](docs/ARCHITECTURE.md)**: System design and technical details (Coming Soon)
-- **[Plugin Development](docs/PLUGIN_DEVELOPMENT.md)**: Create custom nodes and integrations (Coming Soon)
+- **[Implementation Plans](docs/plans/)**: Detailed sprint plans and designs
 
 ### Quick Links
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Example Workflows](#example-workflows)
 - [Configuration](#configuration)
-- [Troubleshooting](docs/AI_PROVIDERS.md#troubleshooting)
+- [Roadmap](#roadmap)
 
 ## Contributing
 
@@ -287,15 +349,36 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### Development Setup
 ```bash
-# Install dev dependencies
+# Clone and install
+git clone https://github.com/flyingpurplepizzaeater/Skynette.git
+cd Skynette
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -e ".[dev]"
 
-# Run tests
-pytest
+# Run tests (299 total: 279 unit + 20 integration)
+pytest --cov=src --cov-report=term-missing
+
+# Run only unit tests
+pytest tests/unit/
+
+# Run integration tests
+pytest tests/integration/
+
+# Run E2E tests (requires Playwright)
+playwright install --with-deps chromium
+pytest tests/e2e/
 
 # Run linting
 ruff check src/
+ruff format --check src/
 ```
+
+### Test Coverage
+- **Unit Tests**: 279 tests covering individual components
+- **Integration Tests**: 20 tests for multi-component workflows
+- **E2E Tests**: Playwright-based browser automation tests
+- **Total**: 299 tests with comprehensive coverage
 
 ## License
 
