@@ -89,7 +89,15 @@ class QueryDialog(ft.AlertDialog):
 
     async def _on_search(self, e):
         """Handle search button click."""
-        if not self.query_field.value:
+        # Validate query not empty
+        if not self.query_field.value or not self.query_field.value.strip():
+            if self.page:
+                self.page.show_snack_bar(
+                    ft.SnackBar(
+                        content=ft.Text("Please enter a query"),
+                        bgcolor=ft.colors.WARNING,
+                    )
+                )
             return
 
         # Clear previous results

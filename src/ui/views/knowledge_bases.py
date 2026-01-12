@@ -166,7 +166,7 @@ class KnowledgeBasesView(ft.Column):
         await self._load_collections()
 
     async def _load_collections(self):
-        """Load collections from backend with caching."""
+        """Load collections from backend with caching and error handling."""
         # Check cache
         if self.collections_cache is not None and self.cache_timestamp:
             age = (datetime.now(timezone.utc) - self.cache_timestamp).total_seconds()
@@ -176,32 +176,51 @@ class KnowledgeBasesView(ft.Column):
                 self._rebuild_ui()
                 return
 
-        # Fetch from backend
-        collections = await self.rag_service.list_collections()
+        try:
+            # Fetch from backend
+            collections = await self.rag_service.list_collections()
 
-        # Convert to CollectionCardData with stats
-        self.collections = []
-        for collection in collections:
-            stats = await self.rag_service.get_collection_stats(collection.id)
+            # Convert to CollectionCardData with stats
+            self.collections = []
+            for collection in collections:
+                stats = await self.rag_service.get_collection_stats(collection.id)
 
-            card_data = CollectionCardData(
-                id=collection.id,
-                name=collection.name,
-                description=collection.description or "",
-                document_count=stats.get("document_count", 0),
-                chunk_count=stats.get("chunk_count", 0),
-                last_updated=stats.get("last_updated", datetime.now(timezone.utc)),
-                storage_size_bytes=stats.get("storage_size_bytes", 0),
-                embedding_model=collection.embedding_model,
-            )
-            self.collections.append(card_data)
+                card_data = CollectionCardData(
+                    id=collection.id,
+                    name=collection.name,
+                    description=collection.description or "",
+                    document_count=stats.get("document_count", 0),
+                    chunk_count=stats.get("chunk_count", 0),
+                    last_updated=stats.get("last_updated", datetime.now(timezone.utc)),
+                    storage_size_bytes=stats.get("storage_size_bytes", 0),
+                    embedding_model=collection.embedding_model,
+                )
+                self.collections.append(card_data)
 
-        # Update cache
-        self.collections_cache = self.collections
-        self.cache_timestamp = datetime.now(timezone.utc)
+            # Update cache
+            self.collections_cache = self.collections
+            self.cache_timestamp = datetime.now(timezone.utc)
 
-        # Rebuild UI
-        self._rebuild_ui()
+            # Rebuild UI
+            self._rebuild_ui()
+
+        except Exception as ex:
+            # Show error to user
+            if self._page:
+                self._page.show_snack_bar(
+                    ft.SnackBar(
+                        content=ft.Text(f"Failed to load collections: {str(ex)}"),
+                        bgcolor=ft.colors.ERROR,
+                    )
+                )
+
+            # Keep existing cached data if available
+            if self.collections_cache:
+                self.collections = self.collections_cache
+            else:
+                self.collections = []
+
+            self._rebuild_ui()
 
     def _rebuild_ui(self):
         """Rebuild UI controls."""

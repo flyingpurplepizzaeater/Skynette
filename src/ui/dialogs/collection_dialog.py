@@ -187,7 +187,6 @@ class CollectionDialog(ft.AlertDialog):
                 self.page.update()
             return
 
-        # Create or update collection
         try:
             if self.is_edit:
                 # TODO: Implement update in RAGService
@@ -211,8 +210,18 @@ class CollectionDialog(ft.AlertDialog):
             if self.on_save:
                 await self.on_save()
 
+        except ValueError as ex:
+            # Validation error from backend
+            if "duplicate" in str(ex).lower() or "already exists" in str(ex).lower():
+                self.name_field.error_text = "Collection name already exists"
+            else:
+                self.name_field.error_text = str(ex)
+
+            if self.page:
+                self.page.update()
+
         except Exception as ex:
-            # Show error
+            # Generic error
             if self.page:
                 self.page.show_snack_bar(
                     ft.SnackBar(
