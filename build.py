@@ -29,13 +29,13 @@ def main():
         print("  Installing PyInstaller...")
         subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)
 
-    # Verify main.py exists
+    # Verify src/main.py exists
     print("\n[2/4] Verifying project structure...")
-    main_py = project_root / "main.py"
+    main_py = project_root / "src" / "main.py"
     if not main_py.exists():
         print(f"  ERROR: main.py not found at {main_py}")
         sys.exit(1)
-    print(f"  main.py found")
+    print(f"  src/main.py found")
 
     spec_file = project_root / "skynette.spec"
     if not spec_file.exists():
