@@ -7,6 +7,7 @@ from src.ui.theme import Theme
 from src.ui.models.knowledge_bases import CollectionCardData
 from src.ui.components.collection_card import CollectionCard
 from src.ui.dialogs.collection_dialog import CollectionDialog
+from src.ui.dialogs.query_dialog import QueryDialog
 from src.rag.service import RAGService
 
 
@@ -127,8 +128,20 @@ class KnowledgeBasesView(ft.Column):
 
     def _on_query_collection(self, collection_id: str):
         """Handle Query button click."""
-        # TODO: Implement in Task 7 (QueryDialog)
-        pass
+        # Find collection
+        collection = next((c for c in self.collections if c.id == collection_id), None)
+        if not collection:
+            return
+
+        dialog = QueryDialog(
+            rag_service=self.rag_service,
+            collection_id=collection_id,
+            collection_name=collection.name,
+        )
+        if self._page:
+            self._page.dialog = dialog
+            dialog.open = True
+            self._page.update()
 
     def _on_manage_collection(self, collection_id: str):
         """Handle Manage button click."""
