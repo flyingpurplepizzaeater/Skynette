@@ -4,6 +4,7 @@ import flet as ft
 import asyncio
 from src.ui.theme import Theme
 from src.ai.models.hub import get_hub, ModelInfo, DownloadProgress
+from src.ui.views.knowledge_bases import KnowledgeBasesView
 
 
 class AIHubView(ft.Column):
@@ -41,12 +42,23 @@ class AIHubView(ft.Column):
         usage_dashboard = UsageDashboardView(page=self._page)
         usage_tab.content = usage_dashboard.build()
 
+        # NEW: Knowledge Bases tab
+        knowledge_bases_tab = ft.Tab(label="Knowledge Bases", icon=ft.Icons.LIBRARY_BOOKS)
+        knowledge_bases_view = KnowledgeBasesView(page=self._page)
+        knowledge_bases_tab.content = knowledge_bases_view.build()
+
         return ft.Column(
             controls=[
                 self._build_header(),
                 ft.Tabs(
-                    length=4,
-                    content=[setup_tab, providers_tab, library_tab, usage_tab],
+                    length=5,  # Changed from 4
+                    content=[
+                        setup_tab,
+                        providers_tab,
+                        library_tab,
+                        usage_tab,
+                        knowledge_bases_tab,  # NEW
+                    ],
                     expand=True,
                 ),
             ],
