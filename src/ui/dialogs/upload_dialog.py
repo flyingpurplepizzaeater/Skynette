@@ -2,6 +2,7 @@
 
 import flet as ft
 import asyncio
+import os
 from pathlib import Path
 from typing import Optional, Callable, Awaitable
 from src.ui.theme import Theme
@@ -243,7 +244,6 @@ class UploadDialog(ft.AlertDialog):
 
         async def process_file(file_info: dict):
             async with semaphore:
-                import os
                 self.upload_progress.current_file = file_info["name"]
                 self.progress_tracker.update_progress(self.upload_progress)
 
@@ -253,8 +253,6 @@ class UploadDialog(ft.AlertDialog):
                         file_path=file_info["path"],
                         collection_id=self.collection_id,
                     )
-
-                    self.upload_progress.processed_files += 1
 
                 except Exception as ex:
                     # Collect error
@@ -266,6 +264,8 @@ class UploadDialog(ft.AlertDialog):
                         )
                     )
                 finally:
+                    # Count ALL files (success and error) - moved from try block
+                    self.upload_progress.processed_files += 1
                     self.progress_tracker.update_progress(self.upload_progress)
 
         # Process all files in parallel
@@ -301,7 +301,7 @@ class UploadDialog(ft.AlertDialog):
                     content=ft.Text(
                         f"Upload complete: {success_count} succeeded, {error_count} failed"
                     ),
-                    bgcolor=ft.Colors.GREEN if error_count == 0 else ft.Colors.ORANGE,
+                    bgcolor=Theme.SUCCESS if error_count == 0 else Theme.WARNING,
                 )
             )
 
