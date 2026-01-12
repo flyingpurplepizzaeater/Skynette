@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, main, develop ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ master, main, develop ]
+    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
@@ -39,13 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.10', '3.11', '3.12']
-        exclude:
-          # Reduce matrix size - test all Python versions on Ubuntu only
-          - os: windows-latest
-            python-version: '3.10'
-          - os: macos-latest
-            python-version: '3.10'
+        python-version: ['3.11', '3.12']
 
     steps:
       - uses: actions/checkout@v4
