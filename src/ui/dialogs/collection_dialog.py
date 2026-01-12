@@ -5,6 +5,7 @@ import re
 from typing import Optional, Callable, Awaitable
 from src.ui.theme import Theme
 from src.rag.service import RAGService
+from src.ui.dialogs.upload_dialog import UploadDialog
 
 
 class CollectionDialog(ft.AlertDialog):
@@ -15,11 +16,13 @@ class CollectionDialog(ft.AlertDialog):
         rag_service: RAGService,
         collection_id: Optional[str] = None,
         on_save: Optional[Callable[[], Awaitable[None]]] = None,
+        page: Optional[ft.Page] = None,
     ):
         super().__init__()
         self.rag_service = rag_service
         self.collection_id = collection_id
         self.on_save = on_save
+        self._page_ref = page
         self.is_edit = collection_id is not None
 
         # Form fields
@@ -94,6 +97,13 @@ class CollectionDialog(ft.AlertDialog):
                 self.chunk_size_field,
                 self.chunk_overlap_field,
                 self.max_chunk_field,
+                ft.Container(height=16),
+                ft.Text("Documents", weight=ft.FontWeight.BOLD) if self.is_edit else ft.Container(height=0),
+                ft.Button(
+                    "Add Documents",
+                    icon=ft.Icons.UPLOAD_FILE,
+                    on_click=self._on_add_documents,
+                ) if self.is_edit else ft.Container(height=0),
             ],
             width=500,
             height=600,
@@ -216,3 +226,23 @@ class CollectionDialog(ft.AlertDialog):
         self.open = False
         if self.page:
             self.page.update()
+
+    def _on_add_documents(self, e):
+        """Open upload dialog."""
+        if not self._page_ref:
+            return
+
+        upload_dialog = UploadDialog(
+            rag_service=self.rag_service,
+            collection_id=self.collection_id,
+            page=self._page_ref,
+            on_complete=self._on_upload_complete,
+        )
+        self._page_ref.dialog = upload_dialog
+        upload_dialog.open = True
+        self._page_ref.update()
+
+    async def _on_upload_complete(self):
+        """Handle upload completion."""
+        # Refresh collection stats
+        pass
