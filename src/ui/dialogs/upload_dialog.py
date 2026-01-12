@@ -1,10 +1,13 @@
 """Upload dialog for adding documents to RAG collections."""
 
 import flet as ft
+import asyncio
 from pathlib import Path
 from typing import Optional, Callable, Awaitable
 from src.ui.theme import Theme
 from src.rag.service import RAGService
+from src.ui.components.progress_tracker import ProgressTracker
+from src.ui.models.knowledge_bases import UploadProgress, UploadError
 
 
 class UploadDialog(ft.AlertDialog):
@@ -23,6 +26,7 @@ class UploadDialog(ft.AlertDialog):
         self._page_ref = page
         self.on_complete = on_complete
         self.selected_files = []
+        self.upload_progress = None
 
         # File picker
         self.file_picker = ft.FilePicker()
@@ -38,6 +42,9 @@ class UploadDialog(ft.AlertDialog):
             height=300,
         )
 
+        # Progress tracker
+        self.progress_tracker = ProgressTracker()
+
         # Build tabs (simple version - just file picker for now)
         self.upload_tabs = ft.Column(
             controls=[
@@ -52,7 +59,14 @@ class UploadDialog(ft.AlertDialog):
         self.title = ft.Text("Add Documents")
 
         self.content = ft.Container(
-            content=self.upload_tabs,
+            content=ft.Column(
+                controls=[
+                    self.upload_tabs,
+                    ft.Container(height=16),
+                    self.progress_tracker,
+                ],
+                spacing=0,
+            ),
             width=600,
             height=500,
             padding=16,
@@ -62,7 +76,7 @@ class UploadDialog(ft.AlertDialog):
             ft.TextButton("Cancel", on_click=self._on_cancel),
             ft.Button(
                 "Upload",
-                on_click=self._on_upload,
+                on_click=self._on_start_upload,
                 disabled=True,
             ),
         ]
@@ -203,70 +217,97 @@ class UploadDialog(ft.AlertDialog):
             if self._page_ref:
                 self._page_ref.update()
 
-    async def _on_upload(self, e):
-        """Handle Upload button click."""
+    async def _on_start_upload(self, e):
+        """Handle upload button click."""
         if not self.selected_files:
             return
 
-        # Show progress
-        progress_bar = ft.ProgressBar()
-        self.content.content = ft.Column(
-            controls=[
-                ft.Text("Uploading documents...", size=16),
-                ft.Container(height=16),
-                progress_bar,
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        self.upload_progress = UploadProgress(
+            total_files=len(self.selected_files),
+            processed_files=0,
+            current_file="",
+            status="processing",
+            errors=[],
         )
+
+        # Show progress
+        self.progress_tracker.update_progress(self.upload_progress)
+
+        # Disable upload button
         self.upload_button.disabled = True
         if self._page_ref:
             self._page_ref.update()
 
-        # Upload each file
-        success_count = 0
-        errors = []
+        # Process files with concurrency limit
+        semaphore = asyncio.Semaphore(5)  # Max 5 concurrent
 
-        for file_info in self.selected_files:
-            try:
-                result = await self.rag_service.ingest_document(
-                    file_path=file_info["path"],
-                    collection_id=self.collection_id,
-                )
+        async def process_file(file_info: dict):
+            async with semaphore:
+                import os
+                self.upload_progress.current_file = file_info["name"]
+                self.progress_tracker.update_progress(self.upload_progress)
 
-                if result["status"] == "success":
-                    success_count += 1
-                else:
-                    errors.append(f"{file_info['name']}: {result.get('error', 'Unknown error')}")
-            except Exception as ex:
-                errors.append(f"{file_info['name']}: {str(ex)}")
-
-        # Show result
-        if errors:
-            error_text = "\n".join(errors)
-            if self._page_ref:
-                self._page_ref.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text(f"Uploaded {success_count} files. Errors:\n{error_text}"),
-                        bgcolor=red if success_count == 0 else orange,
+                try:
+                    # Ingest document
+                    await self.rag_service.ingest_document(
+                        file_path=file_info["path"],
+                        collection_id=self.collection_id,
                     )
-                )
+
+                    self.upload_progress.processed_files += 1
+
+                except Exception as ex:
+                    # Collect error
+                    self.upload_progress.errors.append(
+                        UploadError(
+                            file_path=file_info["path"],
+                            error_message=str(ex),
+                            error_type=self._classify_error(ex),
+                        )
+                    )
+                finally:
+                    self.progress_tracker.update_progress(self.upload_progress)
+
+        # Process all files in parallel
+        await asyncio.gather(*[process_file(f) for f in self.selected_files])
+
+        # Mark completed
+        self.upload_progress.status = "completed"
+        self.progress_tracker.update_progress(self.upload_progress)
+
+        # Show summary
+        self._show_completion_summary()
+
+    def _classify_error(self, ex: Exception) -> str:
+        """Classify error type."""
+        error_str = str(ex).lower()
+        if "unsupported" in error_str or "pdf" in error_str:
+            return "unsupported"
+        elif "permission" in error_str or "not found" in error_str:
+            return "permission"
+        elif "corrupt" in error_str or "parse" in error_str:
+            return "corrupted"
         else:
-            if self._page_ref:
-                self._page_ref.show_snack_bar(
-                    ft.SnackBar(
-                        content=ft.Text(f"Successfully uploaded {success_count} files"),
-                        bgcolor=green,
-                    )
-                )
+            return "embedding_failed"
 
-        # Close dialog
-        self.open = False
+    def _show_completion_summary(self):
+        """Show completion message."""
+        success_count = self.upload_progress.processed_files - len(self.upload_progress.errors)
+        error_count = len(self.upload_progress.errors)
+
         if self._page_ref:
-            self._page_ref.update()
+            self._page_ref.show_snack_bar(
+                ft.SnackBar(
+                    content=ft.Text(
+                        f"Upload complete: {success_count} succeeded, {error_count} failed"
+                    ),
+                    bgcolor=ft.Colors.GREEN if error_count == 0 else ft.Colors.ORANGE,
+                )
+            )
 
         # Callback
         if self.on_complete:
-            await self.on_complete()
+            asyncio.create_task(self.on_complete())
 
     def _on_cancel(self, e):
         """Handle Cancel button click."""
