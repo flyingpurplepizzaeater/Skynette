@@ -79,3 +79,6 @@ installer/
 
 # Git worktrees for isolated development
 .worktrees/
+
+# Windows shortcuts
+*.lnk
