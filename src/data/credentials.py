@@ -12,7 +12,7 @@ import hashlib
 import secrets
 import sqlite3
 from pathlib import Path
-from datetime import datetime, UTC
+from datetime import datetime, timedelta, UTC
 from typing import Optional, Any
 import logging
 
@@ -515,5 +515,315 @@ def store_api_key(service: str, api_key: str, name: Optional[str] = None) -> str
     return vault.save_credential(
         name=name or f"{service.title()} API Key",
         service=service,
-        data={'api_key': api_key}
+        data={'api_key': api_key, 'type': 'api_key'}
     )
+
+
+# ==================== OAuth2 Support ====================
+
+from enum import Enum
+
+
+class CredentialType(str, Enum):
+    """Types of credentials supported."""
+    API_KEY = "api_key"
+    OAUTH2 = "oauth2"
+    BASIC_AUTH = "basic_auth"
+    CUSTOM = "custom"
+
+
+class OAuth2Manager:
+    """
+    Manages OAuth2 credentials with token refresh support.
+
+    Stores OAuth2 tokens encrypted and handles:
+    - Access token storage
+    - Refresh token storage
+    - Token expiry tracking
+    - Automatic refresh detection
+    """
+
+    # OAuth2 provider configurations
+    PROVIDERS = {
+        "google": {
+            "auth_url": "https://accounts.google.com/o/oauth2/v2/auth",
+            "token_url": "https://oauth2.googleapis.com/token",
+            "scopes": {
+                "drive": ["https://www.googleapis.com/auth/drive"],
+                "sheets": ["https://www.googleapis.com/auth/spreadsheets"],
+                "gmail": ["https://www.googleapis.com/auth/gmail.modify"],
+            }
+        },
+        "microsoft": {
+            "auth_url": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+            "token_url": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            "scopes": {
+                "teams": ["Chat.ReadWrite", "Channel.ReadBasic.All", "ChannelMessage.Send"],
+                "onedrive": ["Files.ReadWrite.All"],
+                "outlook": ["Mail.ReadWrite", "Mail.Send"],
+            }
+        },
+        "github": {
+            "auth_url": "https://github.com/login/oauth/authorize",
+            "token_url": "https://github.com/login/oauth/access_token",
+            "scopes": {
+                "repo": ["repo"],
+                "user": ["user"],
+                "workflow": ["workflow"],
+            }
+        },
+        "slack": {
+            "auth_url": "https://slack.com/oauth/v2/authorize",
+            "token_url": "https://slack.com/api/oauth.v2.access",
+            "scopes": {
+                "bot": ["chat:write", "channels:read", "users:read"],
+            }
+        },
+        "notion": {
+            "auth_url": "https://api.notion.com/v1/oauth/authorize",
+            "token_url": "https://api.notion.com/v1/oauth/token",
+            "scopes": {
+                "default": [],  # Notion uses capability-based access
+            }
+        },
+    }
+
+    def __init__(self, vault: Optional[CredentialVault] = None):
+        """Initialize with optional vault instance."""
+        self.vault = vault or CredentialVault()
+
+    def store_oauth_tokens(
+        self,
+        service: str,
+        access_token: str,
+        refresh_token: Optional[str] = None,
+        expires_at: Optional[str] = None,
+        scopes: Optional[list[str]] = None,
+        name: Optional[str] = None,
+        extra_data: Optional[dict] = None,
+    ) -> str:
+        """
+        Store OAuth2 tokens securely.
+
+        Args:
+            service: Service identifier (e.g., 'google', 'microsoft')
+            access_token: OAuth2 access token
+            refresh_token: OAuth2 refresh token (for token refresh)
+            expires_at: ISO timestamp when access token expires
+            scopes: List of granted scopes
+            name: Human-readable name
+            extra_data: Additional service-specific data
+
+        Returns:
+            Credential ID
+        """
+        data = {
+            'type': CredentialType.OAUTH2.value,
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_at': expires_at,
+            'scopes': scopes or [],
+        }
+
+        if extra_data:
+            data.update(extra_data)
+
+        return self.vault.save_credential(
+            name=name or f"{service.title()} OAuth",
+            service=f"{service}_oauth",
+            data=data
+        )
+
+    def get_oauth_tokens(self, service: str) -> Optional[dict]:
+        """
+        Get OAuth2 tokens for a service.
+
+        Returns dict with access_token, refresh_token, expires_at, etc.
+        or None if not found.
+        """
+        cred = self.vault.get_credential_by_service(f"{service}_oauth")
+        if cred:
+            return cred.get('data')
+        return None
+
+    def get_access_token(self, service: str) -> Optional[str]:
+        """Get just the access token for a service."""
+        tokens = self.get_oauth_tokens(service)
+        if tokens:
+            return tokens.get('access_token')
+        return None
+
+    def is_token_expired(self, service: str) -> bool:
+        """
+        Check if the access token is expired or about to expire.
+
+        Returns True if expired or expiring within 5 minutes.
+        """
+        tokens = self.get_oauth_tokens(service)
+        if not tokens or not tokens.get('expires_at'):
+            return True
+
+        try:
+            expires_at = datetime.fromisoformat(tokens['expires_at'].replace('Z', '+00:00'))
+            # Consider expired if within 5 minutes of expiry
+            buffer = 300  # 5 minutes
+            return datetime.now(UTC) >= expires_at - timedelta(seconds=buffer)
+        except (ValueError, TypeError):
+            return True
+
+    def needs_refresh(self, service: str) -> bool:
+        """Check if tokens need to be refreshed."""
+        tokens = self.get_oauth_tokens(service)
+        if not tokens:
+            return False
+
+        # Has refresh token and access token is expired
+        return bool(tokens.get('refresh_token')) and self.is_token_expired(service)
+
+    def update_tokens(
+        self,
+        service: str,
+        access_token: str,
+        expires_at: Optional[str] = None,
+        refresh_token: Optional[str] = None,
+    ) -> bool:
+        """
+        Update tokens after a refresh.
+
+        Args:
+            service: Service identifier
+            access_token: New access token
+            expires_at: New expiry time
+            refresh_token: New refresh token (if rotated)
+
+        Returns:
+            True if updated, False if credential not found
+        """
+        cred = self.vault.get_credential_by_service(f"{service}_oauth")
+        if not cred:
+            return False
+
+        data = cred['data']
+        data['access_token'] = access_token
+        if expires_at:
+            data['expires_at'] = expires_at
+        if refresh_token:
+            data['refresh_token'] = refresh_token
+
+        return self.vault.update_credential(cred['id'], data=data)
+
+    def delete_oauth(self, service: str) -> bool:
+        """Delete OAuth credentials for a service."""
+        cred = self.vault.get_credential_by_service(f"{service}_oauth")
+        if cred:
+            return self.vault.delete_credential(cred['id'])
+        return False
+
+    def list_oauth_credentials(self) -> list[dict]:
+        """List all OAuth credentials (metadata only)."""
+        all_creds = self.vault.list_credentials()
+        return [c for c in all_creds if c['service'].endswith('_oauth')]
+
+    @classmethod
+    def get_provider_config(cls, provider: str) -> Optional[dict]:
+        """Get OAuth2 configuration for a provider."""
+        return cls.PROVIDERS.get(provider)
+
+    @classmethod
+    def get_auth_url(
+        cls,
+        provider: str,
+        client_id: str,
+        redirect_uri: str,
+        scope_set: str = "default",
+        state: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        Build OAuth2 authorization URL.
+
+        Args:
+            provider: Provider name (google, microsoft, etc.)
+            client_id: OAuth2 client ID
+            redirect_uri: Callback URL
+            scope_set: Named scope set from provider config
+            state: Optional state parameter for CSRF protection
+
+        Returns:
+            Authorization URL or None if provider not found
+        """
+        config = cls.get_provider_config(provider)
+        if not config:
+            return None
+
+        from urllib.parse import urlencode
+
+        scopes = config['scopes'].get(scope_set, [])
+
+        params = {
+            'client_id': client_id,
+            'redirect_uri': redirect_uri,
+            'response_type': 'code',
+            'scope': ' '.join(scopes),
+        }
+
+        if state:
+            params['state'] = state
+
+        # Provider-specific adjustments
+        if provider == 'google':
+            params['access_type'] = 'offline'
+            params['prompt'] = 'consent'
+
+        return f"{config['auth_url']}?{urlencode(params)}"
+
+
+# ==================== Basic Auth Support ====================
+
+def store_basic_auth(
+    service: str,
+    username: str,
+    password: str,
+    name: Optional[str] = None
+) -> str:
+    """
+    Store basic authentication credentials.
+
+    Args:
+        service: Service name
+        username: Username/email
+        password: Password
+        name: Optional credential name
+
+    Returns:
+        Credential ID
+    """
+    vault = CredentialVault()
+    return vault.save_credential(
+        name=name or f"{service.title()} Login",
+        service=service,
+        data={
+            'type': CredentialType.BASIC_AUTH.value,
+            'username': username,
+            'password': password,
+        }
+    )
+
+
+def get_basic_auth(service: str) -> Optional[tuple[str, str]]:
+    """
+    Get basic auth credentials as (username, password) tuple.
+
+    Returns:
+        Tuple of (username, password) or None
+    """
+    vault = CredentialVault()
+    cred = vault.get_credential_by_service(service)
+
+    if cred and cred.get('data'):
+        data = cred['data']
+        username = data.get('username')
+        password = data.get('password')
+        if username and password:
+            return (username, password)
+
+    return None
