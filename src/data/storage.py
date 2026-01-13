@@ -7,7 +7,7 @@ Handles persistence of workflows to YAML files and execution history to SQLite.
 import os
 import yaml
 import sqlite3
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Optional
 import logging
@@ -180,7 +180,7 @@ class WorkflowStorage:
     def save_workflow(self, workflow: Workflow) -> str:
         """Save a workflow to YAML file and update database."""
         # Update timestamp
-        workflow.updated_at = datetime.utcnow()
+        workflow.updated_at = datetime.now(UTC)
 
         # Generate file path
         safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in workflow.name)

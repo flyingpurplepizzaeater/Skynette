@@ -12,7 +12,7 @@ import hashlib
 import secrets
 import sqlite3
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional, Any
 import logging
 
@@ -181,7 +181,7 @@ class CredentialVault:
         import uuid
 
         cred_id = credential_id or str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
 
         # Encrypt the credential data
         encrypted_data = self._encrypt(data)
@@ -380,7 +380,7 @@ class CredentialVault:
 
         # Update fields
         new_name = name or row[0]
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
 
         if data is not None:
             new_data = self._encrypt(data)

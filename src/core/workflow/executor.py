@@ -5,7 +5,7 @@ Handles the execution of workflows.
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
 import logging
 
@@ -121,7 +121,7 @@ class WorkflowExecutor:
             if execution.status == "running":
                 execution.status = "completed"
 
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(UTC)
             execution.duration_ms = (
                 execution.completed_at - execution.started_at
             ).total_seconds() * 1000
@@ -134,7 +134,7 @@ class WorkflowExecutor:
         except Exception as e:
             execution.status = "failed"
             execution.error = str(e)
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(UTC)
             logger.exception(f"Workflow execution failed: {e}")
 
         finally:
@@ -146,7 +146,7 @@ class WorkflowExecutor:
         self, node: WorkflowNode, context: dict
     ) -> ExecutionResult:
         """Execute a single node."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             # Get node handler from registry
@@ -161,7 +161,7 @@ class WorkflowExecutor:
             logger.debug(f"Executing node {node.name} ({node.type})")
             output = await handler.execute(resolved_config, context)
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(UTC)
             duration_ms = (end_time - start_time).total_seconds() * 1000
 
             return ExecutionResult(
@@ -174,7 +174,7 @@ class WorkflowExecutor:
             )
 
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(UTC)
             duration_ms = (end_time - start_time).total_seconds() * 1000
 
             logger.error(f"Node {node.name} execution failed: {e}")

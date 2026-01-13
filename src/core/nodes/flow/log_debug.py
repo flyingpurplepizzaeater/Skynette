@@ -4,7 +4,7 @@ Log/Debug Node
 Logs data for debugging purposes.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 import logging
 import json
@@ -105,7 +105,7 @@ class LogDebugNode(UtilityNode):
         log_parts = []
 
         if include_timestamp:
-            log_parts.append(f"[{datetime.utcnow().isoformat()}]")
+            log_parts.append(f"[{datetime.now(UTC).isoformat()}]")
 
         if message:
             log_parts.append(message)

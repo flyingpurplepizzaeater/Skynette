@@ -4,14 +4,16 @@ Workflow Data Models
 Pydantic models for workflow definitions.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from uuid import uuid4
 
 
 class WorkflowNode(BaseModel):
     """Represents a single node in a workflow."""
+
+    model_config = ConfigDict(extra="allow")
 
     id: str = Field(default_factory=lambda: str(uuid4()))
     type: str  # e.g., "manual_trigger", "http_request", "smart_ai"
@@ -19,9 +21,6 @@ class WorkflowNode(BaseModel):
     position: dict = Field(default_factory=lambda: {"x": 0, "y": 0})
     config: dict = Field(default_factory=dict)  # Node-specific configuration
     enabled: bool = True
-
-    class Config:
-        extra = "allow"
 
 
 class WorkflowConnection(BaseModel):
@@ -45,8 +44,8 @@ class Workflow(BaseModel):
     connections: list[WorkflowConnection] = Field(default_factory=list)
     variables: dict = Field(default_factory=dict)  # Workflow-level variables
     settings: dict = Field(default_factory=dict)  # Workflow settings
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     tags: list[str] = Field(default_factory=list)
 
     def get_node(self, node_id: str) -> Optional[WorkflowNode]:
@@ -115,7 +114,7 @@ class ExecutionResult(BaseModel):
     data: Any = None
     error: Optional[str] = None
     duration_ms: float = 0
-    started_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: Optional[datetime] = None
 
 
@@ -128,7 +127,7 @@ class WorkflowExecution(BaseModel):
     trigger_type: str = "manual"
     trigger_data: dict = Field(default_factory=dict)
     node_results: list[ExecutionResult] = Field(default_factory=list)
-    started_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: Optional[datetime] = None
     error: Optional[str] = None
     duration_ms: float = 0

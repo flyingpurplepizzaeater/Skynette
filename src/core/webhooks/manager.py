@@ -13,7 +13,7 @@ import logging
 import secrets
 import sqlite3
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -289,7 +289,7 @@ class WebhookStore:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         cursor.execute("""
             UPDATE webhooks
             SET last_triggered = ?, trigger_count = trigger_count + 1
@@ -419,7 +419,7 @@ class WebhookManager:
             auth_value=auth_value or "",
             allowed_methods=allowed_methods or ["POST"],
             enabled=True,
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
 
         self.store.save(webhook)
@@ -711,7 +711,7 @@ class WebhookServer:
             query_params=parse_qs(aiohttp_request.query_string),
             body=body,
             client_ip=aiohttp_request.remote or "",
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
         # Process through manager

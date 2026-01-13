@@ -4,7 +4,7 @@ Manual Trigger Node
 Triggers a workflow when manually clicked.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from src.core.nodes.base import TriggerNode, NodeField, NodeOutput, FieldType
@@ -49,7 +49,7 @@ class ManualTriggerNode(TriggerNode):
     async def execute(self, config: dict, context: dict) -> Any:
         """Execute the manual trigger."""
         return {
-            "triggered_at": datetime.utcnow().isoformat(),
+            "triggered_at": datetime.now(UTC).isoformat(),
             "data": config.get("test_data", {}),
             "trigger_type": "manual",
         }

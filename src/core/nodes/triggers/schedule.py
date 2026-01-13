@@ -4,7 +4,7 @@ Schedule Trigger Node
 Triggers a workflow on a schedule (cron expression).
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from src.core.nodes.base import TriggerNode, NodeField, NodeOutput, FieldType
@@ -112,9 +112,9 @@ class ScheduleTriggerNode(TriggerNode):
     async def execute(self, config: dict, context: dict) -> Any:
         """Execute the schedule trigger."""
         return {
-            "triggered_at": datetime.utcnow().isoformat(),
+            "triggered_at": datetime.now(UTC).isoformat(),
             "scheduled_time": context.get("$trigger", {}).get(
-                "scheduled_time", datetime.utcnow().isoformat()
+                "scheduled_time", datetime.now(UTC).isoformat()
             ),
             "schedule": {
                 "type": config.get("schedule_type", "interval"),

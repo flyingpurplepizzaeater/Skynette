@@ -25,7 +25,7 @@ Array operations:
 import os
 import re
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Callable
 from uuid import uuid4
 import hashlib
@@ -55,11 +55,11 @@ class ExpressionParser:
     def _register_builtins(self):
         """Register built-in functions."""
         self.BUILTIN_FUNCTIONS = {
-            "now": lambda: datetime.utcnow().isoformat() + "Z",
+            "now": lambda: datetime.now(UTC).isoformat() + "Z",
             "uuid": lambda: str(uuid4()),
-            "date": lambda: datetime.utcnow().strftime("%Y-%m-%d"),
-            "time": lambda: datetime.utcnow().strftime("%H:%M:%S"),
-            "timestamp": lambda: int(datetime.utcnow().timestamp()),
+            "date": lambda: datetime.now(UTC).strftime("%Y-%m-%d"),
+            "time": lambda: datetime.now(UTC).strftime("%H:%M:%S"),
+            "timestamp": lambda: int(datetime.now(UTC).timestamp()),
             "json": lambda x: json.dumps(x, default=str),
             "parse_json": lambda x: json.loads(x) if isinstance(x, str) else x,
             "length": lambda x: len(x) if hasattr(x, "__len__") else 0,
