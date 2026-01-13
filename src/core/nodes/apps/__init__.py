@@ -3,7 +3,13 @@
 from src.core.nodes.apps.slack import SlackSendMessageNode, SlackReactionNode
 from src.core.nodes.apps.email import EmailSendNode, EmailReadNode
 from src.core.nodes.apps.discord import DiscordWebhookNode, DiscordBotMessageNode
-from src.core.nodes.apps.database import SQLiteQueryNode, PostgreSQLQueryNode
+from src.core.nodes.apps.database import (
+    SQLiteQueryNode,
+    PostgreSQLQueryNode,
+    MySQLQueryNode,
+    MongoDBQueryNode,
+    MongoDBWriteNode,
+)
 from src.core.nodes.apps.google_sheets import GoogleSheetsReadNode, GoogleSheetsWriteNode
 from src.core.nodes.apps.google_drive import (
     GoogleDriveListNode,
@@ -47,6 +53,9 @@ __all__ = [
     # Database
     "SQLiteQueryNode",
     "PostgreSQLQueryNode",
+    "MySQLQueryNode",
+    "MongoDBQueryNode",
+    "MongoDBWriteNode",
     # Google Sheets
     "GoogleSheetsReadNode",
     "GoogleSheetsWriteNode",
@@ -109,6 +118,9 @@ APP_NODES = [
     # Database
     SQLiteQueryNode,
     PostgreSQLQueryNode,
+    MySQLQueryNode,
+    MongoDBQueryNode,
+    MongoDBWriteNode,
     # Google Sheets
     GoogleSheetsReadNode,
     GoogleSheetsWriteNode,

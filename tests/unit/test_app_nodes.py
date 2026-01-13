@@ -2228,3 +2228,399 @@ class TestDropboxGetLinkNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "dropbox-get-link"
+
+
+# ============================================================================
+# MySQL Node Tests
+# ============================================================================
+
+class TestMySQLQueryNode:
+    """Tests for MySQLQueryNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.database import MySQLQueryNode
+        return MySQLQueryNode()
+
+    @pytest.fixture
+    def config(self):
+        return {
+            "host": "localhost",
+            "port": 3306,
+            "database": "testdb",
+            "username": "testuser",
+            "password": "testpass",
+            "query": "SELECT * FROM users",
+            "operation": "fetch",
+        }
+
+    @pytest.fixture
+    def mock_aiomysql(self):
+        """Create mock aiomysql module."""
+        mock_module = MagicMock()
+        mock_module.DictCursor = MagicMock()
+        return mock_module
+
+    @pytest.mark.asyncio
+    async def test_fetch_query_success(self, node, config, mock_aiomysql):
+        """Test fetching rows from MySQL."""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+
+        # Setup async cursor context
+        mock_cursor.fetchall = AsyncMock(return_value=[
+            {"id": 1, "name": "Alice"},
+            {"id": 2, "name": "Bob"},
+        ])
+        mock_cursor.execute = AsyncMock()
+        mock_cursor.__aenter__ = AsyncMock(return_value=mock_cursor)
+        mock_cursor.__aexit__ = AsyncMock(return_value=None)
+
+        mock_conn.cursor.return_value = mock_cursor
+        mock_conn.close = MagicMock()
+
+        mock_aiomysql.connect = AsyncMock(return_value=mock_conn)
+
+        with patch.dict("sys.modules", {"aiomysql": mock_aiomysql}):
+            result = await node.execute(config, {})
+
+        assert result["row_count"] == 2
+        assert len(result["rows"]) == 2
+        assert result["rows"][0]["name"] == "Alice"
+
+    @pytest.mark.asyncio
+    async def test_fetchone_operation(self, node, config, mock_aiomysql):
+        """Test fetching single row."""
+        config["operation"] = "fetchone"
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+
+        mock_cursor.fetchone = AsyncMock(return_value={"id": 1, "name": "Alice"})
+        mock_cursor.execute = AsyncMock()
+        mock_cursor.__aenter__ = AsyncMock(return_value=mock_cursor)
+        mock_cursor.__aexit__ = AsyncMock(return_value=None)
+
+        mock_conn.cursor.return_value = mock_cursor
+        mock_conn.close = MagicMock()
+
+        mock_aiomysql.connect = AsyncMock(return_value=mock_conn)
+
+        with patch.dict("sys.modules", {"aiomysql": mock_aiomysql}):
+            result = await node.execute(config, {})
+
+        assert result["row_count"] == 1
+        assert result["rows"][0]["name"] == "Alice"
+
+    @pytest.mark.asyncio
+    async def test_execute_operation(self, node, config, mock_aiomysql):
+        """Test execute operation (INSERT/UPDATE/DELETE)."""
+        config["operation"] = "execute"
+        config["query"] = "INSERT INTO users (name) VALUES (%s)"
+        config["parameters"] = '["Charlie"]'
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+
+        mock_cursor.execute = AsyncMock()
+        mock_cursor.rowcount = 1
+        mock_cursor.lastrowid = 3
+        mock_cursor.__aenter__ = AsyncMock(return_value=mock_cursor)
+        mock_cursor.__aexit__ = AsyncMock(return_value=None)
+
+        mock_conn.cursor.return_value = mock_cursor
+        mock_conn.close = MagicMock()
+
+        mock_aiomysql.connect = AsyncMock(return_value=mock_conn)
+
+        with patch.dict("sys.modules", {"aiomysql": mock_aiomysql}):
+            result = await node.execute(config, {})
+
+        assert result["row_count"] == 1
+        assert result["last_id"] == 3
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "mysql-query"
+        assert node.color == "#4479A1"
+
+    def test_node_inputs(self, node):
+        """Test node has required inputs."""
+        input_names = [i.name for i in node.inputs]
+        assert "host" in input_names
+        assert "database" in input_names
+        assert "username" in input_names
+        assert "password" in input_names
+        assert "query" in input_names
+
+
+# ============================================================================
+# MongoDB Node Tests
+# ============================================================================
+
+class TestMongoDBQueryNode:
+    """Tests for MongoDBQueryNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.database import MongoDBQueryNode
+        return MongoDBQueryNode()
+
+    @pytest.fixture
+    def config(self):
+        return {
+            "connection_string": "mongodb://localhost:27017",
+            "database": "testdb",
+            "collection": "users",
+            "operation": "find",
+            "query": "{}",
+            "limit": 100,
+        }
+
+    @pytest.fixture
+    def mock_motor(self):
+        """Create mock motor module."""
+        mock_motor_asyncio = MagicMock()
+        mock_motor = MagicMock()
+        mock_motor.motor_asyncio = mock_motor_asyncio
+        return mock_motor, mock_motor_asyncio
+
+    @pytest.mark.asyncio
+    async def test_find_documents(self, node, config, mock_motor):
+        """Test finding documents in MongoDB."""
+        mock_motor_mod, mock_motor_asyncio = mock_motor
+
+        # Create mock documents
+        mock_docs = [
+            {"_id": "abc123", "name": "Alice"},
+            {"_id": "def456", "name": "Bob"},
+        ]
+
+        # Setup mock cursor
+        mock_cursor = MagicMock()
+        mock_cursor.sort = MagicMock(return_value=mock_cursor)
+        mock_cursor.limit = MagicMock(return_value=mock_cursor)
+
+        # Make cursor async iterable
+        async def async_iter():
+            for doc in mock_docs:
+                yield doc
+
+        mock_cursor.__aiter__ = lambda self: async_iter()
+
+        mock_collection = MagicMock()
+        mock_collection.find.return_value = mock_cursor
+
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+        mock_client_instance = MagicMock()
+        mock_client_instance.__getitem__ = MagicMock(return_value=mock_db)
+        mock_client_instance.close = MagicMock()
+
+        mock_motor_asyncio.AsyncIOMotorClient.return_value = mock_client_instance
+
+        with patch.dict("sys.modules", {"motor": mock_motor_mod, "motor.motor_asyncio": mock_motor_asyncio}):
+            result = await node.execute(config, {})
+
+        assert result["count"] == 2
+        assert len(result["documents"]) == 2
+        assert result["documents"][0]["name"] == "Alice"
+        # _id should be converted to string
+        assert result["documents"][0]["_id"] == "abc123"
+
+    @pytest.mark.asyncio
+    async def test_find_one_document(self, node, config, mock_motor):
+        """Test finding single document."""
+        config["operation"] = "find_one"
+        config["query"] = '{"name": "Alice"}'
+
+        mock_motor_mod, mock_motor_asyncio = mock_motor
+        mock_doc = {"_id": "abc123", "name": "Alice"}
+
+        mock_collection = MagicMock()
+        mock_collection.find_one = AsyncMock(return_value=mock_doc)
+
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+        mock_client_instance = MagicMock()
+        mock_client_instance.__getitem__ = MagicMock(return_value=mock_db)
+        mock_client_instance.close = MagicMock()
+
+        mock_motor_asyncio.AsyncIOMotorClient.return_value = mock_client_instance
+
+        with patch.dict("sys.modules", {"motor": mock_motor_mod, "motor.motor_asyncio": mock_motor_asyncio}):
+            result = await node.execute(config, {})
+
+        assert result["count"] == 1
+        assert result["documents"][0]["name"] == "Alice"
+
+    @pytest.mark.asyncio
+    async def test_count_documents(self, node, config, mock_motor):
+        """Test counting documents."""
+        config["operation"] = "count"
+
+        mock_motor_mod, mock_motor_asyncio = mock_motor
+
+        mock_collection = MagicMock()
+        mock_collection.count_documents = AsyncMock(return_value=42)
+
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+        mock_client_instance = MagicMock()
+        mock_client_instance.__getitem__ = MagicMock(return_value=mock_db)
+        mock_client_instance.close = MagicMock()
+
+        mock_motor_asyncio.AsyncIOMotorClient.return_value = mock_client_instance
+
+        with patch.dict("sys.modules", {"motor": mock_motor_mod, "motor.motor_asyncio": mock_motor_asyncio}):
+            result = await node.execute(config, {})
+
+        assert result["count"] == 42
+        assert result["documents"] == []
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "mongodb-query"
+        assert node.color == "#47A248"
+
+    def test_node_inputs(self, node):
+        """Test node has required inputs."""
+        input_names = [i.name for i in node.inputs]
+        assert "connection_string" in input_names
+        assert "database" in input_names
+        assert "collection" in input_names
+        assert "operation" in input_names
+
+
+class TestMongoDBWriteNode:
+    """Tests for MongoDBWriteNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.database import MongoDBWriteNode
+        return MongoDBWriteNode()
+
+    @pytest.fixture
+    def config(self):
+        return {
+            "connection_string": "mongodb://localhost:27017",
+            "database": "testdb",
+            "collection": "users",
+            "operation": "insert_one",
+            "document": '{"name": "Alice"}',
+        }
+
+    @pytest.fixture
+    def mock_motor(self):
+        """Create mock motor module."""
+        mock_motor_asyncio = MagicMock()
+        mock_motor = MagicMock()
+        mock_motor.motor_asyncio = mock_motor_asyncio
+        return mock_motor, mock_motor_asyncio
+
+    @pytest.mark.asyncio
+    async def test_insert_one(self, node, config, mock_motor):
+        """Test inserting single document."""
+        mock_motor_mod, mock_motor_asyncio = mock_motor
+
+        mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.inserted_id = "new_id_123"
+
+        mock_collection = MagicMock()
+        mock_collection.insert_one = AsyncMock(return_value=mock_result)
+
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+        mock_client_instance = MagicMock()
+        mock_client_instance.__getitem__ = MagicMock(return_value=mock_db)
+        mock_client_instance.close = MagicMock()
+
+        mock_motor_asyncio.AsyncIOMotorClient.return_value = mock_client_instance
+
+        with patch.dict("sys.modules", {"motor": mock_motor_mod, "motor.motor_asyncio": mock_motor_asyncio}):
+            result = await node.execute(config, {})
+
+        assert result["success"] is True
+        assert result["inserted_id"] == "new_id_123"
+
+    @pytest.mark.asyncio
+    async def test_update_one(self, node, config, mock_motor):
+        """Test updating single document."""
+        config["operation"] = "update_one"
+        config["filter"] = '{"name": "Alice"}'
+        config["document"] = '{"$set": {"age": 30}}'
+
+        mock_motor_mod, mock_motor_asyncio = mock_motor
+
+        mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.matched_count = 1
+        mock_result.modified_count = 1
+        mock_result.upserted_id = None
+
+        mock_collection = MagicMock()
+        mock_collection.update_one = AsyncMock(return_value=mock_result)
+
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+        mock_client_instance = MagicMock()
+        mock_client_instance.__getitem__ = MagicMock(return_value=mock_db)
+        mock_client_instance.close = MagicMock()
+
+        mock_motor_asyncio.AsyncIOMotorClient.return_value = mock_client_instance
+
+        with patch.dict("sys.modules", {"motor": mock_motor_mod, "motor.motor_asyncio": mock_motor_asyncio}):
+            result = await node.execute(config, {})
+
+        assert result["success"] is True
+        assert result["matched_count"] == 1
+        assert result["modified_count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_delete_one(self, node, config, mock_motor):
+        """Test deleting single document."""
+        config["operation"] = "delete_one"
+        config["filter"] = '{"name": "Alice"}'
+
+        mock_motor_mod, mock_motor_asyncio = mock_motor
+
+        mock_result = MagicMock()
+        mock_result.acknowledged = True
+        mock_result.deleted_count = 1
+
+        mock_collection = MagicMock()
+        mock_collection.delete_one = AsyncMock(return_value=mock_result)
+
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+        mock_client_instance = MagicMock()
+        mock_client_instance.__getitem__ = MagicMock(return_value=mock_db)
+        mock_client_instance.close = MagicMock()
+
+        mock_motor_asyncio.AsyncIOMotorClient.return_value = mock_client_instance
+
+        with patch.dict("sys.modules", {"motor": mock_motor_mod, "motor.motor_asyncio": mock_motor_asyncio}):
+            result = await node.execute(config, {})
+
+        assert result["success"] is True
+        assert result["deleted_count"] == 1
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "mongodb-write"
+        assert node.color == "#47A248"
+
+    def test_node_inputs(self, node):
+        """Test node has required inputs."""
+        input_names = [i.name for i in node.inputs]
+        assert "operation" in input_names
+        assert "filter" in input_names
+        assert "document" in input_names
+        assert "upsert" in input_names
