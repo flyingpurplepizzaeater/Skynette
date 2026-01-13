@@ -25,6 +25,14 @@ from src.core.nodes.apps.teams import (
     TeamsGetMessagesNode,
     TeamsCreateMeetingNode,
 )
+from src.core.nodes.apps.dropbox import (
+    DropboxListNode,
+    DropboxDownloadNode,
+    DropboxUploadNode,
+    DropboxCreateFolderNode,
+    DropboxDeleteNode,
+    DropboxGetLinkNode,
+)
 
 __all__ = [
     # Slack
@@ -78,6 +86,13 @@ __all__ = [
     "TeamsListTeamsNode",
     "TeamsGetMessagesNode",
     "TeamsCreateMeetingNode",
+    # Dropbox
+    "DropboxListNode",
+    "DropboxDownloadNode",
+    "DropboxUploadNode",
+    "DropboxCreateFolderNode",
+    "DropboxDeleteNode",
+    "DropboxGetLinkNode",
 ]
 
 # All app nodes for registry
@@ -133,4 +148,11 @@ APP_NODES = [
     TeamsListTeamsNode,
     TeamsGetMessagesNode,
     TeamsCreateMeetingNode,
+    # Dropbox
+    DropboxListNode,
+    DropboxDownloadNode,
+    DropboxUploadNode,
+    DropboxCreateFolderNode,
+    DropboxDeleteNode,
+    DropboxGetLinkNode,
 ]

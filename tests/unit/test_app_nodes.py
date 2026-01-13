@@ -1769,3 +1769,462 @@ class TestTeamsCreateMeetingNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "teams-create-meeting"
+
+
+# ============================================================================
+# Dropbox Node Tests
+# ============================================================================
+
+class TestDropboxListNode:
+    """Tests for DropboxListNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.dropbox import DropboxListNode
+        return DropboxListNode()
+
+    @pytest.mark.asyncio
+    async def test_list_files_success(self, node):
+        """Test listing files successfully."""
+        config = {
+            "access_token": "test-token",
+            "path": "",
+            "recursive": False,
+            "limit": 100,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "entries": [
+                    {
+                        "name": "document.pdf",
+                        "path_display": "/document.pdf",
+                        ".tag": "file",
+                        "size": 1024,
+                        "client_modified": "2024-01-15T10:00:00Z",
+                        "id": "id:abc123",
+                    },
+                    {
+                        "name": "Photos",
+                        "path_display": "/Photos",
+                        ".tag": "folder",
+                        "id": "id:def456",
+                    },
+                ],
+                "has_more": False,
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["entries"]) == 2
+            assert result["entries"][0]["name"] == "document.pdf"
+            assert result["entries"][0]["type"] == "file"
+            assert result["entries"][1]["type"] == "folder"
+            assert result["has_more"] is False
+
+    @pytest.mark.asyncio
+    async def test_list_files_empty(self, node):
+        """Test listing when folder is empty."""
+        config = {"access_token": "test-token", "path": "/empty-folder"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "entries": [],
+                "has_more": False,
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 0
+            assert result["entries"] == []
+
+    @pytest.mark.asyncio
+    async def test_missing_token_raises_error(self, node):
+        """Test that missing token raises error."""
+        config = {"path": "/test"}
+
+        with pytest.raises(ValueError, match="Access token required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "dropbox-list"
+        assert node.category == "Apps"
+        assert node.color == "#0061FF"
+
+
+class TestDropboxDownloadNode:
+    """Tests for DropboxDownloadNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.dropbox import DropboxDownloadNode
+        return DropboxDownloadNode()
+
+    @pytest.mark.asyncio
+    async def test_download_success(self, node):
+        """Test downloading file successfully."""
+        config = {
+            "access_token": "test-token",
+            "path": "/document.txt",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.content = b"Hello, World!"
+            mock_response.headers = {
+                "Dropbox-API-Result": '{"name": "document.txt", "size": 13}'
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["filename"] == "document.txt"
+            assert result["size"] == 13
+
+    @pytest.mark.asyncio
+    async def test_download_failure(self, node):
+        """Test handling download failure."""
+        config = {"access_token": "test-token", "path": "/nonexistent.txt"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert result["content"] == ""
+
+    @pytest.mark.asyncio
+    async def test_missing_path_raises_error(self, node):
+        """Test that missing path raises error."""
+        config = {"access_token": "test-token", "path": ""}
+
+        with pytest.raises(ValueError, match="File path is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "dropbox-download"
+
+
+class TestDropboxUploadNode:
+    """Tests for DropboxUploadNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.dropbox import DropboxUploadNode
+        return DropboxUploadNode()
+
+    @pytest.mark.asyncio
+    async def test_upload_text_success(self, node):
+        """Test uploading text file successfully."""
+        config = {
+            "access_token": "test-token",
+            "path": "/uploads/test.txt",
+            "content": "Hello, Dropbox!",
+            "is_base64": False,
+            "mode": "add",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "path_display": "/uploads/test.txt",
+                "id": "id:xyz789",
+                "size": 15,
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["path"] == "/uploads/test.txt"
+            assert result["id"] == "id:xyz789"
+
+    @pytest.mark.asyncio
+    async def test_upload_base64_content(self, node):
+        """Test uploading base64 encoded content."""
+        import base64
+        content = base64.b64encode(b"Binary content").decode()
+
+        config = {
+            "access_token": "test-token",
+            "path": "/binary.dat",
+            "content": content,
+            "is_base64": True,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "path_display": "/binary.dat",
+                "id": "id:bin123",
+            }
+            mock_post = AsyncMock(return_value=mock_response)
+            mock_client.return_value.__aenter__.return_value.post = mock_post
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            # Verify binary content was decoded
+            call_args = mock_post.call_args
+            assert call_args[1]["content"] == b"Binary content"
+
+    @pytest.mark.asyncio
+    async def test_upload_failure(self, node):
+        """Test handling upload failure."""
+        config = {
+            "access_token": "test-token",
+            "path": "/test.txt",
+            "content": "Test",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 409  # Conflict
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "dropbox-upload"
+
+
+class TestDropboxCreateFolderNode:
+    """Tests for DropboxCreateFolderNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.dropbox import DropboxCreateFolderNode
+        return DropboxCreateFolderNode()
+
+    @pytest.mark.asyncio
+    async def test_create_folder_success(self, node):
+        """Test creating folder successfully."""
+        config = {
+            "access_token": "test-token",
+            "path": "/New Folder",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "metadata": {
+                    "path_display": "/New Folder",
+                    "id": "id:folder123",
+                }
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["path"] == "/New Folder"
+            assert result["id"] == "id:folder123"
+
+    @pytest.mark.asyncio
+    async def test_create_folder_failure(self, node):
+        """Test handling folder creation failure (already exists)."""
+        config = {"access_token": "test-token", "path": "/Existing Folder"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 409
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_missing_path_raises_error(self, node):
+        """Test that missing path raises error."""
+        config = {"access_token": "test-token", "path": ""}
+
+        with pytest.raises(ValueError, match="Folder path is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "dropbox-create-folder"
+
+
+class TestDropboxDeleteNode:
+    """Tests for DropboxDeleteNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.dropbox import DropboxDeleteNode
+        return DropboxDeleteNode()
+
+    @pytest.mark.asyncio
+    async def test_delete_success(self, node):
+        """Test deleting file successfully."""
+        config = {
+            "access_token": "test-token",
+            "path": "/old-file.txt",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "metadata": {"path_display": "/old-file.txt"}
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["deleted_path"] == "/old-file.txt"
+
+    @pytest.mark.asyncio
+    async def test_delete_failure(self, node):
+        """Test handling delete failure (not found)."""
+        config = {"access_token": "test-token", "path": "/nonexistent.txt"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_missing_path_raises_error(self, node):
+        """Test that missing path raises error."""
+        config = {"access_token": "test-token", "path": ""}
+
+        with pytest.raises(ValueError, match="Path is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "dropbox-delete"
+
+
+class TestDropboxGetLinkNode:
+    """Tests for DropboxGetLinkNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.dropbox import DropboxGetLinkNode
+        return DropboxGetLinkNode()
+
+    @pytest.mark.asyncio
+    async def test_create_share_link_success(self, node):
+        """Test creating share link successfully."""
+        config = {
+            "access_token": "test-token",
+            "path": "/shared-doc.pdf",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "url": "https://www.dropbox.com/s/abc123/shared-doc.pdf?dl=0"
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert "dropbox.com" in result["url"]
+
+    @pytest.mark.asyncio
+    async def test_get_existing_link(self, node):
+        """Test getting existing share link when one already exists."""
+        config = {"access_token": "test-token", "path": "/already-shared.pdf"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            # First call returns 409 (link exists)
+            mock_create_response = MagicMock()
+            mock_create_response.status_code = 409
+
+            # Second call returns existing links
+            mock_list_response = MagicMock()
+            mock_list_response.status_code = 200
+            mock_list_response.json.return_value = {
+                "links": [{"url": "https://www.dropbox.com/s/existing/file?dl=0"}]
+            }
+
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                side_effect=[mock_create_response, mock_list_response]
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert "existing" in result["url"]
+
+    @pytest.mark.asyncio
+    async def test_get_link_failure(self, node):
+        """Test handling failure when no link can be created/found."""
+        config = {"access_token": "test-token", "path": "/problem-file.txt"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 403  # Forbidden
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert result["url"] == ""
+
+    @pytest.mark.asyncio
+    async def test_missing_path_raises_error(self, node):
+        """Test that missing path raises error."""
+        config = {"access_token": "test-token", "path": ""}
+
+        with pytest.raises(ValueError, match="Path is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "dropbox-get-link"
