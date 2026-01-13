@@ -1,10 +1,11 @@
 """
-Simple build script for Skynette Windows executable.
+Simple build script for Skynette executable.
 
 Usage:
-    python build.py
+    python build_exe.py
 
-This will create a standalone .exe in the dist/ folder.
+This will create a standalone executable in the dist/ folder.
+Note: Renamed from build.py to avoid shadowing Python's 'build' package.
 """
 
 import subprocess
