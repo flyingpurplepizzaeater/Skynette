@@ -1153,3 +1153,345 @@ class TestWebhookCallNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "webhook-call"
+
+
+# ============================================================================
+# Google Drive Node Tests
+# ============================================================================
+
+class TestGoogleDriveListNode:
+    """Tests for GoogleDriveListNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.google_drive import GoogleDriveListNode
+        return GoogleDriveListNode()
+
+    @pytest.fixture
+    def mock_service(self):
+        """Create mock Google Drive service."""
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+        mock_list = MagicMock()
+        mock_list.execute.return_value = {
+            "files": [
+                {
+                    "id": "file1",
+                    "name": "Document.docx",
+                    "mimeType": "application/vnd.google-apps.document",
+                    "size": "1024",
+                },
+                {
+                    "id": "folder1",
+                    "name": "My Folder",
+                    "mimeType": "application/vnd.google-apps.folder",
+                },
+            ]
+        }
+        mock_files.list.return_value = mock_list
+        mock_svc.files.return_value = mock_files
+        return mock_svc
+
+    @pytest.mark.asyncio
+    async def test_list_files_success(self, node, mock_service):
+        """Test listing files successfully."""
+        config = {"credentials_json": '{"type": "service_account", "private_key": "key"}'}
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get:
+            mock_get.return_value = mock_service
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["files"]) == 2
+            assert result["files"][0]["name"] == "Document.docx"
+
+    @pytest.mark.asyncio
+    async def test_list_files_empty(self, node):
+        """Test listing when no files exist."""
+        config = {"credentials_json": '{"type": "service_account"}'}
+
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+        mock_list = MagicMock()
+        mock_list.execute.return_value = {"files": []}
+        mock_files.list.return_value = mock_list
+        mock_svc.files.return_value = mock_files
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get:
+            mock_get.return_value = mock_svc
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 0
+            assert result["files"] == []
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "google-drive-list"
+        assert node.category == "Apps"
+
+
+class TestGoogleDriveUploadNode:
+    """Tests for GoogleDriveUploadNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.google_drive import GoogleDriveUploadNode
+        return GoogleDriveUploadNode()
+
+    @pytest.mark.asyncio
+    async def test_upload_text_file(self, node):
+        """Test uploading a text file."""
+        config = {
+            "credentials_json": '{"type": "service_account"}',
+            "filename": "test.txt",
+            "content": "Hello, World!",
+            "mime_type": "text/plain",
+        }
+
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+        mock_create = MagicMock()
+        mock_create.execute.return_value = {
+            "id": "new-file-id",
+            "webViewLink": "https://drive.google.com/file/d/new-file-id/view",
+        }
+        mock_files.create.return_value = mock_create
+        mock_svc.files.return_value = mock_files
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get:
+            with patch("googleapiclient.http.MediaIoBaseUpload"):
+                mock_get.return_value = mock_svc
+
+                result = await node.execute(config, {})
+
+                assert result["success"] is True
+                assert result["file_id"] == "new-file-id"
+                assert "drive.google.com" in result["web_link"]
+
+    @pytest.mark.asyncio
+    async def test_upload_to_folder(self, node):
+        """Test uploading to a specific folder."""
+        config = {
+            "credentials_json": '{"type": "service_account"}',
+            "filename": "test.txt",
+            "content": "Content",
+            "folder_id": "folder123",
+        }
+
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+        mock_create = MagicMock()
+        mock_create.execute.return_value = {"id": "file-id", "webViewLink": ""}
+        mock_files.create.return_value = mock_create
+        mock_svc.files.return_value = mock_files
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get:
+            with patch("googleapiclient.http.MediaIoBaseUpload"):
+                mock_get.return_value = mock_svc
+
+                await node.execute(config, {})
+
+                call_args = mock_files.create.call_args
+                body = call_args[1]["body"]
+                assert "folder123" in body["parents"]
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "google-drive-upload"
+
+
+class TestGoogleDriveDownloadNode:
+    """Tests for GoogleDriveDownloadNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.google_drive import GoogleDriveDownloadNode
+        return GoogleDriveDownloadNode()
+
+    @pytest.mark.asyncio
+    async def test_download_binary_file(self, node):
+        """Test downloading a binary file."""
+        config = {
+            "credentials_json": '{"type": "service_account"}',
+            "file_id": "file123",
+        }
+
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+
+        # Mock get for metadata
+        mock_get = MagicMock()
+        mock_get.execute.return_value = {
+            "id": "file123",
+            "name": "image.png",
+            "mimeType": "image/png",
+            "size": "1024",
+        }
+        mock_files.get.return_value = mock_get
+
+        # Mock get_media for download
+        mock_media = MagicMock()
+        mock_media.execute.return_value = b"binary content here"
+        mock_files.get_media.return_value = mock_media
+
+        mock_svc.files.return_value = mock_files
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get_svc:
+            mock_get_svc.return_value = mock_svc
+
+            result = await node.execute(config, {})
+
+            assert result["filename"] == "image.png"
+            assert result["mime_type"] == "image/png"
+            assert result["size"] == len(b"binary content here")
+
+    @pytest.mark.asyncio
+    async def test_export_google_doc(self, node):
+        """Test exporting a Google Doc to PDF."""
+        config = {
+            "credentials_json": '{"type": "service_account"}',
+            "file_id": "doc123",
+            "export_format": "pdf",
+        }
+
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+
+        # Mock get for metadata
+        mock_get = MagicMock()
+        mock_get.execute.return_value = {
+            "id": "doc123",
+            "name": "My Document",
+            "mimeType": "application/vnd.google-apps.document",
+        }
+        mock_files.get.return_value = mock_get
+
+        # Mock export_media for export
+        mock_export = MagicMock()
+        mock_export.execute.return_value = b"PDF content"
+        mock_files.export_media.return_value = mock_export
+
+        mock_svc.files.return_value = mock_files
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get_svc:
+            mock_get_svc.return_value = mock_svc
+
+            result = await node.execute(config, {})
+
+            assert result["filename"] == "My Document.pdf"
+            assert result["mime_type"] == "application/pdf"
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "google-drive-download"
+
+
+class TestGoogleDriveCreateFolderNode:
+    """Tests for GoogleDriveCreateFolderNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.google_drive import GoogleDriveCreateFolderNode
+        return GoogleDriveCreateFolderNode()
+
+    @pytest.mark.asyncio
+    async def test_create_folder(self, node):
+        """Test creating a folder."""
+        config = {
+            "credentials_json": '{"type": "service_account"}',
+            "folder_name": "New Folder",
+        }
+
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+        mock_create = MagicMock()
+        mock_create.execute.return_value = {
+            "id": "folder-id",
+            "webViewLink": "https://drive.google.com/drive/folders/folder-id",
+        }
+        mock_files.create.return_value = mock_create
+        mock_svc.files.return_value = mock_files
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get:
+            mock_get.return_value = mock_svc
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["folder_id"] == "folder-id"
+
+            # Verify folder metadata was set correctly
+            call_args = mock_files.create.call_args
+            body = call_args[1]["body"]
+            assert body["name"] == "New Folder"
+            assert body["mimeType"] == "application/vnd.google-apps.folder"
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "google-drive-create-folder"
+
+
+class TestGoogleDriveDeleteNode:
+    """Tests for GoogleDriveDeleteNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.google_drive import GoogleDriveDeleteNode
+        return GoogleDriveDeleteNode()
+
+    @pytest.mark.asyncio
+    async def test_move_to_trash(self, node):
+        """Test moving file to trash."""
+        config = {
+            "credentials_json": '{"type": "service_account"}',
+            "file_id": "file123",
+            "trash": True,
+        }
+
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+        mock_update = MagicMock()
+        mock_update.execute.return_value = {}
+        mock_files.update.return_value = mock_update
+        mock_svc.files.return_value = mock_files
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get:
+            mock_get.return_value = mock_svc
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+            # Verify update was called with trashed=True
+            call_args = mock_files.update.call_args
+            assert call_args[1]["body"]["trashed"] is True
+
+    @pytest.mark.asyncio
+    async def test_permanent_delete(self, node):
+        """Test permanent deletion."""
+        config = {
+            "credentials_json": '{"type": "service_account"}',
+            "file_id": "file123",
+            "trash": False,
+        }
+
+        mock_svc = MagicMock()
+        mock_files = MagicMock()
+        mock_delete = MagicMock()
+        mock_delete.execute.return_value = None
+        mock_files.delete.return_value = mock_delete
+        mock_svc.files.return_value = mock_files
+
+        with patch("src.core.nodes.apps.google_drive._get_drive_service") as mock_get:
+            mock_get.return_value = mock_svc
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            mock_files.delete.assert_called_once_with(fileId="file123")
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "google-drive-delete"

@@ -5,6 +5,13 @@ from src.core.nodes.apps.email import EmailSendNode, EmailReadNode
 from src.core.nodes.apps.discord import DiscordWebhookNode, DiscordBotMessageNode
 from src.core.nodes.apps.database import SQLiteQueryNode, PostgreSQLQueryNode
 from src.core.nodes.apps.google_sheets import GoogleSheetsReadNode, GoogleSheetsWriteNode
+from src.core.nodes.apps.google_drive import (
+    GoogleDriveListNode,
+    GoogleDriveDownloadNode,
+    GoogleDriveUploadNode,
+    GoogleDriveCreateFolderNode,
+    GoogleDriveDeleteNode,
+)
 from src.core.nodes.apps.webhook import WebhookTriggerNode, WebhookResponseNode, WebhookCallNode
 from src.core.nodes.apps.telegram import TelegramSendMessageNode, TelegramSendPhotoNode, TelegramGetUpdatesNode
 from src.core.nodes.apps.github import GitHubCreateIssueNode, GitHubCreatePRNode, GitHubListReposNode
@@ -28,6 +35,12 @@ __all__ = [
     # Google Sheets
     "GoogleSheetsReadNode",
     "GoogleSheetsWriteNode",
+    # Google Drive
+    "GoogleDriveListNode",
+    "GoogleDriveDownloadNode",
+    "GoogleDriveUploadNode",
+    "GoogleDriveCreateFolderNode",
+    "GoogleDriveDeleteNode",
     # Webhook
     "WebhookTriggerNode",
     "WebhookResponseNode",
@@ -71,6 +84,12 @@ APP_NODES = [
     # Google Sheets
     GoogleSheetsReadNode,
     GoogleSheetsWriteNode,
+    # Google Drive
+    GoogleDriveListNode,
+    GoogleDriveDownloadNode,
+    GoogleDriveUploadNode,
+    GoogleDriveCreateFolderNode,
+    GoogleDriveDeleteNode,
     # Webhook
     WebhookTriggerNode,
     WebhookResponseNode,
