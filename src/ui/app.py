@@ -160,6 +160,7 @@ class SkynetteApp:
             {"icon": ft.Icons.AUTO_AWESOME, "label": "Agents", "view": "agents"},
             {"icon": ft.Icons.DEVELOPER_MODE, "label": "DevTools", "view": "devtools"},
             {"icon": ft.Icons.EXTENSION_ROUNDED, "label": "Plugins", "view": "plugins"},
+            {"icon": ft.Icons.KEY_ROUNDED, "label": "Credentials", "view": "credentials"},
             {"icon": ft.Icons.HISTORY_ROUNDED, "label": "Runs", "view": "runs"},
         ]
 
@@ -670,6 +671,7 @@ class SkynetteApp:
             "agents": "Agent Orchestrator",
             "devtools": "Developer Tools",
             "plugins": "Plugins & Marketplace",
+            "credentials": "Credentials",
             "runs": "Execution History",
             "settings": "Settings",
             "editor": f"Edit: {self.current_workflow.name if self.current_workflow else 'Workflow'}",
@@ -923,6 +925,15 @@ class SkynetteApp:
                     ),
                 ],
             ),
+            padding=ft.Padding.all(24),
+            expand=True,
+        )
+
+    def _build_credentials_view(self) -> ft.Control:
+        """Build the credentials management view."""
+        from src.ui.views.credentials import CredentialsView
+        return ft.Container(
+            content=CredentialsView(),
             padding=ft.Padding.all(24),
             expand=True,
         )
@@ -1467,6 +1478,8 @@ class SkynetteApp:
             self.content_area.content = self._build_devtools_view()
         elif self.current_view == "plugins":
             self.content_area.content = self._build_plugins_view()
+        elif self.current_view == "credentials":
+            self.content_area.content = self._build_credentials_view()
         elif self.current_view == "runs":
             self.content_area.content = self._build_runs_view()
         elif self.current_view == "settings":

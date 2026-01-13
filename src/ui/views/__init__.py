@@ -7,6 +7,7 @@ from src.ui.views.plugins import PluginsView
 from src.ui.views.runs import RunsView
 from src.ui.views.settings import SettingsView
 from src.ui.views.simple_mode import SimpleModeView
+from src.ui.views.credentials import CredentialsView
 
 __all__ = [
     "WorkflowsView",
@@ -16,4 +17,5 @@ __all__ = [
     "RunsView",
     "SettingsView",
     "SimpleModeView",
+    "CredentialsView",
 ]
