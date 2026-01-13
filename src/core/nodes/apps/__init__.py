@@ -18,6 +18,13 @@ from src.core.nodes.apps.github import GitHubCreateIssueNode, GitHubCreatePRNode
 from src.core.nodes.apps.notion import NotionQueryDatabaseNode, NotionCreatePageNode, NotionUpdatePageNode
 from src.core.nodes.apps.aws_s3 import S3UploadNode, S3DownloadNode, S3ListObjectsNode
 from src.core.nodes.apps.twitter import TwitterPostTweetNode, TwitterSearchTweetsNode, TwitterGetUserNode
+from src.core.nodes.apps.teams import (
+    TeamsSendMessageNode,
+    TeamsListChannelsNode,
+    TeamsListTeamsNode,
+    TeamsGetMessagesNode,
+    TeamsCreateMeetingNode,
+)
 
 __all__ = [
     # Slack
@@ -65,6 +72,12 @@ __all__ = [
     "TwitterPostTweetNode",
     "TwitterSearchTweetsNode",
     "TwitterGetUserNode",
+    # Microsoft Teams
+    "TeamsSendMessageNode",
+    "TeamsListChannelsNode",
+    "TeamsListTeamsNode",
+    "TeamsGetMessagesNode",
+    "TeamsCreateMeetingNode",
 ]
 
 # All app nodes for registry
@@ -114,4 +127,10 @@ APP_NODES = [
     TwitterPostTweetNode,
     TwitterSearchTweetsNode,
     TwitterGetUserNode,
+    # Microsoft Teams
+    TeamsSendMessageNode,
+    TeamsListChannelsNode,
+    TeamsListTeamsNode,
+    TeamsGetMessagesNode,
+    TeamsCreateMeetingNode,
 ]

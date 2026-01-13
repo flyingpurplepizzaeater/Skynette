@@ -1495,3 +1495,277 @@ class TestGoogleDriveDeleteNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "google-drive-delete"
+
+
+# ============================================================================
+# Microsoft Teams Node Tests
+# ============================================================================
+
+class TestTeamsSendMessageNode:
+    """Tests for TeamsSendMessageNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.teams import TeamsSendMessageNode
+        return TeamsSendMessageNode()
+
+    @pytest.mark.asyncio
+    async def test_send_channel_message_success(self, node):
+        """Test sending message to a channel."""
+        config = {
+            "access_token": "test-token",
+            "destination_type": "channel",
+            "team_id": "team123",
+            "channel_id": "channel456",
+            "message": "Hello Teams!",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "id": "msg123",
+                "webUrl": "https://teams.microsoft.com/...",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["message_id"] == "msg123"
+
+    @pytest.mark.asyncio
+    async def test_send_chat_message_success(self, node):
+        """Test sending message to a chat."""
+        config = {
+            "access_token": "test-token",
+            "destination_type": "chat",
+            "chat_id": "chat789",
+            "message": "Hello!",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"id": "msg456"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_token_raises_error(self, node):
+        """Test that missing token raises error."""
+        config = {
+            "destination_type": "channel",
+            "team_id": "team123",
+            "channel_id": "channel456",
+            "message": "Hello!",
+        }
+
+        with pytest.raises(ValueError, match="Access token required"):
+            await node.execute(config, {})
+
+    @pytest.mark.asyncio
+    async def test_channel_missing_ids_raises_error(self, node):
+        """Test that missing team/channel IDs raises error."""
+        config = {
+            "access_token": "test-token",
+            "destination_type": "channel",
+            "message": "Hello!",
+        }
+
+        with pytest.raises(ValueError, match="Team ID and Channel ID are required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "teams-send-message"
+        assert node.category == "Apps"
+
+
+class TestTeamsListTeamsNode:
+    """Tests for TeamsListTeamsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.teams import TeamsListTeamsNode
+        return TeamsListTeamsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_teams_success(self, node):
+        """Test listing user's teams."""
+        config = {"access_token": "test-token"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "value": [
+                    {"id": "team1", "displayName": "Team One"},
+                    {"id": "team2", "displayName": "Team Two"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["teams"]) == 2
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "teams-list-teams"
+
+
+class TestTeamsListChannelsNode:
+    """Tests for TeamsListChannelsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.teams import TeamsListChannelsNode
+        return TeamsListChannelsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_channels_success(self, node):
+        """Test listing team channels."""
+        config = {
+            "access_token": "test-token",
+            "team_id": "team123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "value": [
+                    {"id": "ch1", "displayName": "General"},
+                    {"id": "ch2", "displayName": "Random"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "teams-list-channels"
+
+
+class TestTeamsGetMessagesNode:
+    """Tests for TeamsGetMessagesNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.teams import TeamsGetMessagesNode
+        return TeamsGetMessagesNode()
+
+    @pytest.mark.asyncio
+    async def test_get_channel_messages(self, node):
+        """Test getting messages from a channel."""
+        config = {
+            "access_token": "test-token",
+            "source_type": "channel",
+            "team_id": "team123",
+            "channel_id": "channel456",
+            "limit": 10,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "value": [
+                    {"id": "msg1", "body": {"content": "Hello"}},
+                    {"id": "msg2", "body": {"content": "World"}},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["messages"]) == 2
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "teams-get-messages"
+
+
+class TestTeamsCreateMeetingNode:
+    """Tests for TeamsCreateMeetingNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.teams import TeamsCreateMeetingNode
+        return TeamsCreateMeetingNode()
+
+    @pytest.mark.asyncio
+    async def test_create_meeting_success(self, node):
+        """Test creating a meeting."""
+        config = {
+            "access_token": "test-token",
+            "subject": "Team Standup",
+            "start_time": "2024-01-15T09:00:00",
+            "end_time": "2024-01-15T09:30:00",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "id": "meeting123",
+                "joinWebUrl": "https://teams.microsoft.com/l/meetup-join/...",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["meeting_id"] == "meeting123"
+            assert "teams.microsoft.com" in result["join_url"]
+
+    @pytest.mark.asyncio
+    async def test_create_meeting_with_attendees(self, node):
+        """Test creating a meeting with attendees."""
+        config = {
+            "access_token": "test-token",
+            "subject": "Project Review",
+            "start_time": "2024-01-15T14:00:00",
+            "end_time": "2024-01-15T15:00:00",
+            "attendees": "user1@example.com, user2@example.com",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"id": "mtg456", "joinWebUrl": ""}
+            mock_post = AsyncMock(return_value=mock_response)
+            mock_client.return_value.__aenter__.return_value.post = mock_post
+
+            await node.execute(config, {})
+
+            # Verify attendees were included in request
+            call_args = mock_post.call_args
+            body = call_args[1]["json"]
+            assert "participants" in body
+            assert len(body["participants"]["attendees"]) == 2
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "teams-create-meeting"
