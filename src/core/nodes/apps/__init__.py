@@ -39,6 +39,15 @@ from src.core.nodes.apps.dropbox import (
     DropboxDeleteNode,
     DropboxGetLinkNode,
 )
+from src.core.nodes.apps.trello import (
+    TrelloListBoardsNode,
+    TrelloListListsNode,
+    TrelloListCardsNode,
+    TrelloCreateCardNode,
+    TrelloUpdateCardNode,
+    TrelloDeleteCardNode,
+    TrelloAddCommentNode,
+)
 
 __all__ = [
     # Slack
@@ -102,6 +111,14 @@ __all__ = [
     "DropboxCreateFolderNode",
     "DropboxDeleteNode",
     "DropboxGetLinkNode",
+    # Trello
+    "TrelloListBoardsNode",
+    "TrelloListListsNode",
+    "TrelloListCardsNode",
+    "TrelloCreateCardNode",
+    "TrelloUpdateCardNode",
+    "TrelloDeleteCardNode",
+    "TrelloAddCommentNode",
 ]
 
 # All app nodes for registry
@@ -167,4 +184,12 @@ APP_NODES = [
     DropboxCreateFolderNode,
     DropboxDeleteNode,
     DropboxGetLinkNode,
+    # Trello
+    TrelloListBoardsNode,
+    TrelloListListsNode,
+    TrelloListCardsNode,
+    TrelloCreateCardNode,
+    TrelloUpdateCardNode,
+    TrelloDeleteCardNode,
+    TrelloAddCommentNode,
 ]

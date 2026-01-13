@@ -2624,3 +2624,397 @@ class TestMongoDBWriteNode:
         assert "filter" in input_names
         assert "document" in input_names
         assert "upsert" in input_names
+
+
+# ============================================================================
+# Trello Node Tests
+# ============================================================================
+
+class TestTrelloListBoardsNode:
+    """Tests for TrelloListBoardsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.trello import TrelloListBoardsNode
+        return TrelloListBoardsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_boards_success(self, node):
+        """Test listing boards successfully."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "filter": "all",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = [
+                {"id": "board1", "name": "Project Alpha"},
+                {"id": "board2", "name": "Project Beta"},
+            ]
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["boards"]) == 2
+            assert result["boards"][0]["name"] == "Project Alpha"
+
+    @pytest.mark.asyncio
+    async def test_missing_credentials_raises_error(self, node):
+        """Test that missing credentials raises error."""
+        config = {"filter": "all"}
+
+        with pytest.raises(ValueError, match="API key and token required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "trello-list-boards"
+        assert node.color == "#0079BF"
+
+
+class TestTrelloListListsNode:
+    """Tests for TrelloListListsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.trello import TrelloListListsNode
+        return TrelloListListsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_lists_success(self, node):
+        """Test listing lists in a board."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "board_id": "board123",
+            "filter": "open",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = [
+                {"id": "list1", "name": "To Do"},
+                {"id": "list2", "name": "In Progress"},
+                {"id": "list3", "name": "Done"},
+            ]
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 3
+            assert result["lists"][1]["name"] == "In Progress"
+
+    @pytest.mark.asyncio
+    async def test_missing_board_id_raises_error(self, node):
+        """Test that missing board ID raises error."""
+        config = {"api_key": "test-key", "token": "test-token"}
+
+        with pytest.raises(ValueError, match="Board ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "trello-list-lists"
+
+
+class TestTrelloListCardsNode:
+    """Tests for TrelloListCardsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.trello import TrelloListCardsNode
+        return TrelloListCardsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_cards_from_list(self, node):
+        """Test listing cards from a list."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "source_type": "list",
+            "list_id": "list123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = [
+                {"id": "card1", "name": "Task 1", "desc": "Description"},
+                {"id": "card2", "name": "Task 2", "desc": ""},
+            ]
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert result["cards"][0]["name"] == "Task 1"
+
+    @pytest.mark.asyncio
+    async def test_list_cards_from_board(self, node):
+        """Test listing cards from entire board."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "source_type": "board",
+            "board_id": "board123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = [
+                {"id": "card1", "name": "Task 1"},
+            ]
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 1
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "trello-list-cards"
+
+
+class TestTrelloCreateCardNode:
+    """Tests for TrelloCreateCardNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.trello import TrelloCreateCardNode
+        return TrelloCreateCardNode()
+
+    @pytest.mark.asyncio
+    async def test_create_card_success(self, node):
+        """Test creating a card successfully."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "list_id": "list123",
+            "name": "New Task",
+            "description": "Task description",
+            "position": "top",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "card-new-123",
+                "name": "New Task",
+                "url": "https://trello.com/c/abc123",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["card_id"] == "card-new-123"
+            assert "trello.com" in result["card_url"]
+
+    @pytest.mark.asyncio
+    async def test_missing_list_id_raises_error(self, node):
+        """Test that missing list ID raises error."""
+        config = {"api_key": "test-key", "token": "test-token", "name": "Task"}
+
+        with pytest.raises(ValueError, match="List ID is required"):
+            await node.execute(config, {})
+
+    @pytest.mark.asyncio
+    async def test_missing_name_raises_error(self, node):
+        """Test that missing name raises error."""
+        config = {"api_key": "test-key", "token": "test-token", "list_id": "list123"}
+
+        with pytest.raises(ValueError, match="Card name is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "trello-create-card"
+
+
+class TestTrelloUpdateCardNode:
+    """Tests for TrelloUpdateCardNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.trello import TrelloUpdateCardNode
+        return TrelloUpdateCardNode()
+
+    @pytest.mark.asyncio
+    async def test_update_card_success(self, node):
+        """Test updating a card successfully."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "card_id": "card123",
+            "name": "Updated Task Name",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "card123",
+                "name": "Updated Task Name",
+            }
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["card"]["name"] == "Updated Task Name"
+
+    @pytest.mark.asyncio
+    async def test_move_card_to_list(self, node):
+        """Test moving card to different list."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "card_id": "card123",
+            "list_id": "new-list-456",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "card123",
+                "idList": "new-list-456",
+            }
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_card_id_raises_error(self, node):
+        """Test that missing card ID raises error."""
+        config = {"api_key": "test-key", "token": "test-token"}
+
+        with pytest.raises(ValueError, match="Card ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "trello-update-card"
+
+
+class TestTrelloDeleteCardNode:
+    """Tests for TrelloDeleteCardNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.trello import TrelloDeleteCardNode
+        return TrelloDeleteCardNode()
+
+    @pytest.mark.asyncio
+    async def test_delete_card_success(self, node):
+        """Test deleting a card successfully."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "card_id": "card123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_delete_card_failure(self, node):
+        """Test handling delete failure."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "card_id": "nonexistent",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "trello-delete-card"
+
+
+class TestTrelloAddCommentNode:
+    """Tests for TrelloAddCommentNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.trello import TrelloAddCommentNode
+        return TrelloAddCommentNode()
+
+    @pytest.mark.asyncio
+    async def test_add_comment_success(self, node):
+        """Test adding a comment successfully."""
+        config = {
+            "api_key": "test-key",
+            "token": "test-token",
+            "card_id": "card123",
+            "text": "This is a comment",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "comment-xyz",
+                "data": {"text": "This is a comment"},
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["comment_id"] == "comment-xyz"
+
+    @pytest.mark.asyncio
+    async def test_missing_text_raises_error(self, node):
+        """Test that missing text raises error."""
+        config = {"api_key": "test-key", "token": "test-token", "card_id": "card123"}
+
+        with pytest.raises(ValueError, match="Comment text is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "trello-add-comment"
