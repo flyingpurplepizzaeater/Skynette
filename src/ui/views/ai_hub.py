@@ -51,13 +51,12 @@ class AIHubView(ft.Column):
             controls=[
                 self._build_header(),
                 ft.Tabs(
-                    length=5,  # Changed from 4
-                    content=[
+                    tabs=[
                         setup_tab,
                         providers_tab,
                         library_tab,
                         usage_tab,
-                        knowledge_bases_tab,  # NEW
+                        knowledge_bases_tab,
                     ],
                     expand=True,
                 ),
@@ -445,8 +444,7 @@ class AIHubView(ft.Column):
 
         return ft.Container(
             content=ft.Tabs(
-                length=2,
-                content=[my_models_tab, download_tab],
+                tabs=[my_models_tab, download_tab],
                 expand=True,
             ),
             expand=True,

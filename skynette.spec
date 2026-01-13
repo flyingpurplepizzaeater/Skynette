@@ -59,6 +59,25 @@ hiddenimports = [
     'hashlib',
     'base64',
 
+    # Machine Learning / RAG
+    'numpy',
+    'numpy.core',
+    'numpy.core._multiarray_umath',
+    'sentence_transformers',
+    'sentence_transformers.models',
+    'transformers',
+    'transformers.models',
+    'transformers.models.auto',
+    'torch',
+    'torch.nn',
+    'torch.nn.functional',
+    'chromadb',
+    'chromadb.api',
+    'sklearn',
+    'sklearn.metrics',
+    'scipy',
+    'scipy.sparse',
+
     # AI providers
     'openai',
     'anthropic',
@@ -149,10 +168,10 @@ a = Analysis(
     excludes=[
         'tkinter',
         'matplotlib',
-        'numpy',
+        # 'numpy',  # Required for RAG/ML functionality
         'pandas',
-        'scipy',
-        'PIL',
+        # 'scipy',  # Required for RAG/ML functionality
+        # 'PIL',  # Required for sentence_transformers CLIP models
         'cv2',
     ],
     win_no_prefer_redirects=False,
