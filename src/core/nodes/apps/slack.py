@@ -7,6 +7,21 @@ from typing import Any, Optional
 from src.core.nodes.base import BaseNode, NodeField, FieldType
 
 
+def _get_credential(credential_id: Optional[str]) -> Optional[dict]:
+    """Load credential from vault if ID is provided."""
+    if not credential_id:
+        return None
+    try:
+        from src.data.credentials import CredentialVault
+        vault = CredentialVault()
+        cred = vault.get_credential(credential_id)
+        if cred:
+            return cred.get("data", {})
+    except Exception:
+        pass
+    return None
+
+
 class SlackSendMessageNode(BaseNode):
     """
     Send messages to Slack channels.
@@ -27,18 +42,26 @@ class SlackSendMessageNode(BaseNode):
 
     inputs = [
         NodeField(
+            name="credential",
+            label="Slack Credential",
+            type=FieldType.CREDENTIAL,
+            required=False,
+            description="Select a saved Slack credential.",
+            credential_service="slack",
+        ),
+        NodeField(
             name="webhook_url",
             label="Webhook URL",
             type=FieldType.SECRET,
             required=False,
-            description="Slack Incoming Webhook URL. Leave empty to use Bot Token.",
+            description="Slack Incoming Webhook URL (or use saved credential above).",
         ),
         NodeField(
             name="bot_token",
             label="Bot Token",
             type=FieldType.SECRET,
             required=False,
-            description="Slack Bot Token (xoxb-...). Required if not using webhook.",
+            description="Slack Bot Token (or use saved credential above).",
         ),
         NodeField(
             name="channel",
@@ -102,8 +125,18 @@ class SlackSendMessageNode(BaseNode):
         """Send message to Slack."""
         import httpx
 
-        webhook_url = config.get("webhook_url")
-        bot_token = config.get("bot_token")
+        # Check for saved credential first
+        credential_id = config.get("credential")
+        cred_data = _get_credential(credential_id) if credential_id else None
+
+        # Use credential data or fall back to direct config
+        if cred_data:
+            webhook_url = cred_data.get("webhook_url") or cred_data.get("api_key")
+            bot_token = cred_data.get("bot_token")
+        else:
+            webhook_url = config.get("webhook_url")
+            bot_token = config.get("bot_token")
+
         channel = config.get("channel")
         message = config.get("message", "")
         username = config.get("username")
@@ -209,11 +242,19 @@ class SlackReactionNode(BaseNode):
 
     inputs = [
         NodeField(
+            name="credential",
+            label="Slack Credential",
+            type=FieldType.CREDENTIAL,
+            required=False,
+            description="Select a saved Slack credential.",
+            credential_service="slack",
+        ),
+        NodeField(
             name="bot_token",
             label="Bot Token",
             type=FieldType.SECRET,
-            required=True,
-            description="Slack Bot Token (xoxb-...).",
+            required=False,
+            description="Slack Bot Token (or use saved credential above).",
         ),
         NodeField(
             name="channel",
@@ -252,7 +293,19 @@ class SlackReactionNode(BaseNode):
         """Add reaction to message."""
         import httpx
 
-        bot_token = config.get("bot_token")
+        # Check for saved credential first
+        credential_id = config.get("credential")
+        cred_data = _get_credential(credential_id) if credential_id else None
+
+        # Use credential data or fall back to direct config
+        if cred_data:
+            bot_token = cred_data.get("bot_token") or cred_data.get("api_key")
+        else:
+            bot_token = config.get("bot_token")
+
+        if not bot_token:
+            raise ValueError("Bot token is required (via credential or direct input)")
+
         channel = config.get("channel")
         message_ts = config.get("message_ts")
         emoji = config.get("emoji", "thumbsup")

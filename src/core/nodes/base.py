@@ -23,6 +23,7 @@ class FieldType(str, Enum):
     EXPRESSION = "expression"  # Supports {{expressions}}
     FILE = "file"
     SECRET = "secret"  # For passwords/API keys
+    CREDENTIAL = "credential"  # Reference to saved credential
 
 
 class NodeField(BaseModel):
@@ -39,6 +40,7 @@ class NodeField(BaseModel):
     min_value: Optional[float] = None
     max_value: Optional[float] = None
     validation_pattern: Optional[str] = None
+    credential_service: Optional[str] = None  # For CREDENTIAL fields: filter by service
 
 
 class NodeOutput(BaseModel):
