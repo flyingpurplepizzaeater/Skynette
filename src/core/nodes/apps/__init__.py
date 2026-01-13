@@ -48,6 +48,14 @@ from src.core.nodes.apps.trello import (
     TrelloDeleteCardNode,
     TrelloAddCommentNode,
 )
+from src.core.nodes.apps.airtable import (
+    AirtableListBasesNode,
+    AirtableListRecordsNode,
+    AirtableGetRecordNode,
+    AirtableCreateRecordNode,
+    AirtableUpdateRecordNode,
+    AirtableDeleteRecordNode,
+)
 
 __all__ = [
     # Slack
@@ -119,6 +127,13 @@ __all__ = [
     "TrelloUpdateCardNode",
     "TrelloDeleteCardNode",
     "TrelloAddCommentNode",
+    # Airtable
+    "AirtableListBasesNode",
+    "AirtableListRecordsNode",
+    "AirtableGetRecordNode",
+    "AirtableCreateRecordNode",
+    "AirtableUpdateRecordNode",
+    "AirtableDeleteRecordNode",
 ]
 
 # All app nodes for registry
@@ -192,4 +207,11 @@ APP_NODES = [
     TrelloUpdateCardNode,
     TrelloDeleteCardNode,
     TrelloAddCommentNode,
+    # Airtable
+    AirtableListBasesNode,
+    AirtableListRecordsNode,
+    AirtableGetRecordNode,
+    AirtableCreateRecordNode,
+    AirtableUpdateRecordNode,
+    AirtableDeleteRecordNode,
 ]

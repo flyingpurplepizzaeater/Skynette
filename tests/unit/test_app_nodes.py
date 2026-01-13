@@ -3018,3 +3018,462 @@ class TestTrelloAddCommentNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "trello-add-comment"
+
+
+# ============================================================================
+# Airtable Node Tests
+# ============================================================================
+
+class TestAirtableListBasesNode:
+    """Tests for AirtableListBasesNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.airtable import AirtableListBasesNode
+        return AirtableListBasesNode()
+
+    @pytest.mark.asyncio
+    async def test_list_bases_success(self, node):
+        """Test listing bases successfully."""
+        config = {"api_key": "pat-test-key"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "bases": [
+                    {"id": "appABC123", "name": "Project Tracker"},
+                    {"id": "appDEF456", "name": "Customer CRM"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["bases"]) == 2
+            assert result["bases"][0]["name"] == "Project Tracker"
+
+    @pytest.mark.asyncio
+    async def test_list_bases_empty(self, node):
+        """Test listing when no bases."""
+        config = {"api_key": "pat-test-key"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"bases": []}
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 0
+            assert result["bases"] == []
+
+    @pytest.mark.asyncio
+    async def test_missing_api_key_raises_error(self, node):
+        """Test that missing API key raises error."""
+        config = {}
+
+        with pytest.raises(ValueError, match="API key required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "airtable-list-bases"
+        assert node.color == "#18BFFF"
+
+
+class TestAirtableListRecordsNode:
+    """Tests for AirtableListRecordsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.airtable import AirtableListRecordsNode
+        return AirtableListRecordsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_records_success(self, node):
+        """Test listing records successfully."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "records": [
+                    {"id": "recXYZ1", "fields": {"Name": "Task 1", "Status": "Done"}},
+                    {"id": "recXYZ2", "fields": {"Name": "Task 2", "Status": "In Progress"}},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["records"]) == 2
+            assert result["records"][0]["fields"]["Name"] == "Task 1"
+
+    @pytest.mark.asyncio
+    async def test_list_records_with_filter(self, node):
+        """Test listing records with filter formula."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "filter_formula": "Status = 'Done'",
+            "max_records": 50,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "records": [
+                    {"id": "recXYZ1", "fields": {"Name": "Task 1", "Status": "Done"}},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_missing_base_id_raises_error(self, node):
+        """Test that missing base ID raises error."""
+        config = {"api_key": "pat-test-key", "table_name": "Tasks"}
+
+        with pytest.raises(ValueError, match="Base ID is required"):
+            await node.execute(config, {})
+
+    @pytest.mark.asyncio
+    async def test_missing_table_name_raises_error(self, node):
+        """Test that missing table name raises error."""
+        config = {"api_key": "pat-test-key", "base_id": "appABC123"}
+
+        with pytest.raises(ValueError, match="Table name is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "airtable-list-records"
+
+
+class TestAirtableGetRecordNode:
+    """Tests for AirtableGetRecordNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.airtable import AirtableGetRecordNode
+        return AirtableGetRecordNode()
+
+    @pytest.mark.asyncio
+    async def test_get_record_success(self, node):
+        """Test getting a record successfully."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "record_id": "recXYZ123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "recXYZ123",
+                "fields": {"Name": "Important Task", "Status": "Done"},
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["fields"]["Name"] == "Important Task"
+
+    @pytest.mark.asyncio
+    async def test_get_record_not_found(self, node):
+        """Test getting a record that doesn't exist."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "record_id": "recNONEXIST",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert result["fields"] == {}
+
+    @pytest.mark.asyncio
+    async def test_missing_record_id_raises_error(self, node):
+        """Test that missing record ID raises error."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+        }
+
+        with pytest.raises(ValueError, match="Record ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "airtable-get-record"
+
+
+class TestAirtableCreateRecordNode:
+    """Tests for AirtableCreateRecordNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.airtable import AirtableCreateRecordNode
+        return AirtableCreateRecordNode()
+
+    @pytest.mark.asyncio
+    async def test_create_record_success(self, node):
+        """Test creating a record successfully."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "fields": {"Name": "New Task", "Status": "To Do"},
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "recNEW123",
+                "fields": {"Name": "New Task", "Status": "To Do"},
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["record_id"] == "recNEW123"
+
+    @pytest.mark.asyncio
+    async def test_create_record_with_json_string(self, node):
+        """Test creating a record with JSON string fields."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "fields": '{"Name": "JSON Task", "Priority": "High"}',
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "recJSON456",
+                "fields": {"Name": "JSON Task", "Priority": "High"},
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_create_record_failure(self, node):
+        """Test handling create failure."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "fields": {"Name": "Task"},
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 422  # Validation error
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert result["record_id"] == ""
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "airtable-create-record"
+
+
+class TestAirtableUpdateRecordNode:
+    """Tests for AirtableUpdateRecordNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.airtable import AirtableUpdateRecordNode
+        return AirtableUpdateRecordNode()
+
+    @pytest.mark.asyncio
+    async def test_update_record_success(self, node):
+        """Test updating a record successfully."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "record_id": "recXYZ123",
+            "fields": {"Status": "Done"},
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "recXYZ123",
+                "fields": {"Name": "Task", "Status": "Done"},
+            }
+            mock_client.return_value.__aenter__.return_value.patch = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["record"]["fields"]["Status"] == "Done"
+
+    @pytest.mark.asyncio
+    async def test_update_record_failure(self, node):
+        """Test handling update failure."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "record_id": "recNONEXIST",
+            "fields": {"Status": "Done"},
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.patch = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_missing_record_id_raises_error(self, node):
+        """Test that missing record ID raises error."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "fields": {"Status": "Done"},
+        }
+
+        with pytest.raises(ValueError, match="Record ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "airtable-update-record"
+
+
+class TestAirtableDeleteRecordNode:
+    """Tests for AirtableDeleteRecordNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.airtable import AirtableDeleteRecordNode
+        return AirtableDeleteRecordNode()
+
+    @pytest.mark.asyncio
+    async def test_delete_record_success(self, node):
+        """Test deleting a record successfully."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "record_id": "recXYZ123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "deleted": True,
+                "id": "recXYZ123",
+            }
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["deleted_id"] == "recXYZ123"
+
+    @pytest.mark.asyncio
+    async def test_delete_record_not_found(self, node):
+        """Test deleting a record that doesn't exist."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+            "record_id": "recNONEXIST",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.delete = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert result["deleted_id"] == ""
+
+    @pytest.mark.asyncio
+    async def test_missing_record_id_raises_error(self, node):
+        """Test that missing record ID raises error."""
+        config = {
+            "api_key": "pat-test-key",
+            "base_id": "appABC123",
+            "table_name": "Tasks",
+        }
+
+        with pytest.raises(ValueError, match="Record ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "airtable-delete-record"
