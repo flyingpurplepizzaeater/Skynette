@@ -10,61 +10,155 @@ on:
         description: 'Version to release (e.g., v0.1.0)'
         required: true
 
+env:
+  PYTHON_VERSION: '3.11'
+
 jobs:
-  build:
-    name: Build ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.11']
+  # ============================================
+  # Windows Build
+  # ============================================
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           pip install pyinstaller
-        env:
-          # Use prebuilt wheels for llama-cpp-python (when AI features enabled)
-          CMAKE_ARGS: "-DGGML_NATIVE=off"
 
-      - name: Build executable
-        run: |
-          pyinstaller skynette.spec --clean
+      - name: Build Windows executable
+        run: python build_windows.py
 
-      - name: Create artifact name
-        id: artifact
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            echo "name=skynette-windows" >> $GITHUB_OUTPUT
-            echo "path=dist/Skynette.exe" >> $GITHUB_OUTPUT
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            echo "name=skynette-macos" >> $GITHUB_OUTPUT
-            echo "path=dist/Skynette.app" >> $GITHUB_OUTPUT
-          else
-            echo "name=skynette-linux" >> $GITHUB_OUTPUT
-            echo "path=dist/Skynette" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload artifact
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.artifact.outputs.name }}
-          path: ${{ steps.artifact.outputs.path }}
+          name: skynette-windows
+          path: dist/Skynette/
           retention-days: 7
 
+  # ============================================
+  # macOS Build
+  # ============================================
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pyinstaller
+          brew install create-dmg || true
+
+      - name: Build macOS app
+        run: python build_macos.py --no-dmg
+
+      - name: Create DMG
+        run: |
+          if command -v create-dmg &> /dev/null; then
+            python build_macos.py --no-dmg || true
+          fi
+        continue-on-error: true
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skynette-macos
+          path: dist/Skynette.app
+          retention-days: 7
+
+      - name: Upload DMG if exists
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skynette-macos-dmg
+          path: dist/*.dmg
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ============================================
+  # Linux Build
+  # ============================================
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pyinstaller
+
+      - name: Install appimagetool
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          sudo mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
+
+      - name: Build Linux packages
+        run: python build_linux.py --all
+
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: skynette-linux
+          path: dist/skynette/
+          retention-days: 7
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skynette-linux-appimage
+          path: dist/*.AppImage
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload .deb package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skynette-linux-deb
+          path: dist/*.deb
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ============================================
+  # Create Release
+  # ============================================
   release:
     name: Create Release
-    needs: build
+    needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
 
@@ -76,13 +170,29 @@ jobs:
         with:
           path: artifacts/
 
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          # Zip Windows build
+          cd artifacts/skynette-windows && zip -r ../../release/Skynette-Windows.zip . && cd ../..
+          # Zip macOS app
+          cd artifacts/skynette-macos && zip -r ../../release/Skynette-macOS.zip . && cd ../..
+          # Tar Linux build
+          cd artifacts/skynette-linux && tar -czvf ../../release/Skynette-Linux.tar.gz . && cd ../..
+          # Copy AppImage if exists
+          cp artifacts/skynette-linux-appimage/*.AppImage release/ 2>/dev/null || true
+          # Copy DMG if exists
+          cp artifacts/skynette-macos-dmg/*.dmg release/ 2>/dev/null || true
+          # Copy .deb if exists
+          cp artifacts/skynette-linux-deb/*.deb release/ 2>/dev/null || true
+          ls -la release/
+
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/**/*
+          files: release/*
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
