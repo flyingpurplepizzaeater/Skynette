@@ -56,6 +56,16 @@ from src.core.nodes.apps.airtable import (
     AirtableUpdateRecordNode,
     AirtableDeleteRecordNode,
 )
+from src.core.nodes.apps.jira import (
+    JiraListProjectsNode,
+    JiraSearchIssuesNode,
+    JiraGetIssueNode,
+    JiraCreateIssueNode,
+    JiraUpdateIssueNode,
+    JiraAddCommentNode,
+    JiraTransitionIssueNode,
+    JiraGetTransitionsNode,
+)
 
 __all__ = [
     # Slack
@@ -134,6 +144,15 @@ __all__ = [
     "AirtableCreateRecordNode",
     "AirtableUpdateRecordNode",
     "AirtableDeleteRecordNode",
+    # Jira
+    "JiraListProjectsNode",
+    "JiraSearchIssuesNode",
+    "JiraGetIssueNode",
+    "JiraCreateIssueNode",
+    "JiraUpdateIssueNode",
+    "JiraAddCommentNode",
+    "JiraTransitionIssueNode",
+    "JiraGetTransitionsNode",
 ]
 
 # All app nodes for registry
@@ -214,4 +233,13 @@ APP_NODES = [
     AirtableCreateRecordNode,
     AirtableUpdateRecordNode,
     AirtableDeleteRecordNode,
+    # Jira
+    JiraListProjectsNode,
+    JiraSearchIssuesNode,
+    JiraGetIssueNode,
+    JiraCreateIssueNode,
+    JiraUpdateIssueNode,
+    JiraAddCommentNode,
+    JiraTransitionIssueNode,
+    JiraGetTransitionsNode,
 ]

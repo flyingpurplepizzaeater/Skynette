@@ -3477,3 +3477,530 @@ class TestAirtableDeleteRecordNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "airtable-delete-record"
+
+
+# ============================================================================
+# Jira Node Tests
+# ============================================================================
+
+class TestJiraListProjectsNode:
+    """Tests for JiraListProjectsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.jira import JiraListProjectsNode
+        return JiraListProjectsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_projects_success(self, node):
+        """Test listing projects successfully."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = [
+                {"id": "10001", "key": "PROJ", "name": "Project Alpha"},
+                {"id": "10002", "key": "TEST", "name": "Test Project"},
+            ]
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["projects"]) == 2
+            assert result["projects"][0]["key"] == "PROJ"
+
+    @pytest.mark.asyncio
+    async def test_missing_domain_raises_error(self, node):
+        """Test that missing domain raises error."""
+        config = {"email": "user@example.com", "api_token": "test-token"}
+
+        with pytest.raises(ValueError, match="Jira domain is required"):
+            await node.execute(config, {})
+
+    @pytest.mark.asyncio
+    async def test_missing_credentials_raises_error(self, node):
+        """Test that missing credentials raises error."""
+        config = {"domain": "example.atlassian.net"}
+
+        with pytest.raises(ValueError, match="Email and API token are required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "jira-list-projects"
+        assert node.color == "#0052CC"
+
+
+class TestJiraSearchIssuesNode:
+    """Tests for JiraSearchIssuesNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.jira import JiraSearchIssuesNode
+        return JiraSearchIssuesNode()
+
+    @pytest.mark.asyncio
+    async def test_search_issues_success(self, node):
+        """Test searching issues successfully."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "jql": "project = PROJ AND status = Open",
+            "max_results": 50,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "issues": [
+                    {"key": "PROJ-1", "fields": {"summary": "First issue"}},
+                    {"key": "PROJ-2", "fields": {"summary": "Second issue"}},
+                ],
+                "total": 2,
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert result["total"] == 2
+            assert result["issues"][0]["key"] == "PROJ-1"
+
+    @pytest.mark.asyncio
+    async def test_missing_jql_raises_error(self, node):
+        """Test that missing JQL raises error."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+        }
+
+        with pytest.raises(ValueError, match="JQL query is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "jira-search-issues"
+
+
+class TestJiraGetIssueNode:
+    """Tests for JiraGetIssueNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.jira import JiraGetIssueNode
+        return JiraGetIssueNode()
+
+    @pytest.mark.asyncio
+    async def test_get_issue_success(self, node):
+        """Test getting an issue successfully."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "key": "PROJ-123",
+                "fields": {
+                    "summary": "Important bug fix",
+                    "status": {"name": "In Progress"},
+                },
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["summary"] == "Important bug fix"
+            assert result["status"] == "In Progress"
+
+    @pytest.mark.asyncio
+    async def test_get_issue_not_found(self, node):
+        """Test getting an issue that doesn't exist."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-999",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert result["summary"] == ""
+
+    @pytest.mark.asyncio
+    async def test_missing_issue_key_raises_error(self, node):
+        """Test that missing issue key raises error."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+        }
+
+        with pytest.raises(ValueError, match="Issue key is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "jira-get-issue"
+
+
+class TestJiraCreateIssueNode:
+    """Tests for JiraCreateIssueNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.jira import JiraCreateIssueNode
+        return JiraCreateIssueNode()
+
+    @pytest.mark.asyncio
+    async def test_create_issue_success(self, node):
+        """Test creating an issue successfully."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "project_key": "PROJ",
+            "issue_type": "Task",
+            "summary": "New task",
+            "description": "Task description",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "id": "10001",
+                "key": "PROJ-124",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["issue_key"] == "PROJ-124"
+            assert "example.atlassian.net/browse/PROJ-124" in result["issue_url"]
+
+    @pytest.mark.asyncio
+    async def test_create_issue_with_priority(self, node):
+        """Test creating an issue with priority."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "project_key": "PROJ",
+            "issue_type": "Bug",
+            "summary": "Critical bug",
+            "priority": "High",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"id": "10002", "key": "PROJ-125"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_project_key_raises_error(self, node):
+        """Test that missing project key raises error."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "summary": "New task",
+        }
+
+        with pytest.raises(ValueError, match="Project key is required"):
+            await node.execute(config, {})
+
+    @pytest.mark.asyncio
+    async def test_missing_summary_raises_error(self, node):
+        """Test that missing summary raises error."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "project_key": "PROJ",
+        }
+
+        with pytest.raises(ValueError, match="Summary is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "jira-create-issue"
+
+
+class TestJiraUpdateIssueNode:
+    """Tests for JiraUpdateIssueNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.jira import JiraUpdateIssueNode
+        return JiraUpdateIssueNode()
+
+    @pytest.mark.asyncio
+    async def test_update_issue_success(self, node):
+        """Test updating an issue successfully."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+            "summary": "Updated summary",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 204
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["issue_key"] == "PROJ-123"
+
+    @pytest.mark.asyncio
+    async def test_update_issue_no_changes(self, node):
+        """Test updating an issue with no changes."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+        }
+
+        result = await node.execute(config, {})
+
+        assert result["success"] is True
+        assert result["issue_key"] == "PROJ-123"
+
+    @pytest.mark.asyncio
+    async def test_missing_issue_key_raises_error(self, node):
+        """Test that missing issue key raises error."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+        }
+
+        with pytest.raises(ValueError, match="Issue key is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "jira-update-issue"
+
+
+class TestJiraAddCommentNode:
+    """Tests for JiraAddCommentNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.jira import JiraAddCommentNode
+        return JiraAddCommentNode()
+
+    @pytest.mark.asyncio
+    async def test_add_comment_success(self, node):
+        """Test adding a comment successfully."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+            "comment": "This is a test comment",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"id": "comment-123"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["comment_id"] == "comment-123"
+
+    @pytest.mark.asyncio
+    async def test_missing_comment_raises_error(self, node):
+        """Test that missing comment raises error."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+        }
+
+        with pytest.raises(ValueError, match="Comment text is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "jira-add-comment"
+
+
+class TestJiraTransitionIssueNode:
+    """Tests for JiraTransitionIssueNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.jira import JiraTransitionIssueNode
+        return JiraTransitionIssueNode()
+
+    @pytest.mark.asyncio
+    async def test_transition_issue_success(self, node):
+        """Test transitioning an issue successfully."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+            "transition_id": "21",  # e.g., "Done"
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 204
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["issue_key"] == "PROJ-123"
+
+    @pytest.mark.asyncio
+    async def test_transition_with_comment(self, node):
+        """Test transitioning an issue with a comment."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+            "transition_id": "31",
+            "comment": "Moving to done",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 204
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_transition_id_raises_error(self, node):
+        """Test that missing transition ID raises error."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+        }
+
+        with pytest.raises(ValueError, match="Transition ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "jira-transition-issue"
+
+
+class TestJiraGetTransitionsNode:
+    """Tests for JiraGetTransitionsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.jira import JiraGetTransitionsNode
+        return JiraGetTransitionsNode()
+
+    @pytest.mark.asyncio
+    async def test_get_transitions_success(self, node):
+        """Test getting transitions successfully."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+            "issue_key": "PROJ-123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "transitions": [
+                    {"id": "11", "name": "To Do"},
+                    {"id": "21", "name": "In Progress"},
+                    {"id": "31", "name": "Done"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 3
+            assert len(result["transitions"]) == 3
+            assert result["transitions"][1]["name"] == "In Progress"
+
+    @pytest.mark.asyncio
+    async def test_missing_issue_key_raises_error(self, node):
+        """Test that missing issue key raises error."""
+        config = {
+            "domain": "example.atlassian.net",
+            "email": "user@example.com",
+            "api_token": "test-token",
+        }
+
+        with pytest.raises(ValueError, match="Issue key is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "jira-get-transitions"
