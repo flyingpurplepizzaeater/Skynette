@@ -8,9 +8,9 @@ This will create a standalone executable in the dist/ folder.
 Note: Renamed from build.py to avoid shadowing Python's 'build' package.
 """
 
+import shutil
 import subprocess
 import sys
-import os
 from pathlib import Path
 
 
@@ -36,20 +36,19 @@ def main():
     if not main_py.exists():
         print(f"  ERROR: main.py not found at {main_py}")
         sys.exit(1)
-    print(f"  src/main.py found")
+    print("  src/main.py found")
 
     spec_file = project_root / "skynette.spec"
     if not spec_file.exists():
         print(f"  ERROR: skynette.spec not found at {spec_file}")
         sys.exit(1)
-    print(f"  skynette.spec found")
+    print("  skynette.spec found")
 
     # Clean old build
     print("\n[3/4] Cleaning previous build...")
     for folder in ["build", "dist"]:
         folder_path = project_root / folder
         if folder_path.exists():
-            import shutil
             shutil.rmtree(folder_path)
             print(f"  Removed {folder}/")
 

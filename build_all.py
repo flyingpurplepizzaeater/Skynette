@@ -20,14 +20,13 @@ Requirements:
         Linux: appimagetool, dpkg-deb
 """
 
-import subprocess
-import sys
+import argparse
 import os
 import platform
 import shutil
-import argparse
+import subprocess
+import sys
 from pathlib import Path
-
 
 VERSION = "1.0.0"
 APP_NAME = "Skynette"

@@ -5,9 +5,9 @@ This script creates a standalone Windows executable with all dependencies bundle
 """
 
 import os
-import sys
-import subprocess
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -375,12 +375,12 @@ def package_distribution():
     # Get file size
     exe_size = (dist_dir / "Skynette.exe").stat().st_size / (1024 * 1024)
 
-    print(f"\n{'='*50}")
+    print("\n" + "=" * 50)
     print("BUILD COMPLETE!")
-    print(f"{'='*50}")
-    print(f"\nOutput: dist/Skynette.exe")
+    print("=" * 50)
+    print("\nOutput: dist/Skynette.exe")
     print(f"Size: {exe_size:.1f} MB")
-    print(f"\nThe executable is portable - no installation needed!")
+    print("\nThe executable is portable - no installation needed!")
     print("Simply copy Skynette.exe to any location and run it.")
 
     return True

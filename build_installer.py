@@ -14,15 +14,13 @@ Usage:
     --portable: Also create portable ZIP
 """
 
-import os
-import sys
-import subprocess
-import shutil
-import platform
 import argparse
-import tempfile
+import os
+import platform
+import shutil
+import subprocess
+import sys
 from pathlib import Path
-from typing import Optional
 
 # Version info
 VERSION = "1.0.0"
