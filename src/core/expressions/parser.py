@@ -81,7 +81,8 @@ class ExpressionParser:
             "values": lambda x: list(x.values()) if isinstance(x, dict) else [],
             "default": lambda x, default="": x if x is not None else default,
             "hash": lambda x: hashlib.sha256(str(x).encode()).hexdigest(),
-            "md5": lambda x: hashlib.md5(str(x).encode()).hexdigest(),
+            # MD5 used for non-security purposes (checksums, identifiers)
+            "md5": lambda x: hashlib.md5(str(x).encode(), usedforsecurity=False).hexdigest(),
             "base64_encode": lambda x: __import__("base64").b64encode(str(x).encode()).decode(),
             "base64_decode": lambda x: __import__("base64").b64decode(str(x)).decode(),
             "abs": lambda x: abs(float(x)) if x else 0,

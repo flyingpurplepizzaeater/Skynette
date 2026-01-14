@@ -661,7 +661,9 @@ class WebhookServer:
     def __init__(
         self,
         manager: WebhookManager,
-        host: str = "0.0.0.0",
+        # Default 0.0.0.0 is intentional to receive external webhooks.
+        # For production, configure firewall rules appropriately.
+        host: str = "0.0.0.0",  # nosec B104 - intentional for webhook reception
         port: int = 5678,
     ):
         self.manager = manager

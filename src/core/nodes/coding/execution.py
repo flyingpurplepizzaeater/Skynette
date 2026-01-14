@@ -288,9 +288,13 @@ class RunShellNode(BaseNode):
 
             try:
                 if isinstance(shell, bool):
+                    # Security note: shell=True is intentional for this node as it's
+                    # designed to execute user-provided shell commands. The node is
+                    # meant for workflow automation where users explicitly choose
+                    # to run shell commands. Timeout prevents runaway processes.
                     result = subprocess.run(
                         command,
-                        shell=True,
+                        shell=True,  # nosec B602 - intentional for shell execution node
                         capture_output=True,
                         text=True,
                         timeout=timeout,
@@ -299,7 +303,7 @@ class RunShellNode(BaseNode):
                 else:
                     result = subprocess.run(
                         shell if shell_type != "auto" else command,
-                        shell=shell_type == "auto",
+                        shell=shell_type == "auto",  # nosec B602 - intentional
                         capture_output=True,
                         text=True,
                         timeout=timeout,

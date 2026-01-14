@@ -776,6 +776,183 @@ class OAuth2Manager:
 
         return f"{config['auth_url']}?{urlencode(params)}"
 
+    async def exchange_code(
+        self,
+        provider: str,
+        code: str,
+        client_id: str,
+        client_secret: str,
+        redirect_uri: str,
+    ) -> Optional[dict]:
+        """
+        Exchange authorization code for tokens.
+
+        Args:
+            provider: Provider name (google, microsoft, etc.)
+            code: Authorization code from OAuth callback
+            client_id: OAuth2 client ID
+            client_secret: OAuth2 client secret
+            redirect_uri: Callback URL (must match authorization request)
+
+        Returns:
+            Token response dict or None on failure
+        """
+        import httpx
+
+        config = self.get_provider_config(provider)
+        if not config:
+            logger.error(f"Unknown OAuth provider: {provider}")
+            return None
+
+        data = {
+            'grant_type': 'authorization_code',
+            'code': code,
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri,
+        }
+
+        headers = {'Accept': 'application/json'}
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    config['token_url'],
+                    data=data,
+                    headers=headers,
+                )
+
+                if response.status_code != 200:
+                    logger.error(f"Token exchange failed: {response.status_code} - {response.text}")
+                    return None
+
+                token_data = response.json()
+
+                # Calculate expiry time
+                expires_at = None
+                if 'expires_in' in token_data:
+                    expires_at = (
+                        datetime.now(UTC) + timedelta(seconds=int(token_data['expires_in']))
+                    ).isoformat()
+
+                # Store tokens
+                self.store_oauth_tokens(
+                    service=provider,
+                    access_token=token_data.get('access_token'),
+                    refresh_token=token_data.get('refresh_token'),
+                    expires_at=expires_at,
+                    scopes=token_data.get('scope', '').split() if token_data.get('scope') else [],
+                )
+
+                logger.info(f"Successfully exchanged code for {provider} tokens")
+                return token_data
+
+        except Exception as e:
+            logger.error(f"Token exchange error: {e}")
+            return None
+
+    async def refresh_access_token(
+        self,
+        provider: str,
+        client_id: str,
+        client_secret: str,
+    ) -> Optional[str]:
+        """
+        Refresh the access token using stored refresh token.
+
+        Args:
+            provider: Provider name (google, microsoft, etc.)
+            client_id: OAuth2 client ID
+            client_secret: OAuth2 client secret
+
+        Returns:
+            New access token or None on failure
+        """
+        import httpx
+
+        config = self.get_provider_config(provider)
+        if not config:
+            logger.error(f"Unknown OAuth provider: {provider}")
+            return None
+
+        tokens = self.get_oauth_tokens(provider)
+        if not tokens or not tokens.get('refresh_token'):
+            logger.error(f"No refresh token available for {provider}")
+            return None
+
+        data = {
+            'grant_type': 'refresh_token',
+            'refresh_token': tokens['refresh_token'],
+            'client_id': client_id,
+            'client_secret': client_secret,
+        }
+
+        headers = {'Accept': 'application/json'}
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    config['token_url'],
+                    data=data,
+                    headers=headers,
+                )
+
+                if response.status_code != 200:
+                    logger.error(f"Token refresh failed: {response.status_code} - {response.text}")
+                    return None
+
+                token_data = response.json()
+
+                # Calculate new expiry time
+                expires_at = None
+                if 'expires_in' in token_data:
+                    expires_at = (
+                        datetime.now(UTC) + timedelta(seconds=int(token_data['expires_in']))
+                    ).isoformat()
+
+                # Update stored tokens
+                self.update_tokens(
+                    service=provider,
+                    access_token=token_data.get('access_token'),
+                    expires_at=expires_at,
+                    # Some providers rotate refresh tokens
+                    refresh_token=token_data.get('refresh_token'),
+                )
+
+                logger.info(f"Successfully refreshed {provider} access token")
+                return token_data.get('access_token')
+
+        except Exception as e:
+            logger.error(f"Token refresh error: {e}")
+            return None
+
+    async def get_valid_access_token(
+        self,
+        provider: str,
+        client_id: str,
+        client_secret: str,
+    ) -> Optional[str]:
+        """
+        Get a valid access token, refreshing if necessary.
+
+        This is the main method to use when making API calls.
+
+        Args:
+            provider: Provider name
+            client_id: OAuth2 client ID
+            client_secret: OAuth2 client secret
+
+        Returns:
+            Valid access token or None if unavailable
+        """
+        if not self.is_token_expired(provider):
+            return self.get_access_token(provider)
+
+        if self.needs_refresh(provider):
+            return await self.refresh_access_token(provider, client_id, client_secret)
+
+        return None
+
 
 # ==================== Basic Auth Support ====================
 

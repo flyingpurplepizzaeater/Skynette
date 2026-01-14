@@ -290,7 +290,8 @@ class ModelHub:
         self._downloads[model.id] = progress
 
         try:
-            async with httpx.AsyncClient(follow_redirects=True, timeout=None) as client:
+            # Extended timeout for large model downloads (up to 2 hours)
+            async with httpx.AsyncClient(follow_redirects=True, timeout=7200.0) as client:
                 async with client.stream("GET", url) as response:
                     response.raise_for_status()
 

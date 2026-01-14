@@ -23,8 +23,12 @@ def _get_auth(api_key: str) -> tuple:
 
 
 def _get_subscriber_hash(email: str) -> str:
-    """Get MD5 hash of email for subscriber operations."""
-    return hashlib.md5(email.lower().encode()).hexdigest()
+    """Get MD5 hash of email for subscriber operations.
+
+    Note: MD5 is required by Mailchimp API for subscriber identification.
+    This is not used for security purposes.
+    """
+    return hashlib.md5(email.lower().encode(), usedforsecurity=False).hexdigest()
 
 
 class MailchimpListAudiencesNode(BaseNode):
