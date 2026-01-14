@@ -91,6 +91,15 @@ from src.core.nodes.apps.stripe import (
     StripeCreateProductNode,
     StripeCreateRefundNode,
 )
+from src.core.nodes.apps.shopify import (
+    ShopifyListProductsNode,
+    ShopifyGetProductNode,
+    ShopifyListOrdersNode,
+    ShopifyGetOrderNode,
+    ShopifyListCustomersNode,
+    ShopifyCreateCustomerNode,
+    ShopifyUpdateInventoryNode,
+)
 
 __all__ = [
     # Slack
@@ -200,6 +209,14 @@ __all__ = [
     "StripeCreateInvoiceNode",
     "StripeCreateProductNode",
     "StripeCreateRefundNode",
+    # Shopify
+    "ShopifyListProductsNode",
+    "ShopifyGetProductNode",
+    "ShopifyListOrdersNode",
+    "ShopifyGetOrderNode",
+    "ShopifyListCustomersNode",
+    "ShopifyCreateCustomerNode",
+    "ShopifyUpdateInventoryNode",
 ]
 
 # All app nodes for registry
@@ -311,4 +328,12 @@ APP_NODES = [
     StripeCreateInvoiceNode,
     StripeCreateProductNode,
     StripeCreateRefundNode,
+    # Shopify
+    ShopifyListProductsNode,
+    ShopifyGetProductNode,
+    ShopifyListOrdersNode,
+    ShopifyGetOrderNode,
+    ShopifyListCustomersNode,
+    ShopifyCreateCustomerNode,
+    ShopifyUpdateInventoryNode,
 ]

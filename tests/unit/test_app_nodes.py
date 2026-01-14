@@ -5407,3 +5407,364 @@ class TestStripeCreateRefundNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "stripe-create-refund"
+
+
+# ============================================================================
+# Shopify Node Tests
+# ============================================================================
+
+class TestShopifyListProductsNode:
+    """Tests for ShopifyListProductsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.shopify import ShopifyListProductsNode
+        return ShopifyListProductsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_products_success(self, node):
+        """Test listing products successfully."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "limit": 10,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "products": [
+                    {"id": 123, "title": "T-Shirt", "vendor": "MyStore"},
+                    {"id": 456, "title": "Hoodie", "vendor": "MyStore"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_missing_shop_raises_error(self, node):
+        """Test that missing shop raises error."""
+        config = {"access_token": "shpat_xxx"}
+
+        with pytest.raises(ValueError, match="Shop is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "shopify-list-products"
+        assert node.color == "#96BF48"
+
+
+class TestShopifyGetProductNode:
+    """Tests for ShopifyGetProductNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.shopify import ShopifyGetProductNode
+        return ShopifyGetProductNode()
+
+    @pytest.mark.asyncio
+    async def test_get_product_success(self, node):
+        """Test getting product successfully."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "product_id": "123456",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "product": {"id": 123456, "title": "T-Shirt", "variants": []}
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["product"]["id"] == 123456
+
+    @pytest.mark.asyncio
+    async def test_missing_product_id_raises_error(self, node):
+        """Test that missing product ID raises error."""
+        config = {"shop": "mystore", "access_token": "shpat_xxx"}
+
+        with pytest.raises(ValueError, match="Product ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "shopify-get-product"
+
+
+class TestShopifyListOrdersNode:
+    """Tests for ShopifyListOrdersNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.shopify import ShopifyListOrdersNode
+        return ShopifyListOrdersNode()
+
+    @pytest.mark.asyncio
+    async def test_list_orders_success(self, node):
+        """Test listing orders successfully."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "status": "any",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "orders": [
+                    {"id": 1001, "total_price": "29.99", "financial_status": "paid"},
+                    {"id": 1002, "total_price": "49.99", "financial_status": "pending"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_list_orders_filtered(self, node):
+        """Test listing orders with financial status filter."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "financial_status": "paid",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "orders": [{"id": 1001, "financial_status": "paid"}]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "shopify-list-orders"
+
+
+class TestShopifyGetOrderNode:
+    """Tests for ShopifyGetOrderNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.shopify import ShopifyGetOrderNode
+        return ShopifyGetOrderNode()
+
+    @pytest.mark.asyncio
+    async def test_get_order_success(self, node):
+        """Test getting order successfully."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "order_id": "1001",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "order": {"id": 1001, "total_price": "29.99", "line_items": []}
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["order"]["id"] == 1001
+
+    @pytest.mark.asyncio
+    async def test_missing_order_id_raises_error(self, node):
+        """Test that missing order ID raises error."""
+        config = {"shop": "mystore", "access_token": "shpat_xxx"}
+
+        with pytest.raises(ValueError, match="Order ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "shopify-get-order"
+
+
+class TestShopifyListCustomersNode:
+    """Tests for ShopifyListCustomersNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.shopify import ShopifyListCustomersNode
+        return ShopifyListCustomersNode()
+
+    @pytest.mark.asyncio
+    async def test_list_customers_success(self, node):
+        """Test listing customers successfully."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "customers": [
+                    {"id": 101, "email": "customer1@example.com"},
+                    {"id": 102, "email": "customer2@example.com"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 2
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "shopify-list-customers"
+
+
+class TestShopifyCreateCustomerNode:
+    """Tests for ShopifyCreateCustomerNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.shopify import ShopifyCreateCustomerNode
+        return ShopifyCreateCustomerNode()
+
+    @pytest.mark.asyncio
+    async def test_create_customer_success(self, node):
+        """Test creating customer successfully."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "email": "newcustomer@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "customer": {
+                    "id": 999,
+                    "email": "newcustomer@example.com",
+                    "first_name": "John",
+                }
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["customer_id"] == "999"
+
+    @pytest.mark.asyncio
+    async def test_missing_email_raises_error(self, node):
+        """Test that missing email raises error."""
+        config = {"shop": "mystore", "access_token": "shpat_xxx"}
+
+        with pytest.raises(ValueError, match="Email is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "shopify-create-customer"
+
+
+class TestShopifyUpdateInventoryNode:
+    """Tests for ShopifyUpdateInventoryNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.shopify import ShopifyUpdateInventoryNode
+        return ShopifyUpdateInventoryNode()
+
+    @pytest.mark.asyncio
+    async def test_update_inventory_success(self, node):
+        """Test updating inventory successfully."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "inventory_item_id": "12345",
+            "location_id": "67890",
+            "adjustment": 10,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "inventory_level": {"available": 50}
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["available"] == 50
+
+    @pytest.mark.asyncio
+    async def test_missing_inventory_item_id_raises_error(self, node):
+        """Test that missing inventory item ID raises error."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "location_id": "67890",
+            "adjustment": 10,
+        }
+
+        with pytest.raises(ValueError, match="Inventory Item ID is required"):
+            await node.execute(config, {})
+
+    @pytest.mark.asyncio
+    async def test_missing_location_id_raises_error(self, node):
+        """Test that missing location ID raises error."""
+        config = {
+            "shop": "mystore",
+            "access_token": "shpat_xxx",
+            "inventory_item_id": "12345",
+            "adjustment": 10,
+        }
+
+        with pytest.raises(ValueError, match="Location ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "shopify-update-inventory"
