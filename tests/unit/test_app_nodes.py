@@ -4974,3 +4974,436 @@ class TestSendGridSearchContactsNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "sendgrid-search-contacts"
+
+
+# ============================================================================
+# Stripe Node Tests
+# ============================================================================
+
+class TestStripeCreateCustomerNode:
+    """Tests for StripeCreateCustomerNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.stripe import StripeCreateCustomerNode
+        return StripeCreateCustomerNode()
+
+    @pytest.mark.asyncio
+    async def test_create_customer_success(self, node):
+        """Test creating customer successfully."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "email": "customer@example.com",
+            "name": "Test Customer",
+            "phone": "+15551234567",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "cus_abc123",
+                "email": "customer@example.com",
+                "name": "Test Customer",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["customer_id"] == "cus_abc123"
+
+    @pytest.mark.asyncio
+    async def test_create_customer_with_metadata(self, node):
+        """Test creating customer with metadata."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "email": "customer@example.com",
+            "metadata": {"plan": "premium", "source": "website"},
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "cus_meta123",
+                "email": "customer@example.com",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_email_raises_error(self, node):
+        """Test that missing email raises error."""
+        config = {"secret_key": "sk_test_xxx"}
+
+        with pytest.raises(ValueError, match="Email is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "stripe-create-customer"
+        assert node.color == "#635BFF"
+
+
+class TestStripeGetCustomerNode:
+    """Tests for StripeGetCustomerNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.stripe import StripeGetCustomerNode
+        return StripeGetCustomerNode()
+
+    @pytest.mark.asyncio
+    async def test_get_customer_success(self, node):
+        """Test getting customer successfully."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "customer_id": "cus_abc123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "cus_abc123",
+                "email": "customer@example.com",
+                "name": "Test Customer",
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["customer"]["id"] == "cus_abc123"
+
+    @pytest.mark.asyncio
+    async def test_get_customer_not_found(self, node):
+        """Test handling customer not found."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "customer_id": "cus_nonexistent",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_response.json.return_value = {
+                "error": {"message": "No such customer"}
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert "No such customer" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_missing_customer_id_raises_error(self, node):
+        """Test that missing customer ID raises error."""
+        config = {"secret_key": "sk_test_xxx"}
+
+        with pytest.raises(ValueError, match="Customer ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "stripe-get-customer"
+
+
+class TestStripeCreatePaymentIntentNode:
+    """Tests for StripeCreatePaymentIntentNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.stripe import StripeCreatePaymentIntentNode
+        return StripeCreatePaymentIntentNode()
+
+    @pytest.mark.asyncio
+    async def test_create_payment_intent_success(self, node):
+        """Test creating payment intent successfully."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "amount": 2000,
+            "currency": "usd",
+            "customer_id": "cus_abc123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "pi_abc123",
+                "client_secret": "pi_abc123_secret_xyz",
+                "status": "requires_payment_method",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["payment_intent_id"] == "pi_abc123"
+            assert "secret" in result["client_secret"]
+
+    @pytest.mark.asyncio
+    async def test_invalid_amount_raises_error(self, node):
+        """Test that invalid amount raises error."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "amount": 0,
+            "currency": "usd",
+        }
+
+        with pytest.raises(ValueError, match="Amount must be greater than 0"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "stripe-create-payment-intent"
+
+
+class TestStripeListChargesNode:
+    """Tests for StripeListChargesNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.stripe import StripeListChargesNode
+        return StripeListChargesNode()
+
+    @pytest.mark.asyncio
+    async def test_list_charges_success(self, node):
+        """Test listing charges successfully."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "limit": 10,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "data": [
+                    {"id": "ch_1", "amount": 2000, "currency": "usd"},
+                    {"id": "ch_2", "amount": 5000, "currency": "usd"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_list_charges_by_customer(self, node):
+        """Test listing charges filtered by customer."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "customer_id": "cus_abc123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "data": [
+                    {"id": "ch_1", "customer": "cus_abc123"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 1
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "stripe-list-charges"
+
+
+class TestStripeCreateInvoiceNode:
+    """Tests for StripeCreateInvoiceNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.stripe import StripeCreateInvoiceNode
+        return StripeCreateInvoiceNode()
+
+    @pytest.mark.asyncio
+    async def test_create_invoice_success(self, node):
+        """Test creating invoice successfully."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "customer_id": "cus_abc123",
+            "auto_advance": True,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "in_abc123",
+                "hosted_invoice_url": "https://invoice.stripe.com/i/abc123",
+                "status": "draft",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["invoice_id"] == "in_abc123"
+            assert "stripe.com" in result["invoice_url"]
+
+    @pytest.mark.asyncio
+    async def test_missing_customer_id_raises_error(self, node):
+        """Test that missing customer ID raises error."""
+        config = {"secret_key": "sk_test_xxx"}
+
+        with pytest.raises(ValueError, match="Customer ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "stripe-create-invoice"
+
+
+class TestStripeCreateProductNode:
+    """Tests for StripeCreateProductNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.stripe import StripeCreateProductNode
+        return StripeCreateProductNode()
+
+    @pytest.mark.asyncio
+    async def test_create_product_success(self, node):
+        """Test creating product successfully."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "name": "Premium Plan",
+            "description": "Access to all features",
+            "active": True,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "prod_abc123",
+                "name": "Premium Plan",
+                "active": True,
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["product_id"] == "prod_abc123"
+
+    @pytest.mark.asyncio
+    async def test_missing_name_raises_error(self, node):
+        """Test that missing name raises error."""
+        config = {"secret_key": "sk_test_xxx"}
+
+        with pytest.raises(ValueError, match="Product name is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "stripe-create-product"
+
+
+class TestStripeCreateRefundNode:
+    """Tests for StripeCreateRefundNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.stripe import StripeCreateRefundNode
+        return StripeCreateRefundNode()
+
+    @pytest.mark.asyncio
+    async def test_create_refund_success(self, node):
+        """Test creating refund successfully."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "charge_id": "ch_abc123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "re_abc123",
+                "status": "succeeded",
+                "amount": 2000,
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["refund_id"] == "re_abc123"
+            assert result["status"] == "succeeded"
+
+    @pytest.mark.asyncio
+    async def test_create_partial_refund(self, node):
+        """Test creating partial refund."""
+        config = {
+            "secret_key": "sk_test_xxx",
+            "payment_intent_id": "pi_abc123",
+            "amount": 1000,
+            "reason": "requested_by_customer",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "re_partial123",
+                "status": "succeeded",
+                "amount": 1000,
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["amount"] == 1000
+
+    @pytest.mark.asyncio
+    async def test_missing_charge_and_payment_intent_raises_error(self, node):
+        """Test that missing both charge and payment intent raises error."""
+        config = {"secret_key": "sk_test_xxx"}
+
+        with pytest.raises(ValueError, match="Either Charge ID or Payment Intent ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "stripe-create-refund"

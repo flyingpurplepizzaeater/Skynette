@@ -82,6 +82,15 @@ from src.core.nodes.apps.sendgrid import (
     SendGridAddContactNode,
     SendGridSearchContactsNode,
 )
+from src.core.nodes.apps.stripe import (
+    StripeCreateCustomerNode,
+    StripeGetCustomerNode,
+    StripeCreatePaymentIntentNode,
+    StripeListChargesNode,
+    StripeCreateInvoiceNode,
+    StripeCreateProductNode,
+    StripeCreateRefundNode,
+)
 
 __all__ = [
     # Slack
@@ -183,6 +192,14 @@ __all__ = [
     "SendGridListTemplatesNode",
     "SendGridAddContactNode",
     "SendGridSearchContactsNode",
+    # Stripe
+    "StripeCreateCustomerNode",
+    "StripeGetCustomerNode",
+    "StripeCreatePaymentIntentNode",
+    "StripeListChargesNode",
+    "StripeCreateInvoiceNode",
+    "StripeCreateProductNode",
+    "StripeCreateRefundNode",
 ]
 
 # All app nodes for registry
@@ -286,4 +303,12 @@ APP_NODES = [
     SendGridListTemplatesNode,
     SendGridAddContactNode,
     SendGridSearchContactsNode,
+    # Stripe
+    StripeCreateCustomerNode,
+    StripeGetCustomerNode,
+    StripeCreatePaymentIntentNode,
+    StripeListChargesNode,
+    StripeCreateInvoiceNode,
+    StripeCreateProductNode,
+    StripeCreateRefundNode,
 ]
