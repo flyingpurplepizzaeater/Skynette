@@ -1,3 +1,6 @@
+# Dependabot configuration for automatic dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
 version: 2
 updates:
   # GitHub Actions
@@ -5,16 +8,48 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
     labels:
       - "dependencies"
       - "github-actions"
+    commit-message:
+      prefix: "ci(deps)"
+    open-pull-requests-limit: 5
 
   # Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
     labels:
       - "dependencies"
       - "python"
+    commit-message:
+      prefix: "chore(deps)"
     open-pull-requests-limit: 10
+    groups:
+      # Group minor and patch updates together
+      python-minor:
+        update-types:
+          - "minor"
+          - "patch"
+      # AI libraries grouped together
+      ai-libraries:
+        patterns:
+          - "openai"
+          - "anthropic"
+          - "google-generativeai"
+          - "groq"
+          - "llama-cpp-python"
+          - "huggingface-hub"
+          - "chromadb"
+          - "sentence-transformers"
+      # Testing and dev tools
+      testing:
+        patterns:
+          - "pytest*"
+          - "playwright"
+          - "ruff"
+          - "mypy"
+          - "bandit"
