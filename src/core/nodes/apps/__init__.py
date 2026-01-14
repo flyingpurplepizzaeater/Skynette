@@ -109,6 +109,16 @@ from src.core.nodes.apps.hubspot import (
     HubSpotListDealsNode,
     HubSpotCreateDealNode,
 )
+from src.core.nodes.apps.zendesk import (
+    ZendeskCreateTicketNode,
+    ZendeskGetTicketNode,
+    ZendeskUpdateTicketNode,
+    ZendeskListTicketsNode,
+    ZendeskSearchTicketsNode,
+    ZendeskAddCommentNode,
+    ZendeskGetUserNode,
+    ZendeskCreateUserNode,
+)
 
 __all__ = [
     # Slack
@@ -234,6 +244,15 @@ __all__ = [
     "HubSpotGetDealNode",
     "HubSpotListDealsNode",
     "HubSpotCreateDealNode",
+    # Zendesk
+    "ZendeskCreateTicketNode",
+    "ZendeskGetTicketNode",
+    "ZendeskUpdateTicketNode",
+    "ZendeskListTicketsNode",
+    "ZendeskSearchTicketsNode",
+    "ZendeskAddCommentNode",
+    "ZendeskGetUserNode",
+    "ZendeskCreateUserNode",
 ]
 
 # All app nodes for registry
@@ -361,4 +380,13 @@ APP_NODES = [
     HubSpotGetDealNode,
     HubSpotListDealsNode,
     HubSpotCreateDealNode,
+    # Zendesk
+    ZendeskCreateTicketNode,
+    ZendeskGetTicketNode,
+    ZendeskUpdateTicketNode,
+    ZendeskListTicketsNode,
+    ZendeskSearchTicketsNode,
+    ZendeskAddCommentNode,
+    ZendeskGetUserNode,
+    ZendeskCreateUserNode,
 ]

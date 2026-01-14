@@ -6114,3 +6114,445 @@ class TestHubSpotCreateDealNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.name == "hubspot_create_deal"
+
+
+# ============================================================================
+# Zendesk Node Tests
+# ============================================================================
+
+
+class TestZendeskCreateTicketNode:
+    """Tests for ZendeskCreateTicketNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.zendesk import ZendeskCreateTicketNode
+        return ZendeskCreateTicketNode()
+
+    @pytest.mark.asyncio
+    async def test_create_ticket_success(self, node):
+        """Test successful ticket creation."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "subject": "Test Ticket",
+            "description": "This is a test ticket.",
+            "priority": "high",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "ticket": {
+                    "id": 12345,
+                    "subject": "Test Ticket",
+                    "status": "new",
+                }
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["ticket_id"] == 12345
+
+    @pytest.mark.asyncio
+    async def test_missing_subject_raises_error(self, node):
+        """Test that missing subject raises error."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "description": "Test description",
+        }
+
+        with pytest.raises(ValueError, match="Subject is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "zendesk_create_ticket"
+        assert node.category == "apps"
+
+
+class TestZendeskGetTicketNode:
+    """Tests for ZendeskGetTicketNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.zendesk import ZendeskGetTicketNode
+        return ZendeskGetTicketNode()
+
+    @pytest.mark.asyncio
+    async def test_get_ticket_success(self, node):
+        """Test successful ticket retrieval."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "ticket_id": 12345,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "ticket": {
+                    "id": 12345,
+                    "subject": "Test Ticket",
+                    "status": "open",
+                }
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["ticket"]["id"] == 12345
+
+    @pytest.mark.asyncio
+    async def test_missing_ticket_id_raises_error(self, node):
+        """Test that missing ticket ID raises error."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+        }
+
+        with pytest.raises(ValueError, match="Ticket ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "zendesk_get_ticket"
+
+
+class TestZendeskUpdateTicketNode:
+    """Tests for ZendeskUpdateTicketNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.zendesk import ZendeskUpdateTicketNode
+        return ZendeskUpdateTicketNode()
+
+    @pytest.mark.asyncio
+    async def test_update_ticket_success(self, node):
+        """Test successful ticket update."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "ticket_id": 12345,
+            "status": "pending",
+            "priority": "urgent",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "ticket": {
+                    "id": 12345,
+                    "status": "pending",
+                    "priority": "urgent",
+                }
+            }
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "zendesk_update_ticket"
+
+
+class TestZendeskListTicketsNode:
+    """Tests for ZendeskListTicketsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.zendesk import ZendeskListTicketsNode
+        return ZendeskListTicketsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_tickets_success(self, node):
+        """Test successful ticket listing."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "tickets": [
+                    {"id": 1, "subject": "Ticket 1", "status": "open"},
+                    {"id": 2, "subject": "Ticket 2", "status": "pending"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_list_tickets_with_status_filter(self, node):
+        """Test listing tickets with status filter."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "status": "open",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "tickets": [
+                    {"id": 1, "subject": "Ticket 1", "status": "open"},
+                    {"id": 2, "subject": "Ticket 2", "status": "pending"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 1
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "zendesk_list_tickets"
+
+
+class TestZendeskSearchTicketsNode:
+    """Tests for ZendeskSearchTicketsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.zendesk import ZendeskSearchTicketsNode
+        return ZendeskSearchTicketsNode()
+
+    @pytest.mark.asyncio
+    async def test_search_tickets_success(self, node):
+        """Test successful ticket search."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "query": "status:open priority:high",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "results": [{"id": 1, "subject": "Urgent Ticket"}],
+                "count": 1,
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_missing_query_raises_error(self, node):
+        """Test that missing query raises error."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+        }
+
+        with pytest.raises(ValueError, match="Query is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "zendesk_search_tickets"
+
+
+class TestZendeskAddCommentNode:
+    """Tests for ZendeskAddCommentNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.zendesk import ZendeskAddCommentNode
+        return ZendeskAddCommentNode()
+
+    @pytest.mark.asyncio
+    async def test_add_comment_success(self, node):
+        """Test successful comment addition."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "ticket_id": 12345,
+            "body": "This is a comment.",
+            "public": True,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "ticket": {"id": 12345, "status": "open"}
+            }
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_body_raises_error(self, node):
+        """Test that missing comment body raises error."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "ticket_id": 12345,
+        }
+
+        with pytest.raises(ValueError, match="Comment body is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "zendesk_add_comment"
+
+
+class TestZendeskGetUserNode:
+    """Tests for ZendeskGetUserNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.zendesk import ZendeskGetUserNode
+        return ZendeskGetUserNode()
+
+    @pytest.mark.asyncio
+    async def test_get_user_success(self, node):
+        """Test successful user retrieval."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "user_id": 67890,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "user": {
+                    "id": 67890,
+                    "name": "John Doe",
+                    "email": "john@example.com",
+                }
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["user"]["id"] == 67890
+
+    @pytest.mark.asyncio
+    async def test_missing_user_id_raises_error(self, node):
+        """Test that missing user ID raises error."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+        }
+
+        with pytest.raises(ValueError, match="User ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "zendesk_get_user"
+
+
+class TestZendeskCreateUserNode:
+    """Tests for ZendeskCreateUserNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.zendesk import ZendeskCreateUserNode
+        return ZendeskCreateUserNode()
+
+    @pytest.mark.asyncio
+    async def test_create_user_success(self, node):
+        """Test successful user creation."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "user_name": "Jane Smith",
+            "user_email": "jane@example.com",
+            "role": "end-user",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "user": {
+                    "id": 99999,
+                    "name": "Jane Smith",
+                    "email": "jane@example.com",
+                }
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["user_id"] == 99999
+
+    @pytest.mark.asyncio
+    async def test_missing_user_email_raises_error(self, node):
+        """Test that missing user email raises error."""
+        config = {
+            "subdomain": "mycompany",
+            "email": "admin@example.com",
+            "api_token": "abc123",
+            "user_name": "Jane Smith",
+        }
+
+        with pytest.raises(ValueError, match="User email is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "zendesk_create_user"
