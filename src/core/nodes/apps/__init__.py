@@ -74,6 +74,14 @@ from src.core.nodes.apps.twilio import (
     TwilioMakeCallNode,
     TwilioLookupNode,
 )
+from src.core.nodes.apps.sendgrid import (
+    SendGridSendEmailNode,
+    SendGridSendTemplateNode,
+    SendGridGetStatsNode,
+    SendGridListTemplatesNode,
+    SendGridAddContactNode,
+    SendGridSearchContactsNode,
+)
 
 __all__ = [
     # Slack
@@ -168,6 +176,13 @@ __all__ = [
     "TwilioListMessagesNode",
     "TwilioMakeCallNode",
     "TwilioLookupNode",
+    # SendGrid
+    "SendGridSendEmailNode",
+    "SendGridSendTemplateNode",
+    "SendGridGetStatsNode",
+    "SendGridListTemplatesNode",
+    "SendGridAddContactNode",
+    "SendGridSearchContactsNode",
 ]
 
 # All app nodes for registry
@@ -264,4 +279,11 @@ APP_NODES = [
     TwilioListMessagesNode,
     TwilioMakeCallNode,
     TwilioLookupNode,
+    # SendGrid
+    SendGridSendEmailNode,
+    SendGridSendTemplateNode,
+    SendGridGetStatsNode,
+    SendGridListTemplatesNode,
+    SendGridAddContactNode,
+    SendGridSearchContactsNode,
 ]

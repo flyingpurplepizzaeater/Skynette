@@ -4453,3 +4453,524 @@ class TestTwilioLookupNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "twilio-lookup"
+
+
+# ============================================================================
+# SendGrid Node Tests
+# ============================================================================
+
+class TestSendGridSendEmailNode:
+    """Tests for SendGridSendEmailNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.sendgrid import SendGridSendEmailNode
+        return SendGridSendEmailNode()
+
+    @pytest.mark.asyncio
+    async def test_send_email_success(self, node):
+        """Test sending email successfully."""
+        config = {
+            "api_key": "SG.test-key",
+            "from_email": "sender@example.com",
+            "from_name": "Test Sender",
+            "to_email": "recipient@example.com",
+            "to_name": "Test Recipient",
+            "subject": "Test Email",
+            "content": "This is a test email.",
+            "content_type": "text/plain",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 202
+            mock_response.headers = {"X-Message-Id": "msg-abc123"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["message_id"] == "msg-abc123"
+            assert result["status_code"] == 202
+
+    @pytest.mark.asyncio
+    async def test_send_html_email(self, node):
+        """Test sending HTML email."""
+        config = {
+            "api_key": "SG.test-key",
+            "from_email": "sender@example.com",
+            "to_email": "recipient@example.com",
+            "subject": "HTML Test",
+            "content": "<h1>Hello World</h1>",
+            "content_type": "text/html",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 202
+            mock_response.headers = {"X-Message-Id": "msg-html123"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_send_email_with_cc_bcc(self, node):
+        """Test sending email with CC and BCC."""
+        config = {
+            "api_key": "SG.test-key",
+            "from_email": "sender@example.com",
+            "to_email": "recipient@example.com",
+            "subject": "Test",
+            "content": "Test content",
+            "cc_email": "cc@example.com",
+            "bcc_email": "bcc@example.com",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 202
+            mock_response.headers = {"X-Message-Id": "msg-cc123"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_send_email_failure(self, node):
+        """Test handling send failure."""
+        config = {
+            "api_key": "invalid-key",
+            "from_email": "sender@example.com",
+            "to_email": "recipient@example.com",
+            "subject": "Test",
+            "content": "Test",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 401
+            mock_response.text = "Unauthorized"
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert result["error"] == "Unauthorized"
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "sendgrid-send-email"
+        assert node.color == "#1A82E2"
+
+
+class TestSendGridSendTemplateNode:
+    """Tests for SendGridSendTemplateNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.sendgrid import SendGridSendTemplateNode
+        return SendGridSendTemplateNode()
+
+    @pytest.mark.asyncio
+    async def test_send_template_success(self, node):
+        """Test sending template email successfully."""
+        config = {
+            "api_key": "SG.test-key",
+            "from_email": "sender@example.com",
+            "to_email": "recipient@example.com",
+            "template_id": "d-abc123xyz",
+            "template_data": {"name": "John", "order_id": "12345"},
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 202
+            mock_response.headers = {"X-Message-Id": "msg-template123"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["message_id"] == "msg-template123"
+
+    @pytest.mark.asyncio
+    async def test_send_template_without_data(self, node):
+        """Test sending template without dynamic data."""
+        config = {
+            "api_key": "SG.test-key",
+            "from_email": "sender@example.com",
+            "to_email": "recipient@example.com",
+            "template_id": "d-simple-template",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 202
+            mock_response.headers = {"X-Message-Id": "msg-simple"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_send_template_invalid_template(self, node):
+        """Test handling invalid template ID."""
+        config = {
+            "api_key": "SG.test-key",
+            "from_email": "sender@example.com",
+            "to_email": "recipient@example.com",
+            "template_id": "invalid-template",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 400
+            mock_response.text = "Invalid template ID"
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert "Invalid template" in result["error"]
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "sendgrid-send-template"
+
+
+class TestSendGridGetStatsNode:
+    """Tests for SendGridGetStatsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.sendgrid import SendGridGetStatsNode
+        return SendGridGetStatsNode()
+
+    @pytest.mark.asyncio
+    async def test_get_stats_success(self, node):
+        """Test getting stats successfully."""
+        config = {
+            "api_key": "SG.test-key",
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+            "aggregated_by": "day",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = [
+                {"date": "2024-01-01", "stats": [{"metrics": {"requests": 100, "delivered": 95}}]},
+                {"date": "2024-01-02", "stats": [{"metrics": {"requests": 150, "delivered": 145}}]},
+            ]
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert len(result["stats"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_get_stats_weekly_aggregation(self, node):
+        """Test getting stats with weekly aggregation."""
+        config = {
+            "api_key": "SG.test-key",
+            "start_date": "2024-01-01",
+            "aggregated_by": "week",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = [
+                {"date": "2024-01-01", "stats": [{"metrics": {"requests": 700}}]},
+            ]
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_get_stats_failure(self, node):
+        """Test handling stats failure."""
+        config = {
+            "api_key": "invalid-key",
+            "start_date": "2024-01-01",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 401
+            mock_response.text = "Unauthorized"
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "sendgrid-get-stats"
+
+
+class TestSendGridListTemplatesNode:
+    """Tests for SendGridListTemplatesNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.sendgrid import SendGridListTemplatesNode
+        return SendGridListTemplatesNode()
+
+    @pytest.mark.asyncio
+    async def test_list_templates_success(self, node):
+        """Test listing templates successfully."""
+        config = {
+            "api_key": "SG.test-key",
+            "generations": "dynamic",
+            "page_size": 50,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "result": [
+                    {"id": "d-template1", "name": "Welcome Email"},
+                    {"id": "d-template2", "name": "Order Confirmation"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 2
+            assert result["templates"][0]["name"] == "Welcome Email"
+
+    @pytest.mark.asyncio
+    async def test_list_templates_empty(self, node):
+        """Test listing when no templates."""
+        config = {"api_key": "SG.test-key"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"result": []}
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 0
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "sendgrid-list-templates"
+
+
+class TestSendGridAddContactNode:
+    """Tests for SendGridAddContactNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.sendgrid import SendGridAddContactNode
+        return SendGridAddContactNode()
+
+    @pytest.mark.asyncio
+    async def test_add_contact_success(self, node):
+        """Test adding contact successfully."""
+        config = {
+            "api_key": "SG.test-key",
+            "email": "newuser@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 202
+            mock_response.json.return_value = {"job_id": "job-xyz123"}
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["job_id"] == "job-xyz123"
+
+    @pytest.mark.asyncio
+    async def test_add_contact_to_list(self, node):
+        """Test adding contact to specific lists."""
+        config = {
+            "api_key": "SG.test-key",
+            "email": "subscriber@example.com",
+            "list_ids": ["list-abc", "list-xyz"],
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 202
+            mock_response.json.return_value = {"job_id": "job-list123"}
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_add_contact_with_custom_fields(self, node):
+        """Test adding contact with custom fields."""
+        config = {
+            "api_key": "SG.test-key",
+            "email": "custom@example.com",
+            "custom_fields": {"company": "Acme Inc", "plan": "Enterprise"},
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 202
+            mock_response.json.return_value = {"job_id": "job-custom123"}
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_add_contact_failure(self, node):
+        """Test handling add contact failure."""
+        config = {
+            "api_key": "invalid-key",
+            "email": "test@example.com",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 401
+            mock_response.text = "Unauthorized"
+            mock_client.return_value.__aenter__.return_value.put = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "sendgrid-add-contact"
+
+
+class TestSendGridSearchContactsNode:
+    """Tests for SendGridSearchContactsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.sendgrid import SendGridSearchContactsNode
+        return SendGridSearchContactsNode()
+
+    @pytest.mark.asyncio
+    async def test_search_contacts_success(self, node):
+        """Test searching contacts successfully."""
+        config = {
+            "api_key": "SG.test-key",
+            "query": "email LIKE '%@example.com'",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "result": [
+                    {"id": "contact1", "email": "user1@example.com"},
+                    {"id": "contact2", "email": "user2@example.com"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_search_contacts_empty(self, node):
+        """Test searching when no results."""
+        config = {
+            "api_key": "SG.test-key",
+            "query": "email = 'nonexistent@example.com'",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"result": []}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_search_contacts_invalid_query(self, node):
+        """Test handling invalid query syntax."""
+        config = {
+            "api_key": "SG.test-key",
+            "query": "INVALID SYNTAX",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 400
+            mock_response.text = "Invalid SGQL query"
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+            assert "Invalid" in result["error"]
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "sendgrid-search-contacts"
