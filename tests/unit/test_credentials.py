@@ -461,6 +461,229 @@ class TestOAuth2ProviderConfig:
         assert url is None
 
 
+class TestOAuth2AsyncMethods:
+    """Tests for OAuth2Manager async methods."""
+
+    @pytest.fixture
+    def oauth_manager(self, tmp_path):
+        """Create OAuth2Manager with temporary vault."""
+        from src.data.credentials import OAuth2Manager, CredentialVault
+
+        vault = CredentialVault(db_path=tmp_path / "oauth_async_test.db")
+        return OAuth2Manager(vault=vault)
+
+    @pytest.mark.asyncio
+    async def test_exchange_code_success(self, oauth_manager):
+        """Test successful authorization code exchange."""
+        import httpx
+        from unittest.mock import AsyncMock
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "new-access-token",
+            "refresh_token": "new-refresh-token",
+            "expires_in": 3600,
+            "scope": "read write",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_instance = AsyncMock()
+            mock_instance.post.return_value = mock_response
+            mock_instance.__aenter__.return_value = mock_instance
+            mock_instance.__aexit__.return_value = None
+            mock_client.return_value = mock_instance
+
+            result = await oauth_manager.exchange_code(
+                provider="google",
+                code="auth-code-123",
+                client_id="client-id",
+                client_secret="client-secret",
+                redirect_uri="http://localhost/callback",
+            )
+
+        assert result is not None
+        assert result["access_token"] == "new-access-token"
+        assert result["refresh_token"] == "new-refresh-token"
+
+        # Verify tokens were stored
+        tokens = oauth_manager.get_oauth_tokens("google")
+        assert tokens is not None
+        assert tokens["access_token"] == "new-access-token"
+
+    @pytest.mark.asyncio
+    async def test_exchange_code_unknown_provider(self, oauth_manager):
+        """Test code exchange with unknown provider."""
+        result = await oauth_manager.exchange_code(
+            provider="unknown",
+            code="code",
+            client_id="id",
+            client_secret="secret",
+            redirect_uri="http://localhost",
+        )
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_exchange_code_failure(self, oauth_manager):
+        """Test code exchange failure."""
+        from unittest.mock import AsyncMock
+
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.text = "Invalid grant"
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_instance = AsyncMock()
+            mock_instance.post.return_value = mock_response
+            mock_instance.__aenter__.return_value = mock_instance
+            mock_instance.__aexit__.return_value = None
+            mock_client.return_value = mock_instance
+
+            result = await oauth_manager.exchange_code(
+                provider="google",
+                code="invalid-code",
+                client_id="client-id",
+                client_secret="client-secret",
+                redirect_uri="http://localhost/callback",
+            )
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_refresh_access_token_success(self, oauth_manager):
+        """Test successful token refresh."""
+        from unittest.mock import AsyncMock
+
+        # Store initial tokens
+        oauth_manager.store_oauth_tokens(
+            service="google",
+            access_token="old-token",
+            refresh_token="valid-refresh-token",
+        )
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "new-access-token",
+            "expires_in": 3600,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_instance = AsyncMock()
+            mock_instance.post.return_value = mock_response
+            mock_instance.__aenter__.return_value = mock_instance
+            mock_instance.__aexit__.return_value = None
+            mock_client.return_value = mock_instance
+
+            new_token = await oauth_manager.refresh_access_token(
+                provider="google",
+                client_id="client-id",
+                client_secret="client-secret",
+            )
+
+        assert new_token == "new-access-token"
+
+        # Verify tokens were updated
+        tokens = oauth_manager.get_oauth_tokens("google")
+        assert tokens["access_token"] == "new-access-token"
+
+    @pytest.mark.asyncio
+    async def test_refresh_access_token_no_refresh_token(self, oauth_manager):
+        """Test refresh when no refresh token is stored."""
+        # Store tokens without refresh token
+        oauth_manager.store_oauth_tokens(
+            service="google",
+            access_token="token",
+            refresh_token=None,
+        )
+
+        result = await oauth_manager.refresh_access_token(
+            provider="google",
+            client_id="client-id",
+            client_secret="client-secret",
+        )
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_refresh_access_token_unknown_provider(self, oauth_manager):
+        """Test refresh with unknown provider."""
+        result = await oauth_manager.refresh_access_token(
+            provider="unknown",
+            client_id="id",
+            client_secret="secret",
+        )
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_valid_access_token_not_expired(self, oauth_manager):
+        """Test getting valid token when not expired."""
+        future_time = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
+
+        oauth_manager.store_oauth_tokens(
+            service="google",
+            access_token="valid-token",
+            expires_at=future_time,
+        )
+
+        token = await oauth_manager.get_valid_access_token(
+            provider="google",
+            client_id="id",
+            client_secret="secret",
+        )
+
+        assert token == "valid-token"
+
+    @pytest.mark.asyncio
+    async def test_get_valid_access_token_refreshes_expired(self, oauth_manager):
+        """Test that expired token triggers refresh."""
+        from unittest.mock import AsyncMock
+
+        past_time = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+
+        oauth_manager.store_oauth_tokens(
+            service="google",
+            access_token="expired-token",
+            refresh_token="refresh-token",
+            expires_at=past_time,
+        )
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "refreshed-token",
+            "expires_in": 3600,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_instance = AsyncMock()
+            mock_instance.post.return_value = mock_response
+            mock_instance.__aenter__.return_value = mock_instance
+            mock_instance.__aexit__.return_value = None
+            mock_client.return_value = mock_instance
+
+            token = await oauth_manager.get_valid_access_token(
+                provider="google",
+                client_id="client-id",
+                client_secret="client-secret",
+            )
+
+        assert token == "refreshed-token"
+
+    @pytest.mark.asyncio
+    async def test_get_valid_access_token_no_tokens(self, oauth_manager):
+        """Test getting token when none stored."""
+        token = await oauth_manager.get_valid_access_token(
+            provider="google",
+            client_id="id",
+            client_secret="secret",
+        )
+
+        assert token is None
+
+
 class TestCredentialType:
     """Tests for CredentialType enum."""
 
