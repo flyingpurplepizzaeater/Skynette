@@ -100,6 +100,15 @@ from src.core.nodes.apps.shopify import (
     ShopifyCreateCustomerNode,
     ShopifyUpdateInventoryNode,
 )
+from src.core.nodes.apps.hubspot import (
+    HubSpotGetContactNode,
+    HubSpotSearchContactsNode,
+    HubSpotCreateContactNode,
+    HubSpotUpdateContactNode,
+    HubSpotGetDealNode,
+    HubSpotListDealsNode,
+    HubSpotCreateDealNode,
+)
 
 __all__ = [
     # Slack
@@ -217,6 +226,14 @@ __all__ = [
     "ShopifyListCustomersNode",
     "ShopifyCreateCustomerNode",
     "ShopifyUpdateInventoryNode",
+    # HubSpot
+    "HubSpotGetContactNode",
+    "HubSpotSearchContactsNode",
+    "HubSpotCreateContactNode",
+    "HubSpotUpdateContactNode",
+    "HubSpotGetDealNode",
+    "HubSpotListDealsNode",
+    "HubSpotCreateDealNode",
 ]
 
 # All app nodes for registry
@@ -336,4 +353,12 @@ APP_NODES = [
     ShopifyListCustomersNode,
     ShopifyCreateCustomerNode,
     ShopifyUpdateInventoryNode,
+    # HubSpot
+    HubSpotGetContactNode,
+    HubSpotSearchContactsNode,
+    HubSpotCreateContactNode,
+    HubSpotUpdateContactNode,
+    HubSpotGetDealNode,
+    HubSpotListDealsNode,
+    HubSpotCreateDealNode,
 ]

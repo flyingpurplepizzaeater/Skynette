@@ -5768,3 +5768,349 @@ class TestShopifyUpdateInventoryNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "shopify-update-inventory"
+
+
+# ============================================================================
+# HubSpot Node Tests
+# ============================================================================
+
+
+class TestHubSpotGetContactNode:
+    """Tests for HubSpotGetContactNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.hubspot import HubSpotGetContactNode
+        return HubSpotGetContactNode()
+
+    @pytest.mark.asyncio
+    async def test_get_contact_success(self, node):
+        """Test successful contact retrieval."""
+        config = {
+            "access_token": "pat-xxx",
+            "contact_id": "12345",
+            "properties": "email,firstname,lastname",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "12345",
+                "properties": {
+                    "email": "john@example.com",
+                    "firstname": "John",
+                    "lastname": "Doe",
+                },
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["contact"]["id"] == "12345"
+
+    @pytest.mark.asyncio
+    async def test_missing_contact_id_raises_error(self, node):
+        """Test that missing contact ID raises error."""
+        config = {"access_token": "pat-xxx"}
+
+        with pytest.raises(ValueError, match="Contact ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "hubspot_get_contact"
+        assert node.category == "apps"
+
+
+class TestHubSpotSearchContactsNode:
+    """Tests for HubSpotSearchContactsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.hubspot import HubSpotSearchContactsNode
+        return HubSpotSearchContactsNode()
+
+    @pytest.mark.asyncio
+    async def test_search_contacts_success(self, node):
+        """Test successful contact search."""
+        config = {
+            "access_token": "pat-xxx",
+            "query": "john",
+            "limit": 10,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "results": [{"id": "12345", "properties": {"email": "john@example.com"}}],
+                "total": 1,
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert len(result["contacts"]) == 1
+            assert result["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_search_with_filters(self, node):
+        """Test search with filter groups."""
+        config = {
+            "access_token": "pat-xxx",
+            "filters": [{"filters": [{"propertyName": "email", "operator": "CONTAINS", "value": "@example.com"}]}],
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"results": [], "total": 0}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "hubspot_search_contacts"
+
+
+class TestHubSpotCreateContactNode:
+    """Tests for HubSpotCreateContactNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.hubspot import HubSpotCreateContactNode
+        return HubSpotCreateContactNode()
+
+    @pytest.mark.asyncio
+    async def test_create_contact_success(self, node):
+        """Test successful contact creation."""
+        config = {
+            "access_token": "pat-xxx",
+            "email": "jane@example.com",
+            "firstname": "Jane",
+            "lastname": "Doe",
+            "company": "Acme Inc",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "id": "67890",
+                "properties": {
+                    "email": "jane@example.com",
+                    "firstname": "Jane",
+                },
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["contact_id"] == "67890"
+
+    @pytest.mark.asyncio
+    async def test_missing_email_raises_error(self, node):
+        """Test that missing email raises error."""
+        config = {"access_token": "pat-xxx", "firstname": "Jane"}
+
+        with pytest.raises(ValueError, match="Email is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "hubspot_create_contact"
+
+
+class TestHubSpotUpdateContactNode:
+    """Tests for HubSpotUpdateContactNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.hubspot import HubSpotUpdateContactNode
+        return HubSpotUpdateContactNode()
+
+    @pytest.mark.asyncio
+    async def test_update_contact_success(self, node):
+        """Test successful contact update."""
+        config = {
+            "access_token": "pat-xxx",
+            "contact_id": "12345",
+            "properties": {"phone": "555-1234"},
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "12345",
+                "properties": {"phone": "555-1234"},
+            }
+            mock_client.return_value.__aenter__.return_value.patch = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_properties_raises_error(self, node):
+        """Test that missing properties raises error."""
+        config = {"access_token": "pat-xxx", "contact_id": "12345"}
+
+        with pytest.raises(ValueError, match="Properties are required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "hubspot_update_contact"
+
+
+class TestHubSpotGetDealNode:
+    """Tests for HubSpotGetDealNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.hubspot import HubSpotGetDealNode
+        return HubSpotGetDealNode()
+
+    @pytest.mark.asyncio
+    async def test_get_deal_success(self, node):
+        """Test successful deal retrieval."""
+        config = {
+            "access_token": "pat-xxx",
+            "deal_id": "99999",
+            "properties": "dealname,amount",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "99999",
+                "properties": {
+                    "dealname": "Big Deal",
+                    "amount": "10000",
+                },
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["deal"]["id"] == "99999"
+
+    @pytest.mark.asyncio
+    async def test_missing_deal_id_raises_error(self, node):
+        """Test that missing deal ID raises error."""
+        config = {"access_token": "pat-xxx"}
+
+        with pytest.raises(ValueError, match="Deal ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "hubspot_get_deal"
+
+
+class TestHubSpotListDealsNode:
+    """Tests for HubSpotListDealsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.hubspot import HubSpotListDealsNode
+        return HubSpotListDealsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_deals_success(self, node):
+        """Test successful deals listing."""
+        config = {
+            "access_token": "pat-xxx",
+            "limit": 10,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "results": [{"id": "99999", "properties": {"dealname": "Deal 1"}}],
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert len(result["deals"]) == 1
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "hubspot_list_deals"
+
+
+class TestHubSpotCreateDealNode:
+    """Tests for HubSpotCreateDealNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.hubspot import HubSpotCreateDealNode
+        return HubSpotCreateDealNode()
+
+    @pytest.mark.asyncio
+    async def test_create_deal_success(self, node):
+        """Test successful deal creation."""
+        config = {
+            "access_token": "pat-xxx",
+            "dealname": "New Big Deal",
+            "amount": 50000,
+            "pipeline": "default",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "id": "88888",
+                "properties": {
+                    "dealname": "New Big Deal",
+                    "amount": "50000",
+                },
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["deal_id"] == "88888"
+
+    @pytest.mark.asyncio
+    async def test_missing_dealname_raises_error(self, node):
+        """Test that missing deal name raises error."""
+        config = {"access_token": "pat-xxx", "amount": 10000}
+
+        with pytest.raises(ValueError, match="Deal name is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "hubspot_create_deal"
