@@ -1,0 +1,29 @@
+# Skynette Code Owners
+# These owners will be requested for review when someone opens a pull request
+
+# Default owners for everything
+* @flyingpurplepizzaeater
+
+# Core workflow engine
+/src/core/ @flyingpurplepizzaeater
+
+# AI integration
+/src/ai/ @flyingpurplepizzaeater
+
+# RAG system
+/src/rag/ @flyingpurplepizzaeater
+
+# UI components
+/src/ui/ @flyingpurplepizzaeater
+
+# Build and CI/CD
+/.github/ @flyingpurplepizzaeater
+/build*.py @flyingpurplepizzaeater
+/skynette.spec @flyingpurplepizzaeater
+
+# Documentation
+/docs/ @flyingpurplepizzaeater
+*.md @flyingpurplepizzaeater
+
+# Tests
+/tests/ @flyingpurplepizzaeater
