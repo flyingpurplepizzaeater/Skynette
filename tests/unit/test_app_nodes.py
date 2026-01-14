@@ -6556,3 +6556,346 @@ class TestZendeskCreateUserNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.name == "zendesk_create_user"
+
+
+# ============================================================================
+# Mailchimp Node Tests
+# ============================================================================
+
+
+class TestMailchimpListAudiencesNode:
+    """Tests for MailchimpListAudiencesNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.mailchimp import MailchimpListAudiencesNode
+        return MailchimpListAudiencesNode()
+
+    @pytest.mark.asyncio
+    async def test_list_audiences_success(self, node):
+        """Test successful audience listing."""
+        config = {"api_key": "abc123-us10", "count": 10}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "lists": [{"id": "abc123", "name": "Main List"}],
+                "total_items": 1,
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["total"] == 1
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "mailchimp_list_audiences"
+
+
+class TestMailchimpGetAudienceNode:
+    """Tests for MailchimpGetAudienceNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.mailchimp import MailchimpGetAudienceNode
+        return MailchimpGetAudienceNode()
+
+    @pytest.mark.asyncio
+    async def test_get_audience_success(self, node):
+        """Test successful audience retrieval."""
+        config = {"api_key": "abc123-us10", "list_id": "abc123"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "abc123",
+                "name": "Main List",
+                "stats": {"member_count": 100},
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["audience"]["id"] == "abc123"
+
+    @pytest.mark.asyncio
+    async def test_missing_list_id_raises_error(self, node):
+        """Test that missing list ID raises error."""
+        config = {"api_key": "abc123-us10"}
+
+        with pytest.raises(ValueError, match="Audience ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "mailchimp_get_audience"
+
+
+class TestMailchimpAddSubscriberNode:
+    """Tests for MailchimpAddSubscriberNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.mailchimp import MailchimpAddSubscriberNode
+        return MailchimpAddSubscriberNode()
+
+    @pytest.mark.asyncio
+    async def test_add_subscriber_success(self, node):
+        """Test successful subscriber addition."""
+        config = {
+            "api_key": "abc123-us10",
+            "list_id": "abc123",
+            "email": "john@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "def456",
+                "email_address": "john@example.com",
+                "status": "subscribed",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["subscriber_id"] == "def456"
+
+    @pytest.mark.asyncio
+    async def test_missing_email_raises_error(self, node):
+        """Test that missing email raises error."""
+        config = {"api_key": "abc123-us10", "list_id": "abc123"}
+
+        with pytest.raises(ValueError, match="Email is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "mailchimp_add_subscriber"
+
+
+class TestMailchimpUpdateSubscriberNode:
+    """Tests for MailchimpUpdateSubscriberNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.mailchimp import MailchimpUpdateSubscriberNode
+        return MailchimpUpdateSubscriberNode()
+
+    @pytest.mark.asyncio
+    async def test_update_subscriber_success(self, node):
+        """Test successful subscriber update."""
+        config = {
+            "api_key": "abc123-us10",
+            "list_id": "abc123",
+            "email": "john@example.com",
+            "first_name": "Johnny",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "def456",
+                "email_address": "john@example.com",
+                "merge_fields": {"FNAME": "Johnny"},
+            }
+            mock_client.return_value.__aenter__.return_value.patch = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "mailchimp_update_subscriber"
+
+
+class TestMailchimpGetSubscriberNode:
+    """Tests for MailchimpGetSubscriberNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.mailchimp import MailchimpGetSubscriberNode
+        return MailchimpGetSubscriberNode()
+
+    @pytest.mark.asyncio
+    async def test_get_subscriber_success(self, node):
+        """Test successful subscriber retrieval."""
+        config = {
+            "api_key": "abc123-us10",
+            "list_id": "abc123",
+            "email": "john@example.com",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "def456",
+                "email_address": "john@example.com",
+                "status": "subscribed",
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["subscriber"]["status"] == "subscribed"
+
+    @pytest.mark.asyncio
+    async def test_missing_email_raises_error(self, node):
+        """Test that missing email raises error."""
+        config = {"api_key": "abc123-us10", "list_id": "abc123"}
+
+        with pytest.raises(ValueError, match="Email is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "mailchimp_get_subscriber"
+
+
+class TestMailchimpListCampaignsNode:
+    """Tests for MailchimpListCampaignsNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.mailchimp import MailchimpListCampaignsNode
+        return MailchimpListCampaignsNode()
+
+    @pytest.mark.asyncio
+    async def test_list_campaigns_success(self, node):
+        """Test successful campaign listing."""
+        config = {"api_key": "abc123-us10", "count": 10}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "campaigns": [{"id": "camp1", "settings": {"subject_line": "Test"}}],
+                "total_items": 1,
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["total"] == 1
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "mailchimp_list_campaigns"
+
+
+class TestMailchimpCreateCampaignNode:
+    """Tests for MailchimpCreateCampaignNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.mailchimp import MailchimpCreateCampaignNode
+        return MailchimpCreateCampaignNode()
+
+    @pytest.mark.asyncio
+    async def test_create_campaign_success(self, node):
+        """Test successful campaign creation."""
+        config = {
+            "api_key": "abc123-us10",
+            "list_id": "abc123",
+            "subject": "Test Newsletter",
+            "from_name": "Test Company",
+            "reply_to": "info@test.com",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "id": "campaign123",
+                "type": "regular",
+                "settings": {"subject_line": "Test Newsletter"},
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["campaign_id"] == "campaign123"
+
+    @pytest.mark.asyncio
+    async def test_missing_subject_raises_error(self, node):
+        """Test that missing subject raises error."""
+        config = {
+            "api_key": "abc123-us10",
+            "list_id": "abc123",
+            "from_name": "Test",
+            "reply_to": "info@test.com",
+        }
+
+        with pytest.raises(ValueError, match="Subject line is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "mailchimp_create_campaign"
+
+
+class TestMailchimpSendCampaignNode:
+    """Tests for MailchimpSendCampaignNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.mailchimp import MailchimpSendCampaignNode
+        return MailchimpSendCampaignNode()
+
+    @pytest.mark.asyncio
+    async def test_send_campaign_success(self, node):
+        """Test successful campaign send."""
+        config = {"api_key": "abc123-us10", "campaign_id": "campaign123"}
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 204
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["sent"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_campaign_id_raises_error(self, node):
+        """Test that missing campaign ID raises error."""
+        config = {"api_key": "abc123-us10"}
+
+        with pytest.raises(ValueError, match="Campaign ID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.name == "mailchimp_send_campaign"

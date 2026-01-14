@@ -119,6 +119,16 @@ from src.core.nodes.apps.zendesk import (
     ZendeskGetUserNode,
     ZendeskCreateUserNode,
 )
+from src.core.nodes.apps.mailchimp import (
+    MailchimpListAudiencesNode,
+    MailchimpGetAudienceNode,
+    MailchimpAddSubscriberNode,
+    MailchimpUpdateSubscriberNode,
+    MailchimpGetSubscriberNode,
+    MailchimpListCampaignsNode,
+    MailchimpCreateCampaignNode,
+    MailchimpSendCampaignNode,
+)
 
 __all__ = [
     # Slack
@@ -253,6 +263,15 @@ __all__ = [
     "ZendeskAddCommentNode",
     "ZendeskGetUserNode",
     "ZendeskCreateUserNode",
+    # Mailchimp
+    "MailchimpListAudiencesNode",
+    "MailchimpGetAudienceNode",
+    "MailchimpAddSubscriberNode",
+    "MailchimpUpdateSubscriberNode",
+    "MailchimpGetSubscriberNode",
+    "MailchimpListCampaignsNode",
+    "MailchimpCreateCampaignNode",
+    "MailchimpSendCampaignNode",
 ]
 
 # All app nodes for registry
@@ -389,4 +408,13 @@ APP_NODES = [
     ZendeskAddCommentNode,
     ZendeskGetUserNode,
     ZendeskCreateUserNode,
+    # Mailchimp
+    MailchimpListAudiencesNode,
+    MailchimpGetAudienceNode,
+    MailchimpAddSubscriberNode,
+    MailchimpUpdateSubscriberNode,
+    MailchimpGetSubscriberNode,
+    MailchimpListCampaignsNode,
+    MailchimpCreateCampaignNode,
+    MailchimpSendCampaignNode,
 ]
