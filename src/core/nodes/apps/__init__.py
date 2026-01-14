@@ -66,6 +66,14 @@ from src.core.nodes.apps.jira import (
     JiraTransitionIssueNode,
     JiraGetTransitionsNode,
 )
+from src.core.nodes.apps.twilio import (
+    TwilioSendSMSNode,
+    TwilioSendWhatsAppNode,
+    TwilioGetMessageNode,
+    TwilioListMessagesNode,
+    TwilioMakeCallNode,
+    TwilioLookupNode,
+)
 
 __all__ = [
     # Slack
@@ -153,6 +161,13 @@ __all__ = [
     "JiraAddCommentNode",
     "JiraTransitionIssueNode",
     "JiraGetTransitionsNode",
+    # Twilio
+    "TwilioSendSMSNode",
+    "TwilioSendWhatsAppNode",
+    "TwilioGetMessageNode",
+    "TwilioListMessagesNode",
+    "TwilioMakeCallNode",
+    "TwilioLookupNode",
 ]
 
 # All app nodes for registry
@@ -242,4 +257,11 @@ APP_NODES = [
     JiraAddCommentNode,
     JiraTransitionIssueNode,
     JiraGetTransitionsNode,
+    # Twilio
+    TwilioSendSMSNode,
+    TwilioSendWhatsAppNode,
+    TwilioGetMessageNode,
+    TwilioListMessagesNode,
+    TwilioMakeCallNode,
+    TwilioLookupNode,
 ]

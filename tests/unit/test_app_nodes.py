@@ -4004,3 +4004,452 @@ class TestJiraGetTransitionsNode:
     def test_node_definition(self, node):
         """Test node has correct definition."""
         assert node.type == "jira-get-transitions"
+
+
+# ============================================================================
+# Twilio Node Tests
+# ============================================================================
+
+class TestTwilioSendSMSNode:
+    """Tests for TwilioSendSMSNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.twilio import TwilioSendSMSNode
+        return TwilioSendSMSNode()
+
+    @pytest.mark.asyncio
+    async def test_send_sms_success(self, node):
+        """Test sending SMS successfully."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "from_number": "+15551234567",
+            "to_number": "+15559876543",
+            "body": "Hello from Skynette!",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "sid": "SM123456",
+                "status": "queued",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["message_sid"] == "SM123456"
+            assert result["status"] == "queued"
+
+    @pytest.mark.asyncio
+    async def test_send_sms_with_media(self, node):
+        """Test sending MMS with media."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "from_number": "+15551234567",
+            "to_number": "+15559876543",
+            "body": "Check this out!",
+            "media_url": "https://example.com/image.jpg",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"sid": "MM789", "status": "queued"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_credentials_raises_error(self, node):
+        """Test that missing credentials raises error."""
+        config = {
+            "from_number": "+15551234567",
+            "to_number": "+15559876543",
+            "body": "Hello!",
+        }
+
+        with pytest.raises(ValueError, match="Account SID and Auth Token are required"):
+            await node.execute(config, {})
+
+    @pytest.mark.asyncio
+    async def test_missing_body_raises_error(self, node):
+        """Test that missing body raises error."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "from_number": "+15551234567",
+            "to_number": "+15559876543",
+        }
+
+        with pytest.raises(ValueError, match="Message body is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "twilio-send-sms"
+        assert node.color == "#F22F46"
+
+
+class TestTwilioSendWhatsAppNode:
+    """Tests for TwilioSendWhatsAppNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.twilio import TwilioSendWhatsAppNode
+        return TwilioSendWhatsAppNode()
+
+    @pytest.mark.asyncio
+    async def test_send_whatsapp_success(self, node):
+        """Test sending WhatsApp message successfully."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "from_number": "+14155238886",
+            "to_number": "+15559876543",
+            "body": "Hello from WhatsApp!",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "sid": "SM456789",
+                "status": "queued",
+            }
+            mock_post = AsyncMock(return_value=mock_response)
+            mock_client.return_value.__aenter__.return_value.post = mock_post
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            # Verify whatsapp: prefix was added
+            call_args = mock_post.call_args
+            data = call_args[1]["data"]
+            assert data["From"].startswith("whatsapp:")
+            assert data["To"].startswith("whatsapp:")
+
+    @pytest.mark.asyncio
+    async def test_whatsapp_preserves_prefix(self, node):
+        """Test that existing whatsapp: prefix is preserved."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "from_number": "whatsapp:+14155238886",
+            "to_number": "whatsapp:+15559876543",
+            "body": "Test message",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"sid": "SM123", "status": "queued"}
+            mock_post = AsyncMock(return_value=mock_response)
+            mock_client.return_value.__aenter__.return_value.post = mock_post
+
+            await node.execute(config, {})
+
+            call_args = mock_post.call_args
+            data = call_args[1]["data"]
+            # Should not double-prefix
+            assert data["From"] == "whatsapp:+14155238886"
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "twilio-send-whatsapp"
+
+
+class TestTwilioGetMessageNode:
+    """Tests for TwilioGetMessageNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.twilio import TwilioGetMessageNode
+        return TwilioGetMessageNode()
+
+    @pytest.mark.asyncio
+    async def test_get_message_success(self, node):
+        """Test getting message details successfully."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "message_sid": "SM123456",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "sid": "SM123456",
+                "status": "delivered",
+                "body": "Hello!",
+                "from": "+15551234567",
+                "to": "+15559876543",
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["status"] == "delivered"
+            assert result["body"] == "Hello!"
+
+    @pytest.mark.asyncio
+    async def test_get_message_not_found(self, node):
+        """Test getting a message that doesn't exist."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "message_sid": "SM999999",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_missing_message_sid_raises_error(self, node):
+        """Test that missing message SID raises error."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+        }
+
+        with pytest.raises(ValueError, match="Message SID is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "twilio-get-message"
+
+
+class TestTwilioListMessagesNode:
+    """Tests for TwilioListMessagesNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.twilio import TwilioListMessagesNode
+        return TwilioListMessagesNode()
+
+    @pytest.mark.asyncio
+    async def test_list_messages_success(self, node):
+        """Test listing messages successfully."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "limit": 10,
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "messages": [
+                    {"sid": "SM1", "body": "Hello"},
+                    {"sid": "SM2", "body": "World"},
+                ]
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 2
+            assert len(result["messages"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_list_messages_with_filters(self, node):
+        """Test listing messages with filters."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "to_number": "+15559876543",
+            "from_number": "+15551234567",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"messages": [{"sid": "SM1"}]}
+            mock_get = AsyncMock(return_value=mock_response)
+            mock_client.return_value.__aenter__.return_value.get = mock_get
+
+            result = await node.execute(config, {})
+
+            assert result["count"] == 1
+            # Verify filters were passed
+            call_args = mock_get.call_args
+            params = call_args[1]["params"]
+            assert params["To"] == "+15559876543"
+            assert params["From"] == "+15551234567"
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "twilio-list-messages"
+
+
+class TestTwilioMakeCallNode:
+    """Tests for TwilioMakeCallNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.twilio import TwilioMakeCallNode
+        return TwilioMakeCallNode()
+
+    @pytest.mark.asyncio
+    async def test_make_call_with_url_success(self, node):
+        """Test making a call with TwiML URL."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "from_number": "+15551234567",
+            "to_number": "+15559876543",
+            "twiml_url": "https://example.com/twiml.xml",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {
+                "sid": "CA123456",
+                "status": "queued",
+            }
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["call_sid"] == "CA123456"
+
+    @pytest.mark.asyncio
+    async def test_make_call_with_twiml_success(self, node):
+        """Test making a call with inline TwiML."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "from_number": "+15551234567",
+            "to_number": "+15559876543",
+            "twiml": "<Response><Say>Hello!</Say></Response>",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 201
+            mock_response.json.return_value = {"sid": "CA789", "status": "queued"}
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_missing_twiml_raises_error(self, node):
+        """Test that missing TwiML raises error."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "from_number": "+15551234567",
+            "to_number": "+15559876543",
+        }
+
+        with pytest.raises(ValueError, match="Either TwiML URL or inline TwiML is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "twilio-make-call"
+
+
+class TestTwilioLookupNode:
+    """Tests for TwilioLookupNode."""
+
+    @pytest.fixture
+    def node(self):
+        from src.core.nodes.apps.twilio import TwilioLookupNode
+        return TwilioLookupNode()
+
+    @pytest.mark.asyncio
+    async def test_lookup_success(self, node):
+        """Test phone number lookup successfully."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "phone_number": "+15551234567",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "phone_number": "+15551234567",
+                "country_code": "US",
+                "carrier": {"name": "Verizon"},
+            }
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is True
+            assert result["country_code"] == "US"
+            assert result["phone_number"] == "+15551234567"
+
+    @pytest.mark.asyncio
+    async def test_lookup_failure(self, node):
+        """Test handling lookup failure."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+            "phone_number": "+00000000000",
+        }
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_client.return_value.__aenter__.return_value.get = AsyncMock(
+                return_value=mock_response
+            )
+
+            result = await node.execute(config, {})
+
+            assert result["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_missing_phone_number_raises_error(self, node):
+        """Test that missing phone number raises error."""
+        config = {
+            "account_sid": "AC123",
+            "auth_token": "token123",
+        }
+
+        with pytest.raises(ValueError, match="Phone number is required"):
+            await node.execute(config, {})
+
+    def test_node_definition(self, node):
+        """Test node has correct definition."""
+        assert node.type == "twilio-lookup"
