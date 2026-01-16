@@ -314,7 +314,7 @@ class NpmMarketplace(MarketplaceSource):
 
 
 # Official Skynette Marketplace Registry URL
-OFFICIAL_REGISTRY_URL = "https://raw.githubusercontent.com/skynette-ai/skynette-marketplace/main/registry.json"
+OFFICIAL_REGISTRY_URL = "https://raw.githubusercontent.com/flyingpurplepizzaeater/skynette-marketplace/main/registry.json"
 
 
 class OfficialRegistrySource(MarketplaceSource):
