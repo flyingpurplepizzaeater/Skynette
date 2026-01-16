@@ -434,17 +434,23 @@ class AIHubView(ft.Column):
             self._page.update()
 
     def _build_model_library_tab(self):
-        """Model Library tab containing My Models and Download as subtabs."""
-        # Create subtabs for My Models and Download
+        """Model Library tab containing My Models, Hugging Face, Ollama, and Import subtabs."""
+        # Create subtabs for different model sources
         my_models_tab = ft.Tab(label="My Models", icon=ft.Icons.FOLDER)
         my_models_tab.content = self._build_installed_tab()
 
-        download_tab = ft.Tab(label="Download", icon=ft.Icons.DOWNLOAD)
-        download_tab.content = self._build_download_tab()
+        huggingface_tab = ft.Tab(label="Hugging Face", icon=ft.Icons.CLOUD_DOWNLOAD)
+        huggingface_tab.content = self._build_huggingface_tab()
+
+        ollama_tab = ft.Tab(label="Ollama", icon=ft.Icons.TERMINAL)
+        ollama_tab.content = self._build_ollama_tab()
+
+        import_tab = ft.Tab(label="Import", icon=ft.Icons.UPLOAD_FILE)
+        import_tab.content = self._build_import_tab()
 
         return ft.Container(
             content=ft.Tabs(
-                tabs=[my_models_tab, download_tab],
+                tabs=[my_models_tab, huggingface_tab, ollama_tab, import_tab],
                 expand=True,
             ),
             expand=True,
@@ -560,7 +566,8 @@ class AIHubView(ft.Column):
             border=ft.Border.all(1, Theme.BORDER),
         )
 
-    def _build_download_tab(self):
+    def _build_huggingface_tab(self):
+        """Hugging Face tab with recommended models, search, and URL paste."""
         recommended = self.hub.get_recommended_models()
 
         model_cards = []
@@ -574,9 +581,81 @@ class AIHubView(ft.Column):
             spacing=Theme.SPACING_SM,
         )
 
+        # Search field for HF
+        self.hf_search_field = ft.TextField(
+            hint_text="Search Hugging Face for GGUF models...",
+            expand=True,
+            border_color=Theme.BORDER,
+            on_submit=self._search_huggingface,
+        )
+
+        # URL paste field
+        self.hf_url_field = ft.TextField(
+            hint_text="Paste Hugging Face URL (e.g., TheBloke/Llama-2-7B-GGUF)...",
+            expand=True,
+            border_color=Theme.BORDER,
+        )
+
+        # Search results area
+        self.hf_search_results = ft.Column(
+            controls=[],
+            spacing=Theme.SPACING_SM,
+        )
+
         return ft.Container(
             content=ft.Column(
                 controls=[
+                    # Search section
+                    ft.Text(
+                        "Search Hugging Face",
+                        size=16,
+                        weight=ft.FontWeight.W_600,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Row(
+                        controls=[
+                            self.hf_search_field,
+                            ft.Button(
+                                "Search",
+                                icon=ft.Icons.SEARCH,
+                                bgcolor=Theme.PRIMARY,
+                                on_click=self._search_huggingface,
+                            ),
+                        ],
+                        spacing=8,
+                    ),
+                    self.hf_search_results,
+                    ft.Container(height=Theme.SPACING_MD),
+                    ft.Divider(color=Theme.BORDER),
+                    ft.Container(height=Theme.SPACING_MD),
+                    # URL paste section
+                    ft.Text(
+                        "Add from URL",
+                        size=16,
+                        weight=ft.FontWeight.W_600,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        "Paste a Hugging Face model URL or repo ID",
+                        size=12,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                    ft.Row(
+                        controls=[
+                            self.hf_url_field,
+                            ft.Button(
+                                "Add",
+                                icon=ft.Icons.ADD,
+                                bgcolor=Theme.PRIMARY,
+                                on_click=self._add_from_hf_url,
+                            ),
+                        ],
+                        spacing=8,
+                    ),
+                    ft.Container(height=Theme.SPACING_MD),
+                    ft.Divider(color=Theme.BORDER),
+                    ft.Container(height=Theme.SPACING_MD),
+                    # Recommended section
                     ft.Text(
                         "Recommended Models",
                         size=16,
@@ -590,30 +669,6 @@ class AIHubView(ft.Column):
                     ),
                     ft.Container(height=Theme.SPACING_SM),
                     self.recommended_list,
-                    ft.Container(height=Theme.SPACING_LG),
-                    ft.Divider(color=Theme.BORDER),
-                    ft.Container(height=Theme.SPACING_MD),
-                    ft.Text(
-                        "Download from URL",
-                        size=16,
-                        weight=ft.FontWeight.W_600,
-                        color=Theme.TEXT_PRIMARY,
-                    ),
-                    ft.Row(
-                        controls=[
-                            ft.TextField(
-                                hint_text="Paste a GGUF model URL...",
-                                expand=True,
-                                border_color=Theme.BORDER,
-                            ),
-                            ft.Button(
-                                "Download",
-                                icon=ft.Icons.DOWNLOAD,
-                                bgcolor=Theme.PRIMARY,
-                            ),
-                        ],
-                        spacing=8,
-                    ),
                 ],
                 scroll=ft.ScrollMode.AUTO,
                 spacing=Theme.SPACING_SM,
@@ -621,6 +676,316 @@ class AIHubView(ft.Column):
             padding=Theme.SPACING_MD,
             expand=True,
         )
+
+    def _build_ollama_tab(self):
+        """Ollama tab for local Ollama integration."""
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    # Status section
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.INFO_OUTLINE, color=Theme.PRIMARY),
+                                ft.Column(
+                                    controls=[
+                                        ft.Text(
+                                            "Ollama Integration",
+                                            size=16,
+                                            weight=ft.FontWeight.W_600,
+                                            color=Theme.TEXT_PRIMARY,
+                                        ),
+                                        ft.Text(
+                                            "Connect to your local Ollama instance to use and manage models",
+                                            size=12,
+                                            color=Theme.TEXT_SECONDARY,
+                                        ),
+                                    ],
+                                    spacing=4,
+                                    expand=True,
+                                ),
+                                ft.Button(
+                                    "Check Status",
+                                    icon=ft.Icons.REFRESH,
+                                    bgcolor=Theme.SURFACE,
+                                    on_click=self._check_ollama_status,
+                                ),
+                            ],
+                            spacing=Theme.SPACING_MD,
+                        ),
+                        bgcolor=Theme.SURFACE,
+                        padding=Theme.SPACING_MD,
+                        border_radius=Theme.RADIUS_MD,
+                        border=ft.Border.all(1, Theme.BORDER),
+                    ),
+                    ft.Container(height=Theme.SPACING_MD),
+                    # Status indicator
+                    self._build_ollama_status_indicator(),
+                    ft.Container(height=Theme.SPACING_MD),
+                    ft.Divider(color=Theme.BORDER),
+                    ft.Container(height=Theme.SPACING_MD),
+                    # Available models
+                    ft.Text(
+                        "Ollama Library",
+                        size=16,
+                        weight=ft.FontWeight.W_600,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        "Popular models available in the Ollama library",
+                        size=12,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                    ft.Container(height=Theme.SPACING_SM),
+                    self._build_ollama_library_list(),
+                ],
+                scroll=ft.ScrollMode.AUTO,
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=Theme.SPACING_MD,
+            expand=True,
+        )
+
+    def _build_ollama_status_indicator(self):
+        """Build Ollama status indicator."""
+        # This will be updated dynamically
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.CIRCLE, color=Theme.TEXT_MUTED, size=12),
+                    ft.Text(
+                        "Status: Not checked",
+                        size=12,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                ],
+                spacing=8,
+            ),
+            key="ollama_status",
+        )
+
+    def _build_ollama_library_list(self):
+        """Build list of Ollama library models."""
+        models = [
+            {"name": "llama3.2", "desc": "Meta's latest - fast and efficient", "size": "1B/3B"},
+            {"name": "mistral", "desc": "Excellent reasoning", "size": "7B"},
+            {"name": "codellama", "desc": "Code specialist", "size": "7B-70B"},
+            {"name": "deepseek-coder", "desc": "Code generation", "size": "1.3B-33B"},
+            {"name": "phi3", "desc": "Microsoft's efficient model", "size": "mini-medium"},
+            {"name": "gemma2", "desc": "Google's open model", "size": "2B-27B"},
+        ]
+
+        cards = []
+        for m in models:
+            cards.append(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.SMART_TOY, color=Theme.PRIMARY, size=28),
+                            ft.Column(
+                                controls=[
+                                    ft.Text(m["name"], size=14, weight=ft.FontWeight.W_600, color=Theme.TEXT_PRIMARY),
+                                    ft.Text(m["desc"], size=12, color=Theme.TEXT_SECONDARY),
+                                ],
+                                spacing=2,
+                                expand=True,
+                            ),
+                            ft.Text(m["size"], size=12, color=Theme.TEXT_MUTED),
+                            ft.Button(
+                                "Pull",
+                                icon=ft.Icons.DOWNLOAD,
+                                bgcolor=Theme.PRIMARY,
+                                on_click=lambda e, name=m["name"]: self._pull_ollama_model(name),
+                            ),
+                        ],
+                        spacing=Theme.SPACING_MD,
+                    ),
+                    bgcolor=Theme.SURFACE,
+                    padding=Theme.SPACING_MD,
+                    border_radius=Theme.RADIUS_MD,
+                    border=ft.Border.all(1, Theme.BORDER),
+                )
+            )
+
+        return ft.Column(controls=cards, spacing=Theme.SPACING_SM)
+
+    def _build_import_tab(self):
+        """Local file import tab."""
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                ft.Icon(ft.Icons.UPLOAD_FILE, size=48, color=Theme.PRIMARY),
+                                ft.Text(
+                                    "Import Local GGUF Files",
+                                    size=18,
+                                    weight=ft.FontWeight.W_600,
+                                    color=Theme.TEXT_PRIMARY,
+                                ),
+                                ft.Text(
+                                    "Import GGUF model files from your computer",
+                                    size=12,
+                                    color=Theme.TEXT_SECONDARY,
+                                    text_align=ft.TextAlign.CENTER,
+                                ),
+                                ft.Container(height=Theme.SPACING_MD),
+                                ft.ElevatedButton(
+                                    "Select GGUF File",
+                                    icon=ft.Icons.FOLDER_OPEN,
+                                    bgcolor=Theme.PRIMARY,
+                                    color=Theme.TEXT_PRIMARY,
+                                    on_click=self._select_local_file,
+                                ),
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=8,
+                        ),
+                        padding=ft.Padding.all(48),
+                        bgcolor=Theme.SURFACE,
+                        border_radius=Theme.RADIUS_MD,
+                        border=ft.Border.all(2, Theme.BORDER),
+                    ),
+                    ft.Container(height=Theme.SPACING_LG),
+                    ft.Text(
+                        "Supported Sources",
+                        size=14,
+                        weight=ft.FontWeight.W_600,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        "• Models downloaded from LM Studio\n"
+                        "• Models from GPT4All\n"
+                        "• Any GGUF file from the web\n"
+                        "• Air-gapped environments",
+                        size=12,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                    ft.Container(height=Theme.SPACING_MD),
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Icon(ft.Icons.INFO_OUTLINE, color=Theme.WARNING, size=16),
+                                ft.Text(
+                                    "Files will be copied to the models folder. "
+                                    f"Location: {self.hub.models_dir}",
+                                    size=11,
+                                    color=Theme.TEXT_MUTED,
+                                ),
+                            ],
+                            spacing=8,
+                        ),
+                        padding=Theme.SPACING_SM,
+                        bgcolor=Theme.WARNING + "10",
+                        border_radius=Theme.RADIUS_SM,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=Theme.SPACING_SM,
+            ),
+            padding=Theme.SPACING_MD,
+            expand=True,
+        )
+
+    def _search_huggingface(self, e):
+        """Search Hugging Face for models."""
+        query = self.hf_search_field.value
+        if not query:
+            return
+
+        async def do_search():
+            from src.ai.models.sources.huggingface import HuggingFaceSource
+            source = HuggingFaceSource()
+            results = await source.search(query, limit=10)
+
+            self.hf_search_results.controls.clear()
+            if not results.models:
+                self.hf_search_results.controls.append(
+                    ft.Text("No models found", color=Theme.TEXT_SECONDARY)
+                )
+            else:
+                for model in results.models:
+                    self.hf_search_results.controls.append(
+                        self._build_hf_search_result_card(model)
+                    )
+            if self._page:
+                self._page.update()
+
+        if self._page:
+            asyncio.create_task(do_search())
+
+    def _build_hf_search_result_card(self, model):
+        """Build a search result card for HF models."""
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.AUTO_AWESOME, color=Theme.PRIMARY, size=24),
+                    ft.Column(
+                        controls=[
+                            ft.Text(model.name, size=13, weight=ft.FontWeight.W_600, color=Theme.TEXT_PRIMARY),
+                            ft.Text(
+                                model.description[:80] + "..." if len(model.description) > 80 else model.description,
+                                size=11,
+                                color=Theme.TEXT_SECONDARY,
+                            ),
+                        ],
+                        spacing=2,
+                        expand=True,
+                    ),
+                    ft.Button(
+                        "View",
+                        icon=ft.Icons.VISIBILITY,
+                        bgcolor=Theme.SURFACE,
+                        on_click=lambda e, m=model: self._view_hf_model(m),
+                    ),
+                ],
+                spacing=Theme.SPACING_SM,
+            ),
+            bgcolor=Theme.SURFACE,
+            padding=Theme.SPACING_SM,
+            border_radius=Theme.RADIUS_SM,
+            border=ft.Border.all(1, Theme.BORDER),
+        )
+
+    def _add_from_hf_url(self, e):
+        """Add model from Hugging Face URL."""
+        url = self.hf_url_field.value
+        if not url:
+            return
+        # TODO: Implement URL validation and file selection dialog
+        print(f"Adding from URL: {url}")
+
+    def _view_hf_model(self, model):
+        """View HF model details and select files to download."""
+        # TODO: Implement model details dialog
+        print(f"Viewing model: {model.name}")
+
+    def _check_ollama_status(self, e):
+        """Check if Ollama is running."""
+        async def do_check():
+            from src.ai.models.sources.ollama import OllamaSource
+            source = OllamaSource()
+            is_running = await source.is_running()
+
+            # TODO: Update status indicator
+            if is_running:
+                print("Ollama is running")
+            else:
+                print("Ollama is not running")
+
+        if self._page:
+            asyncio.create_task(do_check())
+
+    def _pull_ollama_model(self, model_name):
+        """Pull a model from Ollama library."""
+        print(f"Pulling Ollama model: {model_name}")
+        # TODO: Implement with progress tracking
+
+    def _select_local_file(self, e):
+        """Open file picker for local GGUF import."""
+        # TODO: Implement file picker
+        print("Opening file picker for GGUF import")
 
     def _build_recommended_model_card(self, model: ModelInfo):
         is_downloaded = model.is_downloaded
