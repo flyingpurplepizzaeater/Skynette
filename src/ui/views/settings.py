@@ -21,7 +21,6 @@ class SettingsView(ft.Column):
                             self._build_section("Appearance", self._build_appearance_settings()),
                             self._build_section("AI Settings", self._build_ai_settings()),
                             self._build_section("Storage", self._build_storage_settings()),
-                            self._build_section("Cloud Sync", self._build_cloud_settings()),
                             self._build_section("Advanced", self._build_advanced_settings()),
                         ],
                         scroll=ft.ScrollMode.AUTO,
@@ -281,51 +280,6 @@ class SettingsView(ft.Column):
                         ),
                         ft.Switch(value=True, active_color=Theme.PRIMARY),
                     ],
-                ),
-            ],
-            spacing=Theme.SPACING_MD,
-        )
-
-    def _build_cloud_settings(self):
-        return ft.Column(
-            controls=[
-                ft.Row(
-                    controls=[
-                        ft.Column(
-                            controls=[
-                                ft.Text("Enable Cloud Sync", size=14, weight=ft.FontWeight.W_500),
-                                ft.Text(
-                                    "Sync workflows across devices",
-                                    size=12,
-                                    color=Theme.TEXT_SECONDARY,
-                                ),
-                            ],
-                            expand=True,
-                            spacing=2,
-                        ),
-                        ft.Switch(value=False, active_color=Theme.PRIMARY),
-                    ],
-                ),
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Text(
-                                "Sign in to enable cloud features",
-                                size=12,
-                                color=Theme.TEXT_SECONDARY,
-                            ),
-                            ft.Button(
-                                "Sign In",
-                                icon=ft.Icons.LOGIN,
-                                bgcolor=Theme.PRIMARY,
-                            ),
-                        ],
-                        spacing=Theme.SPACING_SM,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    ),
-                    padding=Theme.SPACING_MD,
-                    bgcolor=Theme.BACKGROUND,
-                    border_radius=Theme.RADIUS_SM,
                 ),
             ],
             spacing=Theme.SPACING_MD,
