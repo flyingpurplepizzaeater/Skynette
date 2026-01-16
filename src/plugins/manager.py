@@ -313,11 +313,104 @@ class NpmMarketplace(MarketplaceSource):
         return plugins
 
 
+# Official Skynette Marketplace Registry URL
+OFFICIAL_REGISTRY_URL = "https://raw.githubusercontent.com/skynette-ai/skynette-marketplace/main/registry.json"
+
+
+class OfficialRegistrySource(MarketplaceSource):
+    """Fetch plugins from the official Skynette marketplace registry."""
+
+    def __init__(self, registry_url: str = OFFICIAL_REGISTRY_URL):
+        self.registry_url = registry_url
+        self._cache: dict = {}
+        self._cache_time: Optional[datetime] = None
+        self._cache_ttl = 300  # 5 minutes
+
+    async def _fetch_registry(self) -> dict:
+        """Fetch and cache the registry."""
+        # Check cache
+        if self._cache and self._cache_time:
+            if (datetime.now() - self._cache_time).seconds < self._cache_ttl:
+                return self._cache
+
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.get(self.registry_url)
+                response.raise_for_status()
+                self._cache = response.json()
+                self._cache_time = datetime.now()
+                return self._cache
+        except Exception as e:
+            print(f"Failed to fetch official registry: {e}")
+            return {"featured": [], "community": []}
+
+    async def search(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
+        """Search official registry for plugins."""
+        registry = await self._fetch_registry()
+        plugins = []
+
+        # Combine featured and community plugins
+        all_entries = registry.get("featured", []) + registry.get("community", [])
+
+        for entry in all_entries:
+            # Filter by query if provided
+            if query:
+                query_lower = query.lower()
+                if (query_lower not in entry.get("name", "").lower() and
+                    query_lower not in entry.get("description", "").lower() and
+                    not any(query_lower in tag.lower() for tag in entry.get("tags", []))):
+                    continue
+
+            is_featured = entry in registry.get("featured", [])
+
+            plugins.append(MarketplacePlugin(
+                id=entry.get("id", ""),
+                name=entry.get("name", ""),
+                version=entry.get("version", "1.0.0"),
+                description=entry.get("description", ""),
+                author=entry.get("author", ""),
+                downloads=entry.get("downloads", 0),
+                categories=entry.get("tags", []),
+                download_url=f"https://github.com/{entry.get('repo', '')}/archive/refs/heads/main.zip",
+                source=PluginSource.OFFICIAL,
+                source_url=f"https://github.com/{entry.get('repo', '')}",
+                is_verified=entry.get("verified", False),
+                is_featured=is_featured,
+            ))
+
+        return plugins[:limit]
+
+    async def get_featured(self) -> List[MarketplacePlugin]:
+        """Get featured plugins from official registry."""
+        registry = await self._fetch_registry()
+        plugins = []
+
+        for entry in registry.get("featured", []):
+            plugins.append(MarketplacePlugin(
+                id=entry.get("id", ""),
+                name=entry.get("name", ""),
+                version=entry.get("version", "1.0.0"),
+                description=entry.get("description", ""),
+                author=entry.get("author", ""),
+                downloads=entry.get("downloads", 0),
+                categories=entry.get("tags", []),
+                download_url=f"https://github.com/{entry.get('repo', '')}/archive/refs/heads/main.zip",
+                source=PluginSource.OFFICIAL,
+                source_url=f"https://github.com/{entry.get('repo', '')}",
+                is_verified=entry.get("verified", False),
+                is_featured=True,
+            ))
+
+        return plugins
+
+
 class PluginMarketplace:
     """Aggregates plugins from multiple sources."""
 
     def __init__(self):
+        self._official = OfficialRegistrySource()
         self.sources = {
+            PluginSource.OFFICIAL: self._official,
             PluginSource.GITHUB: GitHubMarketplace(),
             PluginSource.NPM: NpmMarketplace(),
         }
@@ -392,6 +485,14 @@ class PluginMarketplace:
     async def search_npm(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
         """Search only npm for plugins."""
         return await self.search(query, sources=[PluginSource.NPM], limit=limit)
+
+    async def get_featured(self) -> List[MarketplacePlugin]:
+        """Get featured plugins from the official registry."""
+        return await self._official.get_featured()
+
+    async def search_official(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
+        """Search only the official registry for plugins."""
+        return await self.search(query, sources=[PluginSource.OFFICIAL], limit=limit)
 
 
 class PluginManager:
