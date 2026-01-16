@@ -11,14 +11,14 @@ import httpx
 from src.ai.gateway import (
     AICapability,
     AIMessage,
-    AIProvider,
     AIResponse,
     AIStreamChunk,
     GenerationConfig,
 )
+from src.ai.providers.base import BaseProvider
 
 
-class OllamaProvider(AIProvider):
+class OllamaProvider(BaseProvider):
     """
     Ollama provider for local model inference.
 
@@ -93,13 +93,12 @@ class OllamaProvider(AIProvider):
     async def chat(
         self,
         messages: list[AIMessage],
-        config: Optional[GenerationConfig] = None,
+        config: GenerationConfig,
     ) -> AIResponse:
         """Send a chat completion request."""
         if not self._is_initialized:
             await self.initialize()
 
-        config = config or GenerationConfig()
         model = config.model or self.model
 
         if not model:
@@ -162,13 +161,12 @@ class OllamaProvider(AIProvider):
     async def chat_stream(
         self,
         messages: list[AIMessage],
-        config: Optional[GenerationConfig] = None,
+        config: GenerationConfig,
     ) -> AsyncIterator[AIStreamChunk]:
         """Stream a chat completion request."""
         if not self._is_initialized:
             await self.initialize()
 
-        config = config or GenerationConfig()
         model = config.model or self.model
 
         if not model:
@@ -232,13 +230,12 @@ class OllamaProvider(AIProvider):
     async def generate(
         self,
         prompt: str,
-        config: Optional[GenerationConfig] = None,
+        config: GenerationConfig,
     ) -> AIResponse:
         """Generate text from a prompt (non-chat mode)."""
         if not self._is_initialized:
             await self.initialize()
 
-        config = config or GenerationConfig()
         model = config.model or self.model
 
         if not model:
