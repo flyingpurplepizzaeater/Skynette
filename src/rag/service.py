@@ -92,6 +92,60 @@ class RAGService:
         """
         return self.storage.list_collections()
 
+    async def update_collection(
+        self,
+        collection_id: str,
+        name: str = None,
+        description: str = None,
+    ) -> bool:
+        """
+        Update collection metadata.
+
+        Note: Embedding model and chunking settings cannot be changed
+        after creation since that would require re-embedding all documents.
+
+        Args:
+            collection_id: Collection ID to update
+            name: New name (optional)
+            description: New description (optional)
+
+        Returns:
+            bool: True if successful
+        """
+        collection = self.storage.get_collection(collection_id)
+        if not collection:
+            raise ValueError(f"Collection not found: {collection_id}")
+
+        if name is not None:
+            collection.name = name
+        if description is not None:
+            collection.description = description
+
+        self.storage.save_collection(collection)
+        return True
+
+    async def delete_collection(self, collection_id: str) -> bool:
+        """
+        Delete a collection and all its documents.
+
+        Args:
+            collection_id: Collection ID to delete
+
+        Returns:
+            bool: True if successful
+        """
+        collection = self.storage.get_collection(collection_id)
+        if not collection:
+            raise ValueError(f"Collection not found: {collection_id}")
+
+        # Delete from ChromaDB
+        await self.chromadb.delete_collection(collection_id)
+
+        # Delete from storage (will cascade to documents and chunks)
+        self.storage.delete_collection(collection_id)
+
+        return True
+
     async def ingest_document(
         self,
         file_path: str,

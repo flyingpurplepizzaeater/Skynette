@@ -189,8 +189,12 @@ class CollectionDialog(ft.AlertDialog):
 
         try:
             if self.is_edit:
-                # TODO: Implement update in RAGService
-                pass
+                # Update existing collection
+                await self.rag_service.update_collection(
+                    collection_id=self.collection_id,
+                    name=self.name_field.value,
+                    description=self.description_field.value,
+                )
             else:
                 collection = await self.rag_service.create_collection(
                     name=self.name_field.value,

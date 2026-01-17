@@ -24,6 +24,13 @@ class AIHubView(ft.Column):
         self.selected_providers = []
         self.provider_configs = {}
 
+        # Ollama status UI elements
+        self.ollama_status_icon = None
+        self.ollama_status_text = None
+
+        # File picker for local import
+        self.file_picker = None
+
     def build(self):
         # Import usage dashboard
         from src.ui.views.usage_dashboard import UsageDashboardView
@@ -748,17 +755,16 @@ class AIHubView(ft.Column):
 
     def _build_ollama_status_indicator(self):
         """Build Ollama status indicator."""
-        # This will be updated dynamically
+        # Store references for dynamic updates
+        self.ollama_status_icon = ft.Icon(ft.Icons.CIRCLE, color=Theme.TEXT_MUTED, size=12)
+        self.ollama_status_text = ft.Text(
+            "Status: Not checked - click 'Check Status'",
+            size=12,
+            color=Theme.TEXT_SECONDARY,
+        )
         return ft.Container(
             content=ft.Row(
-                controls=[
-                    ft.Icon(ft.Icons.CIRCLE, color=Theme.TEXT_MUTED, size=12),
-                    ft.Text(
-                        "Status: Not checked",
-                        size=12,
-                        color=Theme.TEXT_SECONDARY,
-                    ),
-                ],
+                controls=[self.ollama_status_icon, self.ollama_status_text],
                 spacing=8,
             ),
             key="ollama_status",
@@ -953,39 +959,370 @@ class AIHubView(ft.Column):
         url = self.hf_url_field.value
         if not url:
             return
-        # TODO: Implement URL validation and file selection dialog
-        print(f"Adding from URL: {url}")
+
+        async def do_add():
+            from src.ai.models.sources.huggingface import HuggingFaceSource
+            source = HuggingFaceSource()
+
+            try:
+                # Validate and get model info
+                model_info = await source.validate_url(url)
+                if model_info:
+                    # Show model details dialog
+                    self._show_hf_model_dialog(model_info)
+                else:
+                    if self._page:
+                        self._page.open(
+                            ft.SnackBar(
+                                content=ft.Text("Could not find model. Check the URL."),
+                                bgcolor=Theme.ERROR,
+                            )
+                        )
+            except Exception as ex:
+                if self._page:
+                    self._page.open(
+                        ft.SnackBar(
+                            content=ft.Text(f"Error: {ex}"),
+                            bgcolor=Theme.ERROR,
+                        )
+                    )
+
+        if self._page:
+            asyncio.create_task(do_add())
 
     def _view_hf_model(self, model):
         """View HF model details and select files to download."""
-        # TODO: Implement model details dialog
-        print(f"Viewing model: {model.name}")
+        self._show_hf_model_dialog(model)
+
+    def _show_hf_model_dialog(self, model):
+        """Show dialog with model details and file selection."""
+        async def load_files():
+            from src.ai.models.sources.huggingface import HuggingFaceSource
+            source = HuggingFaceSource()
+
+            files_list.controls.clear()
+            files_list.controls.append(
+                ft.Text("Loading files...", color=Theme.TEXT_SECONDARY)
+            )
+            if self._page:
+                self._page.update()
+
+            try:
+                files = await source.get_model_files(model.source_url or model.id.replace("--", "/"))
+                files_list.controls.clear()
+
+                # Files are already filtered for GGUF by get_model_files
+                if not files:
+                    files_list.controls.append(
+                        ft.Text("No GGUF files found in this repository", color=Theme.WARNING)
+                    )
+                else:
+                    for f in files:
+                        size_display = f.get("size_display", "")
+                        filename = f.get("filename", "")
+                        quant = f.get("quantization", "")
+                        files_list.controls.append(
+                            ft.Container(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Icon(ft.Icons.INSERT_DRIVE_FILE, size=20, color=Theme.PRIMARY),
+                                        ft.Column(
+                                            controls=[
+                                                ft.Text(filename, size=12, weight=ft.FontWeight.W_500),
+                                                ft.Text(f"{quant} • {size_display}", size=11, color=Theme.TEXT_MUTED),
+                                            ],
+                                            spacing=2,
+                                            expand=True,
+                                        ),
+                                        ft.Button(
+                                            "Download",
+                                            icon=ft.Icons.DOWNLOAD,
+                                            bgcolor=Theme.PRIMARY,
+                                            on_click=lambda e, file=f: self._download_hf_file(model, file, dialog),
+                                        ),
+                                    ],
+                                    spacing=8,
+                                ),
+                                padding=8,
+                                bgcolor=Theme.SURFACE,
+                                border_radius=4,
+                            )
+                        )
+                if self._page:
+                    self._page.update()
+            except Exception as ex:
+                files_list.controls.clear()
+                files_list.controls.append(
+                    ft.Text(f"Error loading files: {ex}", color=Theme.ERROR)
+                )
+                if self._page:
+                    self._page.update()
+
+        files_list = ft.Column(controls=[], spacing=8, scroll=ft.ScrollMode.AUTO)
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(model.name),
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            model.description[:200] + "..." if len(model.description) > 200 else model.description,
+                            size=12,
+                            color=Theme.TEXT_SECONDARY,
+                        ),
+                        ft.Container(height=8),
+                        ft.Text("Available Files:", size=14, weight=ft.FontWeight.W_600),
+                        ft.Container(height=4),
+                        ft.Container(
+                            content=files_list,
+                            height=250,
+                        ),
+                    ],
+                    tight=True,
+                ),
+                width=450,
+            ),
+            actions=[
+                ft.TextButton("Close", on_click=lambda e: self._page.close(dialog) if self._page else None),
+            ],
+        )
+
+        if self._page:
+            self._page.open(dialog)
+            asyncio.create_task(load_files())
+
+    def _download_hf_file(self, model, file_info, dialog):
+        """Download a specific file from HF model."""
+        async def do_download():
+            from src.ai.models.sources.huggingface import HuggingFaceSource
+            source = HuggingFaceSource()
+
+            filename = file_info.get("filename", "")
+
+            if self._page:
+                self._page.close(dialog)
+                self._page.open(
+                    ft.SnackBar(
+                        content=ft.Text(f"Downloading {filename}..."),
+                        bgcolor=Theme.PRIMARY,
+                    )
+                )
+
+            try:
+                def on_progress(progress):
+                    # Could show progress in a dialog, for now just track internally
+                    pass
+
+                await source.download(
+                    model,
+                    self.hub.models_dir,
+                    on_progress,
+                    filename=filename,
+                )
+
+                if self._page:
+                    self._page.open(
+                        ft.SnackBar(
+                            content=ft.Text(f"Downloaded: {filename}"),
+                            bgcolor=Theme.SUCCESS,
+                        )
+                    )
+                    self._refresh_models(None)
+
+            except Exception as ex:
+                if self._page:
+                    self._page.open(
+                        ft.SnackBar(
+                            content=ft.Text(f"Download failed: {ex}"),
+                            bgcolor=Theme.ERROR,
+                        )
+                    )
+
+        if self._page:
+            asyncio.create_task(do_download())
 
     def _check_ollama_status(self, e):
-        """Check if Ollama is running."""
+        """Check if Ollama is running and update UI."""
         async def do_check():
             from src.ai.models.sources.ollama import OllamaSource
             source = OllamaSource()
             is_running = await source.is_running()
 
-            # TODO: Update status indicator
-            if is_running:
-                print("Ollama is running")
-            else:
-                print("Ollama is not running")
+            # Update status indicator
+            if self.ollama_status_icon and self.ollama_status_text:
+                if is_running:
+                    self.ollama_status_icon.color = Theme.SUCCESS
+                    self.ollama_status_text.value = "Status: Running - Ollama is available"
+                    self.ollama_status_text.color = Theme.SUCCESS
+                else:
+                    self.ollama_status_icon.color = Theme.ERROR
+                    self.ollama_status_text.value = "Status: Not running - Start Ollama to use local models"
+                    self.ollama_status_text.color = Theme.ERROR
+
+                if self._page:
+                    self._page.update()
 
         if self._page:
             asyncio.create_task(do_check())
 
     def _pull_ollama_model(self, model_name):
-        """Pull a model from Ollama library."""
-        print(f"Pulling Ollama model: {model_name}")
-        # TODO: Implement with progress tracking
+        """Pull a model from Ollama library with progress tracking."""
+        async def do_pull():
+            from src.ai.models.sources.ollama import OllamaSource
+            from src.ai.models.hub import ModelInfo
+
+            source = OllamaSource()
+
+            # Show progress dialog
+            progress_bar = ft.ProgressBar(width=300, value=0)
+            status_text = ft.Text("Starting download...", size=12, color=Theme.TEXT_SECONDARY)
+
+            dialog = ft.AlertDialog(
+                modal=True,
+                title=ft.Text(f"Pulling {model_name}"),
+                content=ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            status_text,
+                            ft.Container(height=8),
+                            progress_bar,
+                        ],
+                        tight=True,
+                    ),
+                    width=320,
+                ),
+            )
+
+            if self._page:
+                self._page.open(dialog)
+
+            try:
+                def on_progress(progress):
+                    if progress.status == "downloading":
+                        if progress.total_bytes > 0:
+                            pct = progress.downloaded_bytes / progress.total_bytes
+                            progress_bar.value = pct
+                            status_text.value = f"Downloading: {pct*100:.1f}%"
+                        else:
+                            progress_bar.value = None  # Indeterminate
+                            status_text.value = "Downloading..."
+                    elif progress.status == "verifying":
+                        status_text.value = "Verifying..."
+                        progress_bar.value = None  # Indeterminate
+                    elif progress.status == "complete":
+                        status_text.value = "Complete!"
+                        progress_bar.value = 1.0
+                    if self._page:
+                        self._page.update()
+
+                # Create a minimal ModelInfo for the download
+                model_info = ModelInfo(
+                    id=f"ollama-{model_name}",
+                    name=model_name,
+                    description="",
+                    size_bytes=0,
+                    quantization="",
+                    source="ollama",
+                    source_url=model_name,
+                )
+
+                await source.download(model_info, self.hub.models_dir, on_progress)
+
+                # Success
+                status_text.value = "Download complete!"
+                progress_bar.value = 1.0
+                if self._page:
+                    self._page.update()
+                    await asyncio.sleep(1)
+                    self._page.close(dialog)
+                    self._page.open(
+                        ft.SnackBar(
+                            content=ft.Text(f"Model {model_name} pulled successfully"),
+                            bgcolor=Theme.SUCCESS,
+                        )
+                    )
+
+            except Exception as ex:
+                if self._page:
+                    self._page.close(dialog)
+                    self._page.open(
+                        ft.SnackBar(
+                            content=ft.Text(f"Pull failed: {ex}"),
+                            bgcolor=Theme.ERROR,
+                        )
+                    )
+
+        if self._page:
+            asyncio.create_task(do_pull())
 
     def _select_local_file(self, e):
         """Open file picker for local GGUF import."""
-        # TODO: Implement file picker
-        print("Opening file picker for GGUF import")
+        def on_file_picked(e: ft.FilePickerResultEvent):
+            if e.files:
+                for file in e.files:
+                    self._import_local_gguf(file.path)
+
+        if not self.file_picker:
+            self.file_picker = ft.FilePicker(on_result=on_file_picked)
+            if self._page:
+                self._page.overlay.append(self.file_picker)
+                self._page.update()
+
+        # Open file picker for GGUF files
+        self.file_picker.pick_files(
+            dialog_title="Select GGUF Model File",
+            allowed_extensions=["gguf"],
+            allow_multiple=False,
+        )
+
+    def _import_local_gguf(self, file_path: str):
+        """Import a local GGUF file."""
+        async def do_import():
+            from src.ai.models.sources.local import LocalFileSource
+            from pathlib import Path
+
+            source = LocalFileSource(self.hub.models_dir)
+            source_path = Path(file_path)
+
+            try:
+                # Validate the GGUF file
+                model_info = await source.validate_file(source_path)
+                if not model_info:
+                    if self._page:
+                        self._page.open(
+                            ft.SnackBar(
+                                content=ft.Text("Invalid GGUF file"),
+                                bgcolor=Theme.ERROR,
+                            )
+                        )
+                    return
+
+                # Copy the file to models directory
+                await source.download(model_info, self.hub.models_dir)
+
+                # Show success message
+                if self._page:
+                    self._page.open(
+                        ft.SnackBar(
+                            content=ft.Text(f"Model imported: {model_info.name}"),
+                            bgcolor=Theme.SUCCESS,
+                        )
+                    )
+                    # Refresh model list
+                    self._refresh_models(None)
+
+            except Exception as ex:
+                if self._page:
+                    self._page.open(
+                        ft.SnackBar(
+                            content=ft.Text(f"Import failed: {ex}"),
+                            bgcolor=Theme.ERROR,
+                        )
+                    )
+
+        if self._page:
+            asyncio.create_task(do_import())
 
     def _build_recommended_model_card(self, model: ModelInfo):
         is_downloaded = model.is_downloaded
@@ -1234,9 +1571,19 @@ class AIHubView(ft.Column):
         self._refresh_models(None)
 
     def _set_default_model(self, model: ModelInfo):
-        """Set a model as the default."""
-        # TODO: Implement default model setting
-        print(f"Setting default: {model.name}")
+        """Set a model as the default for local inference."""
+        from src.data.storage import get_storage
+
+        storage = get_storage()
+        storage.set_setting("default_local_model", model.id)
+
+        if self._page:
+            self._page.open(
+                ft.SnackBar(
+                    content=ft.Text(f"Default model set to: {model.name}"),
+                    bgcolor=Theme.SUCCESS,
+                )
+            )
 
     def _build_provider_config_dialog(self, provider: dict) -> ft.AlertDialog:
         """Build provider configuration dialog.
