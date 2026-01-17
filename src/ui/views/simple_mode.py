@@ -684,7 +684,7 @@ class SimpleModeView(ft.Column):
             dialog = ft.AlertDialog(
                 title=ft.Text("Add Step"),
                 content=ft.Container(
-                    content=ft.Tabs(tabs=tabs, expand=True) if tabs else ft.Text("No nodes available"),
+                    content=ft.Tabs(content=tabs, length=len(tabs), expand=True) if tabs else ft.Text("No nodes available"),
                     width=450,
                     height=350,
                 ),

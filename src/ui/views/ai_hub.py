@@ -54,17 +54,19 @@ class AIHubView(ft.Column):
         knowledge_bases_view = KnowledgeBasesView(page=self._page)
         knowledge_bases_tab.content = knowledge_bases_view.build()
 
+        main_tabs = [
+            setup_tab,
+            providers_tab,
+            library_tab,
+            usage_tab,
+            knowledge_bases_tab,
+        ]
         return ft.Column(
             controls=[
                 self._build_header(),
                 ft.Tabs(
-                    tabs=[
-                        setup_tab,
-                        providers_tab,
-                        library_tab,
-                        usage_tab,
-                        knowledge_bases_tab,
-                    ],
+                    content=main_tabs,
+                    length=len(main_tabs),
                     expand=True,
                 ),
             ],
@@ -455,9 +457,11 @@ class AIHubView(ft.Column):
         import_tab = ft.Tab(label="Import", icon=ft.Icons.UPLOAD_FILE)
         import_tab.content = self._build_import_tab()
 
+        subtabs = [my_models_tab, huggingface_tab, ollama_tab, import_tab]
         return ft.Container(
             content=ft.Tabs(
-                tabs=[my_models_tab, huggingface_tab, ollama_tab, import_tab],
+                content=subtabs,
+                length=len(subtabs),
                 expand=True,
             ),
             expand=True,

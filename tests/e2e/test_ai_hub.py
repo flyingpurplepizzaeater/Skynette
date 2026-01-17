@@ -28,11 +28,11 @@ class TestAIHubView:
         if my_models.count() > 0:
             expect(my_models.first).to_be_visible()
 
-    def test_download_tab_visible(self, page: Page):
-        """Verify Download tab is visible."""
-        download = page.locator("[aria-label*='Download']")
-        if download.count() > 0:
-            expect(download.first).to_be_visible()
+    def test_model_library_tab_visible(self, page: Page):
+        """Verify Model Library tab is visible."""
+        model_library = page.locator("[aria-label*='Model Library'], [aria-label*='Library']")
+        if model_library.count() > 0:
+            expect(model_library.first).to_be_visible()
 
     def test_providers_tab_visible(self, page: Page):
         """Verify Providers tab is visible."""
@@ -69,31 +69,42 @@ class TestMyModelsTab:
             expect(refresh_btn.first).to_be_visible()
 
 
-class TestDownloadTab:
-    """Tests for the Download tab."""
+class TestModelLibraryTab:
+    """Tests for the Model Library tab."""
 
     @pytest.fixture(autouse=True)
-    def navigate_to_download(self, page: Page, helpers):
-        """Navigate to AI Hub and Download tab."""
+    def navigate_to_model_library(self, page: Page, helpers):
+        """Navigate to AI Hub and Model Library tab."""
         helpers.navigate_to(page, "ai_hub")
         page.wait_for_timeout(500)
-        download = page.locator("[aria-label*='Download']")
-        if download.count() > 0:
-            download.first.click()
+        model_library = page.locator("[aria-label*='Model Library'], [aria-label*='Library']")
+        if model_library.count() > 0:
+            model_library.first.click()
             page.wait_for_timeout(500)
 
-    def test_download_tab_content_visible(self, page: Page):
-        """Verify Download tab content is visible."""
-        download = page.locator("[aria-label*='Download']")
-        if download.count() > 0:
-            expect(download.first).to_be_visible()
+    def test_model_library_tab_content_visible(self, page: Page):
+        """Verify Model Library tab content is visible."""
+        model_library = page.locator("[aria-label*='Model Library'], [aria-label*='Library']")
+        if model_library.count() > 0:
+            expect(model_library.first).to_be_visible()
 
-    def test_recommended_models_shown(self, page: Page):
-        """Verify recommended models are shown."""
-        # Should show some model recommendations or categories
-        download = page.locator("[aria-label*='Download']")
-        if download.count() > 0:
-            expect(download.first).to_be_visible()
+    def test_huggingface_subtab_visible(self, page: Page):
+        """Verify Hugging Face subtab is visible."""
+        hf_tab = page.locator("[aria-label*='Hugging Face'], [aria-label*='HuggingFace']")
+        if hf_tab.count() > 0:
+            expect(hf_tab.first).to_be_visible()
+
+    def test_ollama_subtab_visible(self, page: Page):
+        """Verify Ollama subtab is visible."""
+        ollama_tab = page.locator("[aria-label*='Ollama']")
+        if ollama_tab.count() > 0:
+            expect(ollama_tab.first).to_be_visible()
+
+    def test_import_subtab_visible(self, page: Page):
+        """Verify Import subtab is visible."""
+        import_tab = page.locator("[aria-label*='Import']")
+        if import_tab.count() > 0:
+            expect(import_tab.first).to_be_visible()
 
 
 class TestProvidersTab:

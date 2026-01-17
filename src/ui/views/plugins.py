@@ -12,24 +12,26 @@ class PluginsView(ft.Column):
         self.expand = True
 
     def build(self):
+        plugin_tabs = [
+            ft.Tab(
+                text="Installed",
+                content=self._build_installed_tab(),
+            ),
+            ft.Tab(
+                text="Marketplace",
+                content=self._build_marketplace_tab(),
+            ),
+            ft.Tab(
+                text="Develop",
+                content=self._build_develop_tab(),
+            ),
+        ]
         return ft.Column(
             controls=[
                 self._build_header(),
                 ft.Tabs(
-                    tabs=[
-                        ft.Tab(
-                            text="Installed",
-                            content=self._build_installed_tab(),
-                        ),
-                        ft.Tab(
-                            text="Marketplace",
-                            content=self._build_marketplace_tab(),
-                        ),
-                        ft.Tab(
-                            text="Develop",
-                            content=self._build_develop_tab(),
-                        ),
-                    ],
+                    content=plugin_tabs,
+                    length=len(plugin_tabs),
                     expand=True,
                 ),
             ],

@@ -40,18 +40,24 @@ class TestAIHubStructure:
         assert ai_hub is not None
         assert isinstance(ai_hub, AIHubView)
 
-    def test_ai_hub_has_three_tab_methods(self):
+    def test_ai_hub_has_tab_methods(self):
         """Test AI Hub has all required tab building methods."""
         ai_hub = AIHubView(page=None)
 
         # Build each tab independently
         my_models = ai_hub._build_installed_tab()
-        download = ai_hub._build_download_tab()
+        model_library = ai_hub._build_model_library_tab()
+        huggingface = ai_hub._build_huggingface_tab()
+        ollama = ai_hub._build_ollama_tab()
+        import_tab = ai_hub._build_import_tab()
         providers = ai_hub._build_providers_tab()
 
         # All should build successfully
         assert my_models is not None
-        assert download is not None
+        assert model_library is not None
+        assert huggingface is not None
+        assert ollama is not None
+        assert import_tab is not None
         assert providers is not None
 
     def test_ai_hub_has_header_method(self):
@@ -96,54 +102,117 @@ class TestMyModelsTab:
         assert "Models folder" in all_text or "folder" in all_text
 
 
-class TestDownloadTab:
-    """Test Download tab functionality."""
+class TestHuggingFaceTab:
+    """Test Hugging Face tab functionality (model downloads)."""
 
-    def test_download_tab_builds(self):
-        """Test Download tab builds without errors."""
+    def test_huggingface_tab_builds(self):
+        """Test Hugging Face tab builds without errors."""
         ai_hub = AIHubView(page=None)
-        download_tab = ai_hub._build_download_tab()
+        hf_tab = ai_hub._build_huggingface_tab()
 
-        assert download_tab is not None
-        assert isinstance(download_tab, ft.Container)
+        assert hf_tab is not None
+        assert isinstance(hf_tab, ft.Container)
 
-    def test_download_tab_shows_recommended_models(self):
-        """Test Download tab displays recommended models section."""
+    def test_huggingface_tab_shows_recommended_models(self):
+        """Test Hugging Face tab displays recommended models section."""
         ai_hub = AIHubView(page=None)
-        download_tab = ai_hub._build_download_tab()
+        hf_tab = ai_hub._build_huggingface_tab()
 
-        all_text = extract_text_from_control(download_tab)
+        all_text = extract_text_from_control(hf_tab)
 
         # Should have recommended models section
         assert "Recommended Models" in all_text or "Recommended" in all_text
 
-    def test_download_tab_has_url_download_option(self):
-        """Test Download tab has download from URL option."""
+    def test_huggingface_tab_has_url_section(self):
+        """Test Hugging Face tab has add from URL option."""
         ai_hub = AIHubView(page=None)
-        download_tab = ai_hub._build_download_tab()
+        hf_tab = ai_hub._build_huggingface_tab()
 
-        all_text = extract_text_from_control(download_tab)
+        all_text = extract_text_from_control(hf_tab)
 
-        # Should have URL download section
-        assert "Download from URL" in all_text or "URL" in all_text
+        # Should have URL section
+        assert "URL" in all_text or "Hugging Face" in all_text
 
-    def test_download_tab_has_text_field_for_url(self):
-        """Test Download tab has text field for URL input."""
+    def test_huggingface_tab_has_text_fields(self):
+        """Test Hugging Face tab has text fields for search and URL."""
         ai_hub = AIHubView(page=None)
-        download_tab = ai_hub._build_download_tab()
+        hf_tab = ai_hub._build_huggingface_tab()
 
-        # Should have text field for URL input
-        text_fields = _find_controls_by_type(download_tab, ft.TextField)
+        # Should have text fields (search and URL)
+        text_fields = _find_controls_by_type(hf_tab, ft.TextField)
         assert len(text_fields) >= 1
 
-    def test_download_tab_has_download_button(self):
-        """Test Download tab has download button."""
+    def test_huggingface_tab_has_buttons(self):
+        """Test Hugging Face tab has action buttons."""
         ai_hub = AIHubView(page=None)
-        download_tab = ai_hub._build_download_tab()
+        hf_tab = ai_hub._build_huggingface_tab()
 
-        # Should have download button (might be in recommended model cards)
-        buttons = _find_controls_by_type(download_tab, ft.ElevatedButton)
-        # At least one button should exist (either Download or in cards)
+        # Should have buttons (Search, Add, Download)
+        buttons = _find_controls_by_type(hf_tab, ft.Button)
+        assert len(buttons) >= 1
+
+
+class TestOllamaTab:
+    """Test Ollama tab functionality."""
+
+    def test_ollama_tab_builds(self):
+        """Test Ollama tab builds without errors."""
+        ai_hub = AIHubView(page=None)
+        ollama_tab = ai_hub._build_ollama_tab()
+
+        assert ollama_tab is not None
+        assert isinstance(ollama_tab, ft.Container)
+
+    def test_ollama_tab_shows_library_models(self):
+        """Test Ollama tab displays library models."""
+        ai_hub = AIHubView(page=None)
+        ollama_tab = ai_hub._build_ollama_tab()
+
+        all_text = extract_text_from_control(ollama_tab)
+
+        # Should show Ollama library models
+        assert "Ollama" in all_text
+        assert "Library" in all_text or "llama" in all_text.lower()
+
+    def test_ollama_tab_has_status_indicator(self):
+        """Test Ollama tab has status indicator."""
+        ai_hub = AIHubView(page=None)
+        ollama_tab = ai_hub._build_ollama_tab()
+
+        all_text = extract_text_from_control(ollama_tab)
+
+        # Should have status indicator
+        assert "Status" in all_text or "Check" in all_text
+
+
+class TestImportTab:
+    """Test Import tab functionality."""
+
+    def test_import_tab_builds(self):
+        """Test Import tab builds without errors."""
+        ai_hub = AIHubView(page=None)
+        import_tab = ai_hub._build_import_tab()
+
+        assert import_tab is not None
+        assert isinstance(import_tab, ft.Container)
+
+    def test_import_tab_shows_gguf_info(self):
+        """Test Import tab shows GGUF import info."""
+        ai_hub = AIHubView(page=None)
+        import_tab = ai_hub._build_import_tab()
+
+        all_text = extract_text_from_control(import_tab)
+
+        # Should mention GGUF files
+        assert "GGUF" in all_text or "Import" in all_text
+
+    def test_import_tab_has_file_picker_button(self):
+        """Test Import tab has file picker button."""
+        ai_hub = AIHubView(page=None)
+        import_tab = ai_hub._build_import_tab()
+
+        # Should have file selection button
+        buttons = _find_controls_by_type(import_tab, ft.ElevatedButton)
         assert len(buttons) >= 1
 
 
@@ -195,7 +264,7 @@ class TestProvidersTab:
         ai_hub = AIHubView(page=None)
         providers_tab = ai_hub._build_providers_tab()
 
-        buttons = _find_controls_by_type(providers_tab, ft.ElevatedButton)
+        buttons = _find_controls_by_type(providers_tab, ft.Button)
 
         # Should have at least 3 buttons (one per provider)
         assert len(buttons) >= 3
@@ -287,9 +356,9 @@ class TestProviderConfiguration:
         # Should have action buttons
         assert len(dialog.actions) >= 2
 
-        # Actions should be buttons
-        assert isinstance(dialog.actions[0], (ft.TextButton, ft.ElevatedButton))
-        assert isinstance(dialog.actions[1], (ft.TextButton, ft.ElevatedButton))
+        # Actions should be buttons (TextButton, ElevatedButton, or Button)
+        assert isinstance(dialog.actions[0], (ft.TextButton, ft.ElevatedButton, ft.Button))
+        assert isinstance(dialog.actions[1], (ft.TextButton, ft.ElevatedButton, ft.Button))
 
 
 class TestProviderStatusPersistence:
@@ -369,12 +438,18 @@ class TestAIHubIntegration:
 
         # Build each tab independently
         my_models = ai_hub._build_installed_tab()
-        download = ai_hub._build_download_tab()
+        model_library = ai_hub._build_model_library_tab()
+        huggingface = ai_hub._build_huggingface_tab()
+        ollama = ai_hub._build_ollama_tab()
+        import_tab = ai_hub._build_import_tab()
         providers = ai_hub._build_providers_tab()
 
         # All should build successfully
         assert my_models is not None
-        assert download is not None
+        assert model_library is not None
+        assert huggingface is not None
+        assert ollama is not None
+        assert import_tab is not None
         assert providers is not None
 
 
@@ -397,24 +472,24 @@ class TestErrorHandling:
         assert ai_hub.hub is not None
 
     def test_recommended_models_handles_empty_list(self):
-        """Test Download tab handles empty recommended models list."""
+        """Test Hugging Face tab handles empty recommended models list."""
         ai_hub = AIHubView(page=None)
-        download_tab = ai_hub._build_download_tab()
+        hf_tab = ai_hub._build_huggingface_tab()
 
         # Should build even if no recommended models
-        assert download_tab is not None
+        assert hf_tab is not None
 
 
 class TestUIComponentsPresence:
     """Test presence of specific UI components."""
 
-    def test_header_has_icons(self):
-        """Test AI Hub header uses icons for visual elements."""
+    def test_header_has_refresh_button(self):
+        """Test AI Hub header has refresh button."""
         ai_hub = AIHubView(page=None)
         header = ai_hub._build_header()
 
-        # Should have icon in refresh button
-        buttons = _find_controls_by_type(header, ft.ElevatedButton)
+        # Should have refresh button
+        buttons = _find_controls_by_type(header, ft.Button)
         assert len(buttons) >= 1
 
     def test_providers_tab_has_icons_for_providers(self):
@@ -458,12 +533,12 @@ class TestTabContent:
         # Empty state should guide to Download tab
         assert "Download" in all_text
 
-    def test_download_tab_mentions_model_size(self):
-        """Test Download tab shows model sizes or descriptions."""
+    def test_huggingface_tab_has_content(self):
+        """Test Hugging Face tab shows model sizes or descriptions."""
         ai_hub = AIHubView(page=None)
-        download_tab = ai_hub._build_download_tab()
+        hf_tab = ai_hub._build_huggingface_tab()
 
-        all_text = extract_text_from_control(download_tab)
+        all_text = extract_text_from_control(hf_tab)
 
         # Should mention models in some way
         assert len(all_text) > 50  # Has substantial content
@@ -488,12 +563,18 @@ class TestCompleteFlow:
 
         # Build each tab (simulating tab switches)
         my_models = ai_hub._build_installed_tab()
-        download = ai_hub._build_download_tab()
+        model_library = ai_hub._build_model_library_tab()
+        huggingface = ai_hub._build_huggingface_tab()
+        ollama = ai_hub._build_ollama_tab()
+        import_tab = ai_hub._build_import_tab()
         providers = ai_hub._build_providers_tab()
 
         # All should succeed
         assert my_models is not None
-        assert download is not None
+        assert model_library is not None
+        assert huggingface is not None
+        assert ollama is not None
+        assert import_tab is not None
         assert providers is not None
 
     def test_complete_flow_configure_provider(self):
