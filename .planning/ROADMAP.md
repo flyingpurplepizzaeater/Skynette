@@ -85,14 +85,15 @@ Plans:
   3. User can preview AI-suggested changes as a diff before applying
   4. User can accept or reject AI changes with clear controls
   5. User can select any configured AI provider for completions
-**Plans**: TBD
+**Plans**: 6 plans in 4 waves
 
 Plans:
-- [ ] 04-01: Add AI chat panel with code context
-- [ ] 04-02: Implement inline suggestions with ghost text
-- [ ] 04-03: Add diff preview with accept/reject controls
-- [ ] 04-04: Connect editor to AI Gateway
-- [ ] 04-05: Integration tests for AI-assisted editing flow
+- [ ] 04-01-PLAN.md - Foundation services (ChatState, TokenCounter, DiffService)
+- [ ] 04-02-PLAN.md - Chat panel component with streaming responses
+- [ ] 04-03-PLAN.md - Ghost text suggestions with completion service
+- [ ] 04-04-PLAN.md - Diff preview with accept/reject controls
+- [ ] 04-05-PLAN.md - CodeEditorView integration and keyboard shortcuts
+- [ ] 04-06-PLAN.md - Integration tests for AI-assisted editing (QUAL-03)
 
 ### Phase 5: Advanced Integration
 **Goal**: Code editor integrates with workflow automation and codebase knowledge
@@ -122,7 +123,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Stability & Audit | 4/4 | Complete | 2026-01-18 |
 | 2. Provider Foundation | 5/5 | Complete | 2026-01-18 |
 | 3. Code Editor Core | 5/5 | Complete | 2026-01-18 |
-| 4. AI-Assisted Editing | 0/5 | Not started | - |
+| 4. AI-Assisted Editing | 0/6 | Planned | - |
 | 5. Advanced Integration | 0/4 | Not started | - |
 
 ---
