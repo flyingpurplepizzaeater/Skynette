@@ -33,6 +33,7 @@ from src.ui.views.code_editor.file_tree import FileTree
 from src.ui.views.code_editor.state import EditorState, OpenFile
 from src.ui.views.code_editor.tab_bar import EditorTabBar
 from src.ui.views.code_editor.toolbar import EditorToolbar
+from src.ui.views.code_editor.workflow_bridge import WorkflowBridge, WorkflowFormat
 
 
 class CodeEditorView(ft.Column):
@@ -87,6 +88,11 @@ class CodeEditorView(ft.Column):
         self._pending_diff: tuple[str, str] | None = None  # (original, modified)
         self._diff_dialog: ft.AlertDialog | None = None
 
+        # Workflow editing state
+        self._workflow_bridge: WorkflowBridge | None = None
+        self._current_workflow_id: str | None = None
+        self._workflow_format: WorkflowFormat = WorkflowFormat.YAML
+
         # File picker (must be added to page overlay before use)
         self._folder_picker = ft.FilePicker()
         self._folder_picker.on_result = self._on_folder_picked
@@ -105,15 +111,18 @@ class CodeEditorView(ft.Column):
 
     def build(self) -> None:
         """Build the complete editor layout."""
-        # Toolbar with AI panel toggle
+        # Toolbar with AI panel toggle and format selector
         self._toolbar = EditorToolbar(
             on_save=self._save_current,
             on_save_all=self._save_all,
             on_toggle_sidebar=self._toggle_sidebar,
             on_open_folder=self._open_folder,
             on_toggle_ai=self.toggle_ai_panel,
+            on_format_change=self._on_format_change,
             sidebar_visible=self.state.sidebar_visible,
             ai_panel_visible=self._ai_panel_visible,
+            workflow_mode=self._current_workflow_id is not None,
+            current_format=self._workflow_format.value,
         )
 
         # File tree (with placeholder root)
@@ -264,10 +273,19 @@ class CodeEditorView(ft.Column):
             index: Tab index to close.
         """
         file = self.state.open_files[index]
+
+        # Check if closing a workflow file
+        is_workflow_file = (
+            self._current_workflow_id
+            and file.path.startswith("workflows/")
+        )
+
         if file.is_dirty:
             self._show_save_dialog(index)
         else:
             self.state.close_file(index)
+            if is_workflow_file:
+                self._close_workflow()
 
     def _on_content_change(self, content: str) -> None:
         """Handle editor content change.
@@ -349,6 +367,19 @@ class CodeEditorView(ft.Column):
         """Save current file asynchronously."""
         if self.state.active_file:
             f = self.state.active_file
+
+            # Check if editing a workflow
+            if self._current_workflow_id and self._workflow_bridge:
+                success, error = self._workflow_bridge.save_from_code(
+                    self._current_workflow_id, f.content, self._workflow_format
+                )
+                if success:
+                    self.state.mark_saved(self.state.active_file_index)
+                else:
+                    self._show_error(f"Workflow save failed: {error}")
+                return
+
+            # Normal file save
             try:
                 await self.file_service.write_file(f.path, f.content)
                 self.state.mark_saved(self.state.active_file_index)
@@ -402,6 +433,116 @@ class CodeEditorView(ft.Column):
             width: New AI panel width.
         """
         self._ai_panel_width = width
+
+    # Workflow editing methods
+    def open_workflow(
+        self,
+        workflow_id: str,
+        format: WorkflowFormat = WorkflowFormat.YAML,
+    ) -> bool:
+        """Open a workflow for editing in code editor.
+
+        Args:
+            workflow_id: ID of workflow to open.
+            format: Format to display (YAML, JSON, or Python DSL).
+
+        Returns:
+            True if workflow opened successfully.
+        """
+        # Create bridge if not exists
+        if self._workflow_bridge is None:
+            self._workflow_bridge = WorkflowBridge()
+
+        # Load workflow as code
+        code = self._workflow_bridge.load_as_code(workflow_id, format)
+        if code is None:
+            self._show_error(f"Workflow not found: {workflow_id}")
+            return False
+
+        # Get workflow name for virtual file path
+        name = self._workflow_bridge.get_workflow_name(workflow_id) or "workflow"
+        ext = {"yaml": "yaml", "json": "json", "python": "py"}[format.value]
+        virtual_path = f"workflows/{name}.{ext}"
+
+        # Determine language for highlighting
+        language = {"yaml": "yaml", "json": "json", "python": "python"}[format.value]
+
+        # Open in editor
+        self.state.open_file(virtual_path, code, language)
+
+        # Store workflow state
+        self._current_workflow_id = workflow_id
+        self._workflow_format = format
+
+        # Update toolbar to show format dropdown
+        if self._toolbar:
+            self._toolbar.set_workflow_mode(True, format.value)
+
+        return True
+
+    def _on_format_change(self, format_value: str) -> None:
+        """Handle workflow format change from dropdown.
+
+        Args:
+            format_value: New format value (yaml/json/python).
+        """
+        if not self._current_workflow_id or not self._workflow_bridge:
+            return
+
+        # Map string to enum
+        format_map = {
+            "yaml": WorkflowFormat.YAML,
+            "json": WorkflowFormat.JSON,
+            "python": WorkflowFormat.PYTHON_DSL,
+        }
+        new_format = format_map.get(format_value)
+        if not new_format or new_format == self._workflow_format:
+            return
+
+        # Get current content and convert
+        if self.state.active_file:
+            current_content = self.state.active_file.content
+            converted, error = self._workflow_bridge.convert_format(
+                current_content, self._workflow_format, new_format
+            )
+
+            if error:
+                self._show_error(f"Conversion failed: {error}")
+                # Reset dropdown to previous value
+                if self._toolbar and self._toolbar._format_dropdown:
+                    self._toolbar._format_dropdown.value = self._workflow_format.value
+                    self._toolbar.update()
+                return
+
+            # Update format and content
+            self._workflow_format = new_format
+
+            # Update file extension in path
+            name = self._workflow_bridge.get_workflow_name(
+                self._current_workflow_id
+            ) or "workflow"
+            ext = {"yaml": "yaml", "json": "json", "python": "py"}[new_format.value]
+            new_path = f"workflows/{name}.{ext}"
+            language = {"yaml": "yaml", "json": "json", "python": "python"}[
+                new_format.value
+            ]
+
+            # Update the file in state
+            if self.state.active_file_index >= 0:
+                self.state.open_files[self.state.active_file_index].path = new_path
+                self.state.open_files[self.state.active_file_index].language = language
+                self.state.set_content(self.state.active_file_index, converted)
+
+            # Update editor
+            if self._editor:
+                self._editor.set_content(converted)
+
+    def _close_workflow(self) -> None:
+        """Clear workflow editing state."""
+        self._current_workflow_id = None
+        self._workflow_format = WorkflowFormat.YAML
+        if self._toolbar:
+            self._toolbar.set_workflow_mode(False)
 
     def _open_folder(self) -> None:
         """Open folder picker."""
@@ -634,4 +775,6 @@ __all__ = [
     "CodeEditor",
     "EditorTabBar",
     "EditorToolbar",
+    "WorkflowBridge",
+    "WorkflowFormat",
 ]
