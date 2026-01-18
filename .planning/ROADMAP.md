@@ -13,7 +13,7 @@ Skynette v2 transforms the AI workspace from a chat-and-workflow tool into a com
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Stability & Audit** - Fix what is broken before building new
-- [ ] **Phase 2: Provider Foundation** - Gemini, Grok, and Ollama improvements
+- [x] **Phase 2: Provider Foundation** - Gemini, Grok, and Ollama improvements
 - [ ] **Phase 3: Code Editor Core** - Syntax highlighting, file operations, navigation
 - [ ] **Phase 4: AI-Assisted Editing** - Completions, diff preview, accept/reject
 - [ ] **Phase 5: Advanced Integration** - Workflow scripts, RAG, execution node, final tests
@@ -50,11 +50,11 @@ Plans:
 **Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 02-01-PLAN.md - Implement Gemini provider (PROV-01)
-- [ ] 02-02-PLAN.md - Implement Grok provider (PROV-02)
-- [ ] 02-03-PLAN.md - Enhance Ollama service discovery and status UI (PROV-03)
-- [ ] 02-04-PLAN.md - Implement rate limit handling and streaming failure recovery (PROV-04, PROV-05)
-- [ ] 02-05-PLAN.md - Unit tests for provider integrations (QUAL-01)
+- [x] 02-01-PLAN.md - Implement Gemini provider (PROV-01)
+- [x] 02-02-PLAN.md - Implement Grok provider (PROV-02)
+- [x] 02-03-PLAN.md - Enhance Ollama service discovery and status UI (PROV-03)
+- [x] 02-04-PLAN.md - Implement rate limit handling and streaming failure recovery (PROV-04, PROV-05)
+- [x] 02-05-PLAN.md - Unit tests for provider integrations (QUAL-01)
 
 ### Phase 3: Code Editor Core
 **Goal**: Users can open, edit, and save code files with syntax highlighting
@@ -120,8 +120,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Stability & Audit | 4/4 | Complete | 2026-01-18 |
-| 2. Provider Foundation | 0/5 | Ready | - |
-| 3. Code Editor Core | 0/5 | Not started | - |
+| 2. Provider Foundation | 5/5 | Complete | 2026-01-18 |
+| 3. Code Editor Core | 0/5 | Ready | - |
 | 4. AI-Assisted Editing | 0/5 | Not started | - |
 | 5. Advanced Integration | 0/4 | Not started | - |
 

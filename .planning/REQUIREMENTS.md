@@ -15,11 +15,11 @@
 
 ### AI Providers
 
-- [ ] **PROV-01**: Add Gemini provider using `google-genai>=1.59.0` SDK
-- [ ] **PROV-02**: Add Grok provider using `xai-sdk>=1.5.0` SDK
-- [ ] **PROV-03**: Enhance Ollama with better service discovery and status UI
-- [ ] **PROV-04**: Implement provider-specific rate limit handling with pre-emptive throttling
-- [ ] **PROV-05**: Handle streaming mid-stream failures gracefully (buffer, track state, notify user)
+- [x] **PROV-01**: Add Gemini provider using `google-genai>=1.59.0` SDK
+- [x] **PROV-02**: Add Grok provider using `xai-sdk>=1.5.0` SDK
+- [x] **PROV-03**: Enhance Ollama with better service discovery and status UI
+- [x] **PROV-04**: Implement provider-specific rate limit handling with pre-emptive throttling
+- [x] **PROV-05**: Handle streaming mid-stream failures gracefully (buffer, track state, notify user)
 
 ### Code Editor — Core
 
@@ -47,7 +47,7 @@
 
 ### Quality
 
-- [ ] **QUAL-01**: Unit tests for all new provider integrations
+- [x] **QUAL-01**: Unit tests for all new provider integrations
 - [ ] **QUAL-02**: Unit tests for code editor components
 - [ ] **QUAL-03**: Integration tests for AI-assisted editing flow
 - [ ] **QUAL-04**: E2E tests for critical user journeys
@@ -87,12 +87,12 @@
 | STAB-03 | Phase 1 | Complete |
 | STAB-04 | Phase 1 | Complete |
 | STAB-05 | Phase 5 | Pending |
-| PROV-01 | Phase 2 | Pending |
-| PROV-02 | Phase 2 | Pending |
-| PROV-03 | Phase 2 | Pending |
-| PROV-04 | Phase 2 | Pending |
-| PROV-05 | Phase 2 | Pending |
-| QUAL-01 | Phase 2 | Pending |
+| PROV-01 | Phase 2 | Complete |
+| PROV-02 | Phase 2 | Complete |
+| PROV-03 | Phase 2 | Complete |
+| PROV-04 | Phase 2 | Complete |
+| PROV-05 | Phase 2 | Complete |
+| QUAL-01 | Phase 2 | Complete |
 | EDIT-01 | Phase 3 | Pending |
 | EDIT-02 | Phase 3 | Pending |
 | EDIT-03 | Phase 3 | Pending |
