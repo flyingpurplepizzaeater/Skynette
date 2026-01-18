@@ -11,7 +11,7 @@ from src.ui.theme import SkynetteTheme
 class EditorToolbar(ft.Column):
     """Toolbar for code editor actions.
 
-    Actions: Save, Save All, Toggle Sidebar, Open Folder
+    Actions: Save, Save All, Toggle Sidebar, Open Folder, Toggle AI Panel
 
     Example:
         toolbar = EditorToolbar(
@@ -19,6 +19,7 @@ class EditorToolbar(ft.Column):
             on_save_all=lambda: print("Save all"),
             on_toggle_sidebar=lambda: print("Toggle sidebar"),
             on_open_folder=lambda: print("Open folder"),
+            on_toggle_ai=lambda: print("Toggle AI panel"),
         )
     """
 
@@ -28,8 +29,10 @@ class EditorToolbar(ft.Column):
         on_save_all: Callable[[], None],
         on_toggle_sidebar: Callable[[], None],
         on_open_folder: Callable[[], None],
+        on_toggle_ai: Callable[[], None] | None = None,
         sidebar_visible: bool = True,
         has_unsaved: bool = False,
+        ai_panel_visible: bool = False,
     ):
         """Initialize toolbar.
 
@@ -38,16 +41,20 @@ class EditorToolbar(ft.Column):
             on_save_all: Callback for save all action.
             on_toggle_sidebar: Callback for toggle sidebar action.
             on_open_folder: Callback for open folder action.
+            on_toggle_ai: Callback for toggle AI panel action.
             sidebar_visible: Whether sidebar is currently visible.
             has_unsaved: Whether there are unsaved files (highlights Save All).
+            ai_panel_visible: Whether AI panel is currently visible.
         """
         super().__init__()
         self.on_save = on_save
         self.on_save_all = on_save_all
         self.on_toggle_sidebar = on_toggle_sidebar
         self.on_open_folder = on_open_folder
+        self.on_toggle_ai = on_toggle_ai
         self.sidebar_visible = sidebar_visible
         self.has_unsaved = has_unsaved
+        self.ai_panel_visible = ai_panel_visible
 
         # Column settings
         self.spacing = 0
@@ -75,6 +82,18 @@ class EditorToolbar(ft.Column):
                         on_click=lambda e: self.on_open_folder(),
                     ),
                     ft.Container(expand=True),  # Spacer
+                    # Toggle AI Panel
+                    ft.IconButton(
+                        icon=(
+                            ft.Icons.SMART_TOY
+                            if self.ai_panel_visible
+                            else ft.Icons.SMART_TOY_OUTLINED
+                        ),
+                        tooltip="Toggle AI Assistant (Ctrl+Shift+A)",
+                        on_click=lambda e: self.on_toggle_ai() if self.on_toggle_ai else None,
+                        icon_color=SkynetteTheme.PRIMARY if self.ai_panel_visible else None,
+                    ),
+                    ft.VerticalDivider(width=1),
                     # Save
                     ft.IconButton(
                         icon=ft.Icons.SAVE,

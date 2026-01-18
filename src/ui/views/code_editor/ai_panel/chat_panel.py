@@ -37,6 +37,7 @@ class ChatPanel(ft.Column):
         state: ChatState,
         gateway: AIGateway,
         on_include_code: Callable[[], str] | None = None,
+        on_code_suggestion: Callable[[str], None] | None = None,
     ):
         """Initialize the chat panel.
 
@@ -45,12 +46,14 @@ class ChatPanel(ft.Column):
             state: ChatState instance for managing conversation state.
             gateway: AIGateway instance for AI communication.
             on_include_code: Optional callback to get selected code from editor.
+            on_code_suggestion: Optional callback when AI suggests code changes.
         """
         super().__init__()
         self._page_ref = page
         self.state = state
         self.gateway = gateway
         self._on_include_code_callback = on_include_code
+        self._on_code_suggestion = on_code_suggestion
 
         self.expand = True
         self.spacing = 0
@@ -419,6 +422,10 @@ class ChatPanel(ft.Column):
 
         finally:
             self.state.set_streaming(False)
+            # Check if response contains code suggestion
+            if self.state.messages:
+                final_content = self.state.messages[-1].content
+                self._check_for_code_suggestion(final_content)
 
     def _build_api_messages(self) -> list[AIMessage]:
         """Convert ChatMessages to AIMessages for API.
@@ -449,6 +456,34 @@ class ChatPanel(ft.Column):
             api_messages.append(AIMessage(role=msg.role, content=content))
 
         return api_messages
+
+    def _detect_code_in_response(self, content: str) -> str | None:
+        """Extract code from AI response if present.
+
+        Args:
+            content: Full AI response content.
+
+        Returns:
+            Extracted code string, or None if no code block found.
+        """
+        import re
+
+        # Match ```language\ncode\n```
+        match = re.search(r"```\w*\n(.*?)```", content, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        return None
+
+    def _check_for_code_suggestion(self, content: str) -> None:
+        """Check if response contains code and trigger diff preview.
+
+        Args:
+            content: Full AI response content.
+        """
+        if self._on_code_suggestion:
+            code = self._detect_code_in_response(content)
+            if code:
+                self._on_code_suggestion(code)
 
     def dispose(self) -> None:
         """Clean up resources and listeners."""

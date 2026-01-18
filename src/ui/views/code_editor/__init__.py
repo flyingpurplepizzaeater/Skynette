@@ -16,9 +16,18 @@ from collections.abc import Awaitable
 
 import flet as ft
 
+from src.ai.completions import CompletionService
+from src.ai.gateway import get_gateway
 from src.services.editor import FileService, PygmentsHighlighter
 from src.ui.components.code_editor import ResizableSplitPanel
 from src.ui.theme import SkynetteTheme
+from src.ui.views.code_editor.ai_panel import (
+    ChatPanel,
+    ChatState,
+    DiffPreview,
+    GhostTextOverlay,
+    Suggestion,
+)
 from src.ui.views.code_editor.editor import CodeEditor
 from src.ui.views.code_editor.file_tree import FileTree
 from src.ui.views.code_editor.state import EditorState, OpenFile
@@ -62,6 +71,22 @@ class CodeEditorView(ft.Column):
         self._split_panel: ResizableSplitPanel | None = None
         self._editor_area: ft.Column | None = None
 
+        # AI assistance state
+        self.chat_state = ChatState()
+        self._ai_panel_visible = False
+        self._ai_panel_width = 350  # Default width
+        self._gateway = get_gateway()
+        self._completion_service = CompletionService(self._gateway)
+
+        # AI component references
+        self._chat_panel: ChatPanel | None = None
+        self._ai_panel_container: ft.Container | None = None
+        self._editor_with_ai: ResizableSplitPanel | None = None
+
+        # Diff preview state
+        self._pending_diff: tuple[str, str] | None = None  # (original, modified)
+        self._diff_dialog: ft.AlertDialog | None = None
+
         # File picker (must be added to page overlay before use)
         self._folder_picker = ft.FilePicker()
         self._folder_picker.on_result = self._on_folder_picked
@@ -71,19 +96,24 @@ class CodeEditorView(ft.Column):
         # Register state listener
         self.state.add_listener(self._on_state_change)
 
+        # Register keyboard shortcuts
+        self._setup_keyboard_shortcuts()
+
         # Column settings
         self.expand = True
         self.spacing = 0
 
     def build(self) -> None:
         """Build the complete editor layout."""
-        # Toolbar
+        # Toolbar with AI panel toggle
         self._toolbar = EditorToolbar(
             on_save=self._save_current,
             on_save_all=self._save_all,
             on_toggle_sidebar=self._toggle_sidebar,
             on_open_folder=self._open_folder,
+            on_toggle_ai=self.toggle_ai_panel,
             sidebar_visible=self.state.sidebar_visible,
+            ai_panel_visible=self._ai_panel_visible,
         )
 
         # File tree (with placeholder root)
@@ -113,10 +143,34 @@ class CodeEditorView(ft.Column):
             spacing=0,
         )
 
-        # Split panel
+        # Chat panel (initially hidden)
+        self._chat_panel = ChatPanel(
+            page=self._page_ref,
+            state=self.chat_state,
+            gateway=self._gateway,
+            on_include_code=self._get_selected_code,
+            on_code_suggestion=self.show_diff_from_ai,
+        )
+
+        # AI panel container (for visibility toggle)
+        self._ai_panel_container = ft.Container(
+            content=self._chat_panel,
+            visible=self._ai_panel_visible,
+            width=self._ai_panel_width,
+        )
+
+        # Wrap editor area with AI panel split
+        self._editor_with_ai = ResizableSplitPanel(
+            left=self._editor_area,
+            right=self._ai_panel_container,
+            initial_width=None,  # No initial split - full editor
+            on_resize=self._on_ai_panel_resize,
+        )
+
+        # Main split: file tree | (editor + AI panel)
         self._split_panel = ResizableSplitPanel(
             left=self._file_tree,
-            right=self._editor_area,
+            right=self._editor_with_ai,
             initial_width=self.state.sidebar_width,
             on_resize=self._on_sidebar_resize,
         )
@@ -287,6 +341,34 @@ class CodeEditorView(ft.Column):
         if self._split_panel:
             self._split_panel.set_left_visible(self.state.sidebar_visible)
 
+    def toggle_ai_panel(self) -> None:
+        """Toggle AI chat panel visibility."""
+        self._ai_panel_visible = not self._ai_panel_visible
+        if self._ai_panel_container:
+            self._ai_panel_container.visible = self._ai_panel_visible
+        if self._toolbar:
+            self._toolbar.ai_panel_visible = self._ai_panel_visible
+        self.update()
+
+    def _get_selected_code(self) -> str:
+        """Get selected code from editor for context.
+
+        Returns:
+            Currently returns entire file content.
+            TODO: Get actual selection when TextField supports it.
+        """
+        if self._editor and self.state.active_file:
+            return self.state.active_file.content
+        return ""
+
+    def _on_ai_panel_resize(self, width: int) -> None:
+        """Handle AI panel resize.
+
+        Args:
+            width: New AI panel width.
+        """
+        self._ai_panel_width = width
+
     def _open_folder(self) -> None:
         """Open folder picker."""
         self._folder_picker.get_directory_path()
@@ -361,10 +443,130 @@ class CodeEditorView(ft.Column):
         self._page_ref.snack_bar.open = True
         self._page_ref.update()
 
+    def _setup_keyboard_shortcuts(self) -> None:
+        """Register keyboard shortcuts for AI features."""
+        original_handler = self._page_ref.on_keyboard_event
+
+        def on_keyboard(e: ft.KeyboardEvent) -> None:
+            # Ctrl+Shift+A: Toggle AI panel
+            if e.ctrl and e.shift and e.key == "A":
+                self.toggle_ai_panel()
+                return
+
+            # Tab: Accept suggestion (when ghost text visible)
+            if e.key == "Tab" and self._editor and self._editor._ghost_overlay:
+                if self._editor._ghost_overlay.has_suggestion():
+                    self._editor._ghost_overlay.accept()
+                    return  # Don't let Tab propagate
+
+            # Escape: Dismiss suggestion
+            if e.key == "Escape" and self._editor and self._editor._ghost_overlay:
+                if self._editor._ghost_overlay.has_suggestion():
+                    self._editor._ghost_overlay.dismiss()
+                    return
+
+            # Ctrl+Shift+D: Show diff preview for last AI response
+            if e.ctrl and e.shift and e.key == "D":
+                self._show_diff_preview()
+                return
+
+            # Call original handler if any
+            if original_handler:
+                original_handler(e)
+
+        self._page_ref.on_keyboard_event = on_keyboard
+
+    def _cleanup_keyboard_shortcuts(self) -> None:
+        """Remove keyboard shortcut handlers."""
+        self._page_ref.on_keyboard_event = None
+
+    def show_diff_from_ai(self, modified_code: str) -> None:
+        """Show diff preview for AI-suggested changes.
+
+        Called when AI response contains code that differs from current file.
+
+        Args:
+            modified_code: The modified code suggested by AI.
+        """
+        if not self.state.active_file:
+            return
+
+        original = self.state.active_file.content
+        if original == modified_code:
+            return  # No changes
+
+        self._pending_diff = (original, modified_code)
+        self._show_diff_preview()
+
+    def _show_diff_preview(self) -> None:
+        """Show diff preview dialog."""
+        if not self._pending_diff:
+            return
+
+        original, modified = self._pending_diff
+        filename = self.state.active_file.path if self.state.active_file else "file"
+
+        diff_preview = DiffPreview(
+            original=original,
+            modified=modified,
+            filename=filename.split("/")[-1].split("\\")[-1],
+            on_accept=self._apply_diff,
+            on_reject=self._cancel_diff,
+        )
+
+        self._diff_dialog = ft.AlertDialog(
+            title=ft.Text("Review Changes"),
+            content=ft.Container(
+                content=diff_preview,
+                width=700,
+                height=500,
+            ),
+            actions=[],  # DiffPreview has its own buttons
+            modal=True,
+        )
+
+        self._page_ref.overlay.append(self._diff_dialog)
+        self._diff_dialog.open = True
+        self._page_ref.update()
+
+    def _apply_diff(self, content: str) -> None:
+        """Apply diff changes to active file.
+
+        Args:
+            content: New content to apply.
+        """
+        if self.state.active_file_index >= 0:
+            self.state.set_content(self.state.active_file_index, content)
+            if self._editor:
+                self._editor.set_content(content)
+
+        self._close_diff_dialog()
+        self._pending_diff = None
+
+    def _cancel_diff(self) -> None:
+        """Cancel diff preview."""
+        self._close_diff_dialog()
+        self._pending_diff = None
+
+    def _close_diff_dialog(self) -> None:
+        """Close diff dialog."""
+        if self._diff_dialog:
+            self._diff_dialog.open = False
+            self._page_ref.update()
+
     def dispose(self) -> None:
         """Clean up all resources when view is destroyed."""
+        # Remove keyboard shortcuts
+        self._cleanup_keyboard_shortcuts()
+
         # Remove state listener
         self.state.remove_listener(self._on_state_change)
+
+        # Dispose AI components
+        if self._chat_panel:
+            self._chat_panel.dispose()
+        self.chat_state.dispose()
+        self._completion_service.cancel_pending()
 
         # Dispose child components
         if self._editor:
@@ -381,6 +583,9 @@ class CodeEditorView(ft.Column):
         self._file_tree = None
         self._editor = None
         self._split_panel = None
+        self._chat_panel = None
+        self._ai_panel_container = None
+        self._editor_with_ai = None
 
 
 # Export re-exports for backward compatibility
