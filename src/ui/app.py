@@ -17,6 +17,7 @@ from src.ai.providers import initialize_default_providers
 from src.ui.views.simple_mode import SimpleModeView
 from src.ui.views.agents import AgentsView
 from src.ui.views.devtools import DevToolsView
+from src.ui.views.code_editor import CodeEditorView
 
 
 class WorkflowExecutionError(Exception):
@@ -157,6 +158,7 @@ class SkynetteApp:
         nav_items = [
             {"icon": ft.Icons.ACCOUNT_TREE_ROUNDED, "label": "Workflows", "view": "workflows"},
             {"icon": ft.Icons.SMART_TOY_ROUNDED, "label": "AI Hub", "view": "ai_hub"},
+            {"icon": ft.Icons.CODE_ROUNDED, "label": "Code Editor", "view": "code_editor"},
             {"icon": ft.Icons.AUTO_AWESOME, "label": "Agents", "view": "agents"},
             {"icon": ft.Icons.DEVELOPER_MODE, "label": "DevTools", "view": "devtools"},
             {"icon": ft.Icons.EXTENSION_ROUNDED, "label": "Plugins", "view": "plugins"},
@@ -668,6 +670,7 @@ class SkynetteApp:
         titles = {
             "workflows": "Workflows",
             "ai_hub": "AI Model Hub",
+            "code_editor": "Code Editor",
             "agents": "Agent Orchestrator",
             "devtools": "Developer Tools",
             "plugins": "Plugins & Marketplace",
@@ -1472,6 +1475,8 @@ class SkynetteApp:
                 self._hide_loading()
         elif self.current_view == "ai_hub":
             self.content_area.content = self._build_ai_hub_view()
+        elif self.current_view == "code_editor":
+            self.content_area.content = CodeEditorView(self.page)
         elif self.current_view == "agents":
             self.content_area.content = self._build_agents_view()
         elif self.current_view == "devtools":
