@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Provider Foundation** - Gemini, Grok, and Ollama improvements
 - [x] **Phase 3: Code Editor Core** - Syntax highlighting, file operations, navigation
 - [x] **Phase 4: AI-Assisted Editing** - Completions, diff preview, accept/reject
-- [ ] **Phase 5: Advanced Integration** - Workflow scripts, RAG, execution node, final tests
+- [x] **Phase 5: Advanced Integration** - Workflow scripts, RAG, execution node, final tests
 
 ## Phase Details
 
@@ -108,10 +108,10 @@ Plans:
 **Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 05-01-PLAN.md — Workflow-Editor bridge for script editing (INTG-01)
-- [ ] 05-02-PLAN.md — Project-level RAG with dimension validation (INTG-02, INTG-04)
-- [ ] 05-03-PLAN.md — Code execution node for workflows (INTG-03)
-- [ ] 05-04-PLAN.md — E2E tests and security audit (STAB-05, QUAL-04, QUAL-05)
+- [x] 05-01-PLAN.md — Workflow-Editor bridge for script editing (INTG-01)
+- [x] 05-02-PLAN.md — Project-level RAG with dimension validation (INTG-02, INTG-04)
+- [x] 05-03-PLAN.md — Code execution node for workflows (INTG-03)
+- [x] 05-04-PLAN.md — E2E tests and security audit (STAB-05, QUAL-04, QUAL-05)
 
 ## Progress
 
@@ -124,8 +124,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Provider Foundation | 5/5 | Complete | 2026-01-18 |
 | 3. Code Editor Core | 5/5 | Complete | 2026-01-18 |
 | 4. AI-Assisted Editing | 6/6 | Complete | 2026-01-18 |
-| 5. Advanced Integration | 0/4 | Not started | - |
+| 5. Advanced Integration | 4/4 | Complete | 2026-01-19 |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-18*
+*Last updated: 2026-01-19*

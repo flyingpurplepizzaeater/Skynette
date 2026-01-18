@@ -11,7 +11,7 @@
 - [x] **STAB-02**: Audit Model Management (local + cloud) — identify and fix all bugs
 - [x] **STAB-03**: Audit Workflow Builder — identify and fix all bugs
 - [x] **STAB-04**: Refactor state management to handle scale (address AIHubView complexity)
-- [ ] **STAB-05**: Achieve comprehensive test coverage for all existing features
+- [x] **STAB-05**: Achieve comprehensive test coverage for all existing features
 
 ### AI Providers
 
@@ -40,18 +40,18 @@
 
 ### Integration
 
-- [ ] **INTG-01**: Enable workflow script editing in code editor
-- [ ] **INTG-02**: Implement project-level RAG for codebase context (leverage ChromaDB)
-- [ ] **INTG-03**: Add code execution node for running snippets in workflows
-- [ ] **INTG-04**: Validate embedding dimensions before writes (prevent RAG corruption)
+- [x] **INTG-01**: Enable workflow script editing in code editor
+- [x] **INTG-02**: Implement project-level RAG for codebase context (leverage ChromaDB)
+- [x] **INTG-03**: Add code execution node for running snippets in workflows
+- [x] **INTG-04**: Validate embedding dimensions before writes (prevent RAG corruption)
 
 ### Quality
 
 - [x] **QUAL-01**: Unit tests for all new provider integrations
 - [x] **QUAL-02**: Unit tests for code editor components
 - [x] **QUAL-03**: Integration tests for AI-assisted editing flow
-- [ ] **QUAL-04**: E2E tests for critical user journeys
-- [ ] **QUAL-05**: Security audit — ensure API keys not exposed in memory
+- [x] **QUAL-04**: E2E tests for critical user journeys
+- [x] **QUAL-05**: Security audit — ensure API keys not exposed in memory
 
 ## v2+ Requirements (Deferred)
 
@@ -86,7 +86,7 @@
 | STAB-02 | Phase 1 | Complete |
 | STAB-03 | Phase 1 | Complete |
 | STAB-04 | Phase 1 | Complete |
-| STAB-05 | Phase 5 | Pending |
+| STAB-05 | Phase 5 | Complete |
 | PROV-01 | Phase 2 | Complete |
 | PROV-02 | Phase 2 | Complete |
 | PROV-03 | Phase 2 | Complete |
@@ -106,12 +106,12 @@
 | AIED-04 | Phase 4 | Complete |
 | AIED-05 | Phase 4 | Complete |
 | QUAL-03 | Phase 4 | Complete |
-| INTG-01 | Phase 5 | Pending |
-| INTG-02 | Phase 5 | Pending |
-| INTG-03 | Phase 5 | Pending |
-| INTG-04 | Phase 5 | Pending |
-| QUAL-04 | Phase 5 | Pending |
-| QUAL-05 | Phase 5 | Pending |
+| INTG-01 | Phase 5 | Complete |
+| INTG-02 | Phase 5 | Complete |
+| INTG-03 | Phase 5 | Complete |
+| INTG-04 | Phase 5 | Complete |
+| QUAL-04 | Phase 5 | Complete |
+| QUAL-05 | Phase 5 | Complete |
 
 **Coverage:**
 - v2 requirements: 30 total
@@ -120,4 +120,4 @@
 
 ---
 *Requirements defined: 2026-01-18*
-*Last updated: 2026-01-18 after roadmap creation*
+*Last updated: 2026-01-19 — v2 complete*
