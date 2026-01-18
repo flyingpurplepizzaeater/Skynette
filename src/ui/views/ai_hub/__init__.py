@@ -9,13 +9,15 @@ This package provides the refactored AIHubView with:
 """
 
 import flet as ft
+
 from src.ui.theme import Theme
+
+from .model_library import ModelLibraryTab
+from .providers import ProvidersTab
 from .state import AIHubState
 
 # Import extracted components
 from .wizard import SetupWizard
-from .providers import ProvidersTab
-from .model_library import ModelLibraryTab
 
 
 class AIHubView(ft.Column):
@@ -49,8 +51,8 @@ class AIHubView(ft.Column):
     def build(self):
         """Build the AI Hub view with all tabs."""
         # Import views that aren't part of the refactored package
-        from src.ui.views.usage_dashboard import UsageDashboardView
         from src.ui.views.knowledge_bases import KnowledgeBasesView
+        from src.ui.views.usage_dashboard import UsageDashboardView
 
         # Instantiate extracted components with shared state
         self._wizard = SetupWizard(page=self._page, state=self.state)

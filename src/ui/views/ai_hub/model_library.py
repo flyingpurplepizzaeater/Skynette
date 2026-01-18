@@ -5,11 +5,12 @@ Extracted from AIHubView to improve modularity and testability.
 Contains My Models, Hugging Face, Ollama, and Import sub-tabs.
 """
 
-import flet as ft
 import asyncio
-from src.ui.theme import Theme
-from src.ai.models.hub import get_hub, ModelInfo, DownloadProgress
 
+import flet as ft
+
+from src.ai.models.hub import DownloadProgress, ModelInfo, get_hub
+from src.ui.theme import Theme
 
 # Ollama library models
 OLLAMA_LIBRARY_MODELS = [
@@ -870,8 +871,8 @@ class ModelLibraryTab(ft.Column):
     def _pull_ollama_model(self, model_name):
         """Pull a model from Ollama library with progress tracking."""
         async def do_pull():
-            from src.ai.models.sources.ollama import OllamaSource
             from src.ai.models.hub import ModelInfo
+            from src.ai.models.sources.ollama import OllamaSource
 
             source = OllamaSource()
 
@@ -1061,8 +1062,9 @@ class ModelLibraryTab(ft.Column):
     def _import_local_gguf(self, file_path: str):
         """Import a local GGUF file."""
         async def do_import():
-            from src.ai.models.sources.local import LocalFileSource
             from pathlib import Path
+
+            from src.ai.models.sources.local import LocalFileSource
 
             source = LocalFileSource(self.hub.models_dir)
             source_path = Path(file_path)

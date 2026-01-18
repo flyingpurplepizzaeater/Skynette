@@ -6,9 +6,10 @@ Handles provider configuration including API key management.
 """
 
 import flet as ft
-from src.ui.theme import Theme
-from .state import AIHubState
 
+from src.ui.theme import Theme
+
+from .state import AIHubState
 
 # Provider definitions with branding
 PROVIDER_DEFINITIONS = [
@@ -131,7 +132,7 @@ class ProvidersTab(ft.Column):
         Returns:
             AlertDialog for configuring the provider
         """
-        from src.ai.security import store_api_key, has_api_key, get_api_key
+        from src.ai.security import get_api_key, has_api_key, store_api_key
 
         # Get existing API key if any
         existing_key = ""

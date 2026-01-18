@@ -6,9 +6,10 @@ Uses AIHubState for centralized state management.
 """
 
 import flet as ft
-from src.ui.theme import Theme
-from .state import AIHubState
 
+from src.ui.theme import Theme
+
+from .state import AIHubState
 
 # Provider definitions
 AVAILABLE_PROVIDERS = [
@@ -335,9 +336,10 @@ class SetupWizard(ft.Column):
 
     def _complete_wizard(self):
         """Complete wizard and save configurations."""
+        import json
+
         from src.ai.security import store_api_key
         from src.data.storage import get_storage
-        import json
 
         storage = get_storage()
 

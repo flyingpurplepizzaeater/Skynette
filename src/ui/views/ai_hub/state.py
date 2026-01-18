@@ -1,8 +1,9 @@
 # src/ui/views/ai_hub/state.py
 """Centralized state for AI Hub components."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Any
+from typing import Any
 
 
 @dataclass
