@@ -220,6 +220,7 @@ class CodeEditorView(ft.Column):
             content=active.content,
             language=active.language,
             on_change=self._on_content_change,
+            on_request_completion=self._handle_completion_request,
         )
         return self._editor
 
@@ -276,6 +277,39 @@ class CodeEditorView(ft.Column):
         """
         if self.state.active_file_index >= 0:
             self.state.set_content(self.state.active_file_index, content)
+
+    def _handle_completion_request(self, code: str, language: str) -> None:
+        """Handle completion request from editor.
+
+        Args:
+            code: Current code content (before cursor).
+            language: Programming language.
+        """
+        asyncio.create_task(self._fetch_completion(code, language))
+
+    async def _fetch_completion(self, code: str, language: str) -> None:
+        """Fetch AI completion asynchronously.
+
+        Args:
+            code: Current code content (before cursor).
+            language: Programming language.
+        """
+        from src.ai.completions import CompletionRequest
+
+        request = CompletionRequest(
+            code_before=code,
+            code_after="",
+            language=language,
+            provider=self.chat_state.selected_provider,
+        )
+
+        try:
+            suggestion = await self._completion_service.get_completion(request)
+            if suggestion and self._editor:
+                self._editor.show_suggestion(suggestion)
+        except Exception:
+            # Silently fail - inline suggestions are optional
+            pass
 
     def _on_sidebar_resize(self, width: int) -> None:
         """Handle sidebar resize.
