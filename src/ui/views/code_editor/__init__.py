@@ -49,7 +49,7 @@ class CodeEditorView(ft.Column):
             page: Flet page reference for dialogs and overlays.
         """
         super().__init__()
-        self.page = page
+        self._page_ref = page
         self.state = EditorState()
         self.file_service = FileService()
         self.highlighter = PygmentsHighlighter()
@@ -284,8 +284,8 @@ class CodeEditorView(ft.Column):
     def _open_folder(self) -> None:
         """Open folder picker."""
         picker = ft.FilePicker(on_result=self._on_folder_picked)
-        self.page.overlay.append(picker)
-        self.page.update()
+        self._page_ref.overlay.append(picker)
+        self._page_ref.update()
         picker.get_directory_path()
 
     def _on_folder_picked(self, e: ft.FilePickerResultEvent) -> None:
@@ -311,16 +311,16 @@ class CodeEditorView(ft.Column):
         def handle_save(e: ft.ControlEvent) -> None:
             asyncio.create_task(self._save_and_close(index))
             dialog.open = False
-            self.page.update()
+            self._page_ref.update()
 
         def handle_discard(e: ft.ControlEvent) -> None:
             self.state.close_file(index)
             dialog.open = False
-            self.page.update()
+            self._page_ref.update()
 
         def handle_cancel(e: ft.ControlEvent) -> None:
             dialog.open = False
-            self.page.update()
+            self._page_ref.update()
 
         dialog = ft.AlertDialog(
             title=ft.Text(f"Save changes to {filename}?"),
@@ -331,9 +331,9 @@ class CodeEditorView(ft.Column):
                 ft.TextButton("Cancel", on_click=handle_cancel),
             ],
         )
-        self.page.overlay.append(dialog)
+        self._page_ref.overlay.append(dialog)
         dialog.open = True
-        self.page.update()
+        self._page_ref.update()
 
     async def _save_and_close(self, index: int) -> None:
         """Save file then close tab.
@@ -351,12 +351,12 @@ class CodeEditorView(ft.Column):
         Args:
             message: Error message to display.
         """
-        self.page.snack_bar = ft.SnackBar(
+        self._page_ref.snack_bar = ft.SnackBar(
             content=ft.Text(message),
             bgcolor=SkynetteTheme.ERROR,
         )
-        self.page.snack_bar.open = True
-        self.page.update()
+        self._page_ref.snack_bar.open = True
+        self._page_ref.update()
 
     def dispose(self) -> None:
         """Clean up resources."""
