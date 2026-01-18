@@ -380,6 +380,76 @@ class ChatPanel(ft.Column):
         # Start streaming response
         asyncio.create_task(self._stream_response())
 
+    async def _stream_response(self) -> None:
+        """Stream AI response and update state.
+
+        Uses gateway.chat_stream() for streaming chat responses.
+        Updates the last message incrementally as chunks arrive.
+        Handles errors gracefully by appending error text to message.
+        """
+        self.state.set_streaming(True)
+
+        # Build messages for API
+        messages = self._build_api_messages()
+
+        # Add empty assistant message for streaming
+        self.state.add_message("assistant", "")
+
+        try:
+            provider = self.state.selected_provider
+            # Use chat_stream for streaming chat responses
+            async for chunk in self.gateway.chat_stream(messages, provider=provider):
+                if chunk.content:
+                    # Append to last message
+                    current = self.state.messages[-1].content
+                    self.state.update_last_message(current + chunk.content)
+
+                if chunk.error:
+                    self.state.update_last_message(
+                        self.state.messages[-1].content + "\n\n[Response interrupted]"
+                    )
+                    break
+
+        except Exception as e:
+            error_msg = str(e)
+            # Make error messages more user-friendly
+            if "No providers available" in error_msg:
+                error_msg = "No AI provider configured. Please set up a provider in Settings."
+            self.state.update_last_message(f"Error: {error_msg}")
+
+        finally:
+            self.state.set_streaming(False)
+
+    def _build_api_messages(self) -> list[AIMessage]:
+        """Convert ChatMessages to AIMessages for API.
+
+        Builds the message list for the API call, including:
+        - System message with coding assistant context
+        - All chat history messages
+        - Code context prepended to user messages that have it
+
+        Returns:
+            List of AIMessage objects ready for gateway.chat_stream().
+        """
+        api_messages: list[AIMessage] = []
+
+        # System message with context mode
+        system_prompt = (
+            "You are a helpful coding assistant. "
+            "Help the user understand, write, and improve their code. "
+            "Be concise but thorough. Use code blocks with language tags when showing code."
+        )
+        api_messages.append(AIMessage(role="system", content=system_prompt))
+
+        # Convert chat history
+        for msg in self.state.messages:
+            content = msg.content
+            if msg.code_context:
+                content = f"Code context:\n```\n{msg.code_context}\n```\n\n{content}"
+            api_messages.append(AIMessage(role=msg.role, content=content))
+
+        return api_messages
+
     def dispose(self) -> None:
         """Clean up resources and listeners."""
         self.state.remove_listener(self._on_state_change)
