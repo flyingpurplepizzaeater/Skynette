@@ -93,6 +93,7 @@ Plans:
 - [x] 04-03-PLAN.md - Ghost text suggestions with completion service
 - [x] 04-04-PLAN.md - Diff preview with accept/reject controls
 - [x] 04-05-PLAN.md - CodeEditorView integration and keyboard shortcuts
+- [x] 04-06-PLAN.md - Integration tests for AI-assisted editing (QUAL-03)
 
 ### Phase 5: Advanced Integration
 **Goal**: Code editor integrates with workflow automation and codebase knowledge
@@ -122,7 +123,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Stability & Audit | 4/4 | Complete | 2026-01-18 |
 | 2. Provider Foundation | 5/5 | Complete | 2026-01-18 |
 | 3. Code Editor Core | 5/5 | Complete | 2026-01-18 |
-| 4. AI-Assisted Editing | 5/5 | Complete | 2026-01-18 |
+| 4. AI-Assisted Editing | 6/6 | Complete | 2026-01-18 |
 | 5. Advanced Integration | 0/4 | Not started | - |
 
 ---

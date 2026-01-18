@@ -32,11 +32,11 @@
 
 ### Code Editor — AI Assistance
 
-- [ ] **AIED-01**: Add AI chat panel with code context awareness
-- [ ] **AIED-02**: Implement inline suggestions (ghost text with Tab to accept)
-- [ ] **AIED-03**: Add diff preview showing changes before applying
-- [ ] **AIED-04**: Implement accept/reject controls for AI changes
-- [ ] **AIED-05**: Connect editor to existing AI Gateway for completions
+- [x] **AIED-01**: Add AI chat panel with code context awareness
+- [x] **AIED-02**: Implement inline suggestions (ghost text with Tab to accept)
+- [x] **AIED-03**: Add diff preview showing changes before applying
+- [x] **AIED-04**: Implement accept/reject controls for AI changes
+- [x] **AIED-05**: Connect editor to existing AI Gateway for completions
 
 ### Integration
 
@@ -49,7 +49,7 @@
 
 - [x] **QUAL-01**: Unit tests for all new provider integrations
 - [x] **QUAL-02**: Unit tests for code editor components
-- [ ] **QUAL-03**: Integration tests for AI-assisted editing flow
+- [x] **QUAL-03**: Integration tests for AI-assisted editing flow
 - [ ] **QUAL-04**: E2E tests for critical user journeys
 - [ ] **QUAL-05**: Security audit — ensure API keys not exposed in memory
 
@@ -100,12 +100,12 @@
 | EDIT-05 | Phase 3 | Complete |
 | EDIT-06 | Phase 3 | Complete |
 | QUAL-02 | Phase 3 | Complete |
-| AIED-01 | Phase 4 | Pending |
-| AIED-02 | Phase 4 | Pending |
-| AIED-03 | Phase 4 | Pending |
-| AIED-04 | Phase 4 | Pending |
-| AIED-05 | Phase 4 | Pending |
-| QUAL-03 | Phase 4 | Pending |
+| AIED-01 | Phase 4 | Complete |
+| AIED-02 | Phase 4 | Complete |
+| AIED-03 | Phase 4 | Complete |
+| AIED-04 | Phase 4 | Complete |
+| AIED-05 | Phase 4 | Complete |
+| QUAL-03 | Phase 4 | Complete |
 | INTG-01 | Phase 5 | Pending |
 | INTG-02 | Phase 5 | Pending |
 | INTG-03 | Phase 5 | Pending |

@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** One app to replace separate AI chat clients, model managers, and workflow tools -- accessible to everyone
-**Current focus:** Phase 4 - AI-Assisted Editing
+**Current focus:** Phase 5 - Advanced Integration
 
 ## Current Position
 
