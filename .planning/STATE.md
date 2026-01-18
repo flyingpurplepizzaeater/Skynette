@@ -10,31 +10,31 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Phase: 2 of 5 (Provider Foundation)
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-18 -- Completed 02-03-PLAN.md (Ollama Service Discovery)
+Last activity: 2026-01-18 -- Completed 02-04-PLAN.md (Rate Limit & Streaming Error Handling)
 
-Progress: [#######.............] 30%
+Progress: [########............] 35%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 15 min
-- Total execution time: 1.6 hours
+- Total plans completed: 8
+- Average duration: 14 min
+- Total execution time: 1.7 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Stability & Audit | 4/4 | 80 min | 20 min |
-| 2. Provider Foundation | 3/5 | 21 min | 7 min |
+| 2. Provider Foundation | 4/5 | 25 min | 6 min |
 | 3. Code Editor Core | 0/5 | - | - |
 | 4. AI-Assisted Editing | 0/5 | - | - |
 | 5. Advanced Integration | 0/4 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (8 min), 02-02 (5 min), 02-01 (8 min), 01-02 (9 min), 01-03 (11 min)
+- Last 5 plans: 02-04 (4 min), 02-03 (8 min), 02-02 (5 min), 02-01 (8 min), 01-02 (9 min)
 - Trend: Fast
 
 *Updated after each plan completion*
@@ -62,6 +62,9 @@ Recent decisions affecting current work:
 - [02-02]: GrokProvider uses xai-sdk with 3600s timeout for reasoning models
 - [02-03]: User-friendly Ollama error messages over technical errors
 - [02-03]: did_mount lifecycle hook for auto-refresh on tab load
+- [02-04]: Streaming recovery wrapper catches all exceptions, yields interrupt marker, re-raises wrapped
+- [02-04]: Rate limit threshold at 80% for is_approaching_limit flag
+- [02-04]: _raw_chat_stream pattern separates internal implementation from public chat_stream
 
 ### Pending Todos
 
@@ -77,5 +80,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 02-03-PLAN.md (Ollama Service Discovery)
+Stopped at: Completed 02-04-PLAN.md (Rate Limit & Streaming Error Handling)
 Resume file: None
