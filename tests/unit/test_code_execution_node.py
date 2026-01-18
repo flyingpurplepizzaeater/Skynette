@@ -311,3 +311,27 @@ print(x + y)
         })
         assert valid is False
         assert "unsupported" in error.lower()
+
+    # === Registry Integration Tests ===
+
+    def test_node_in_registry(self):
+        """Test that CodeExecutionNode is registered in the node registry."""
+        from src.core.nodes.registry import NodeRegistry
+        # Reset singleton for clean test
+        NodeRegistry._instance = None
+        NodeRegistry._handlers = {}
+        registry = NodeRegistry()
+        handler = registry.get_handler("code_execution")
+        assert handler is not None
+        assert isinstance(handler, CodeExecutionNode)
+
+    def test_node_in_execution_category(self):
+        """Test that node appears in Execution category."""
+        from src.core.nodes.registry import NodeRegistry
+        # Reset singleton for clean test
+        NodeRegistry._instance = None
+        NodeRegistry._handlers = {}
+        registry = NodeRegistry()
+        execution_nodes = registry.get_by_category("Execution")
+        node_types = [n.type for n in execution_nodes]
+        assert "code_execution" in node_types

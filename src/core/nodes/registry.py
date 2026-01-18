@@ -94,6 +94,15 @@ class NodeRegistry:
         except ImportError as e:
             logger.warning(f"Could not load Coding nodes: {e}")
 
+        # Load Execution nodes
+        try:
+            from src.core.nodes.execution import EXECUTION_NODES
+            for node_class in EXECUTION_NODES:
+                self.register(node_class)
+            logger.info(f"Loaded {len(EXECUTION_NODES)} Execution nodes")
+        except ImportError as e:
+            logger.warning(f"Could not load Execution nodes: {e}")
+
         logger.info(f"Total: {len(self._handlers)} nodes registered")
 
     def register(self, node_class: Type[BaseNode]):
