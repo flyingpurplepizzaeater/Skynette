@@ -9,13 +9,11 @@ Supports downloading from:
 """
 
 import asyncio
-import hashlib
 import json
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import AsyncIterator, Callable, Optional
-from urllib.parse import urlparse
 
 import httpx
 
@@ -30,9 +28,9 @@ class ModelInfo:
     quantization: str = ""  # e.g., "Q4_K_M", "Q5_K_S"
     source: str = ""  # "huggingface", "ollama", "url", "github"
     source_url: str = ""
-    local_path: Optional[Path] = None
+    local_path: Path | None = None
     is_downloaded: bool = False
-    sha256: Optional[str] = None
+    sha256: str | None = None
     metadata: dict = field(default_factory=dict)
 
     @property
@@ -54,7 +52,7 @@ class DownloadProgress:
     total_bytes: int
     speed_bps: float = 0
     status: str = "downloading"  # downloading, verifying, complete, failed
-    error: Optional[str] = None
+    error: str | None = None
 
     @property
     def percent(self) -> float:
@@ -130,7 +128,7 @@ class ModelHub:
     Manages AI model downloads and local model library.
     """
 
-    def __init__(self, models_dir: Optional[Path] = None):
+    def __init__(self, models_dir: Path | None = None):
         self.models_dir = models_dir or Path.home() / "skynette" / "models"
         self.models_dir.mkdir(parents=True, exist_ok=True)
 
@@ -222,7 +220,7 @@ class ModelHub:
     async def download_model(
         self,
         model: ModelInfo,
-        progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
     ) -> Path:
         """
         Download a model.
@@ -244,7 +242,7 @@ class ModelHub:
     async def _download_from_huggingface(
         self,
         model: ModelInfo,
-        progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
     ) -> Path:
         """Download a model from Hugging Face."""
         # Construct URL for the model file
@@ -274,7 +272,7 @@ class ModelHub:
     async def _download_from_url(
         self,
         model: ModelInfo,
-        progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
     ) -> Path:
         """Download a model from a direct URL."""
         url = model.source_url
@@ -362,7 +360,7 @@ class ModelHub:
 
             raise
 
-    def get_download_progress(self, model_id: str) -> Optional[DownloadProgress]:
+    def get_download_progress(self, model_id: str) -> DownloadProgress | None:
         """Get download progress for a model."""
         return self._downloads.get(model_id)
 
@@ -378,7 +376,7 @@ class ModelHub:
                 return True
         return False
 
-    def get_model_by_id(self, model_id: str) -> Optional[ModelInfo]:
+    def get_model_by_id(self, model_id: str) -> ModelInfo | None:
         """Get a model by ID (local or recommended)."""
         for model in self._local_models:
             if model.id == model_id:
@@ -390,7 +388,7 @@ class ModelHub:
 
 
 # Singleton hub instance
-_hub: Optional[ModelHub] = None
+_hub: ModelHub | None = None
 
 
 def get_hub() -> ModelHub:
