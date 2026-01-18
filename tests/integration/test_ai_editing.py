@@ -392,4 +392,44 @@ class TestChatMessageFlow:
         assert state.context_mode == "project"
 
 
+def test_chat_panel_state_integration():
+    """Integration test verifying chat panel state management.
+
+    Tests the complete flow of sending a message through ChatState
+    and verifying the response handling mechanism.
+    """
+    state = ChatState()
+    notifications = []
+    state.add_listener(lambda: notifications.append("notified"))
+
+    # Simulate sending a message
+    state.add_message("user", "Hello, explain this code", code_context="x = 1")
+    assert len(notifications) == 1
+    assert state.messages[-1].role == "user"
+
+    # Simulate starting response streaming
+    state.set_streaming(True)
+    assert len(notifications) == 2
+    assert state.is_streaming
+
+    # Simulate receiving streaming response
+    state.add_message("assistant", "")
+    assert len(notifications) == 3
+
+    state.update_last_message("Let me explain...")
+    assert state.messages[-1].content == "Let me explain..."
+
+    state.update_last_message("Let me explain this code: x = 1 assigns...")
+    assert state.messages[-1].content == "Let me explain this code: x = 1 assigns..."
+
+    # Simulate completing response
+    state.set_streaming(False)
+    assert not state.is_streaming
+
+    # Verify final state
+    assert len(state.messages) == 2
+    assert state.messages[0].role == "user"
+    assert state.messages[1].role == "assistant"
+
+
 # Run with: pytest tests/integration/test_ai_editing.py -v
