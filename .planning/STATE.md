@@ -10,31 +10,31 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Phase: 1 of 5 (Stability & Audit)
-Plan: 3 of 4 in current phase
+Plan: 3 of 4 in current phase (01-01, 01-02, 01-03 complete)
 Status: In progress
-Last activity: 2026-01-18 -- Completed 01-03-PLAN.md (Workflow Builder Audit)
+Last activity: 2026-01-18 -- Completed 01-01-PLAN.md (AI Chat Audit)
 
-Progress: [###.................] 13%
+Progress: [####................] 17%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 10 min
-- Total execution time: 0.33 hours
+- Total plans completed: 3
+- Average duration: 15 min
+- Total execution time: 0.75 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Stability & Audit | 2/4 | 20 min | 10 min |
+| 1. Stability & Audit | 3/4 | 45 min | 15 min |
 | 2. Provider Foundation | 0/5 | - | - |
 | 3. Code Editor Core | 0/5 | - | - |
 | 4. AI-Assisted Editing | 0/5 | - | - |
 | 5. Advanced Integration | 0/4 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (9 min), 01-03 (11 min)
+- Last 5 plans: 01-02 (9 min), 01-03 (11 min), 01-01 (25 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -53,6 +53,8 @@ Recent decisions affecting current work:
 - [01-02]: Import sorting issues in ai_hub.py deferred to Plan 04 (refactor)
 - [01-02]: Wizard multi-provider config is UX limitation, not blocking bug
 - [01-03]: BUG-01 fixed: _add_step connection logic now captures steps before adding new node
+- [01-01]: simple_mode.py is workflow builder, not AI Chat (plan naming discrepancy documented)
+- [01-01]: AIGateway regression tests added (17 tests)
 
 ### Pending Todos
 
@@ -68,5 +70,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 01-03-PLAN.md (Workflow Builder Audit)
+Stopped at: Completed 01-01-PLAN.md (AI Chat Audit)
 Resume file: None
