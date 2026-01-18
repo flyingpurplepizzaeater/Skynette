@@ -292,6 +292,204 @@ tags: []
         assert name == "Test Workflow"
 
 
+class TestWorkflowValidation:
+    """Tests for workflow validation."""
+
+    @patch("src.ui.views.code_editor.workflow_bridge.get_storage")
+    @patch("src.ui.views.code_editor.workflow_bridge.NodeRegistry")
+    def test_validate_valid_yaml(self, mock_registry_class, mock_get_storage):
+        """Valid YAML returns no errors."""
+        mock_registry = MagicMock()
+        mock_registry.node_types = ["manual_trigger", "http_request"]
+        mock_registry_class.return_value = mock_registry
+        mock_get_storage.return_value = MagicMock()
+
+        bridge = WorkflowBridge()
+        yaml_code = """
+name: Valid Workflow
+version: "1.0.0"
+nodes:
+  - id: n1
+    type: manual_trigger
+    name: Start
+    position: {x: 0, y: 0}
+    config: {}
+    enabled: true
+connections: []
+variables: {}
+settings: {}
+tags: []
+"""
+        errors = bridge.validate_code(yaml_code, WorkflowFormat.YAML)
+
+        assert len(errors) == 0
+
+    @patch("src.ui.views.code_editor.workflow_bridge.get_storage")
+    @patch("src.ui.views.code_editor.workflow_bridge.NodeRegistry")
+    def test_validate_unknown_node_type(self, mock_registry_class, mock_get_storage):
+        """Unknown node type returns error."""
+        mock_registry = MagicMock()
+        mock_registry.node_types = ["manual_trigger"]  # http_request not in list
+        mock_registry_class.return_value = mock_registry
+        mock_get_storage.return_value = MagicMock()
+
+        bridge = WorkflowBridge()
+        yaml_code = """
+name: Unknown Node Type
+version: "1.0.0"
+nodes:
+  - id: n1
+    type: unknown_node_type
+    name: Unknown
+    position: {x: 0, y: 0}
+    config: {}
+    enabled: true
+connections: []
+variables: {}
+settings: {}
+tags: []
+"""
+        errors = bridge.validate_code(yaml_code, WorkflowFormat.YAML)
+
+        assert len(errors) == 1
+        assert "Unknown node type" in errors[0]
+        assert "unknown_node_type" in errors[0]
+
+    @patch("src.ui.views.code_editor.workflow_bridge.get_storage")
+    @patch("src.ui.views.code_editor.workflow_bridge.NodeRegistry")
+    def test_validate_duplicate_node_ids(self, mock_registry_class, mock_get_storage):
+        """Duplicate node IDs return error."""
+        mock_registry = MagicMock()
+        mock_registry.node_types = ["manual_trigger", "http_request"]
+        mock_registry_class.return_value = mock_registry
+        mock_get_storage.return_value = MagicMock()
+
+        bridge = WorkflowBridge()
+        yaml_code = """
+name: Duplicate IDs
+version: "1.0.0"
+nodes:
+  - id: same-id
+    type: manual_trigger
+    name: Start
+    position: {x: 0, y: 0}
+    config: {}
+    enabled: true
+  - id: same-id
+    type: http_request
+    name: API
+    position: {x: 0, y: 0}
+    config: {}
+    enabled: true
+connections: []
+variables: {}
+settings: {}
+tags: []
+"""
+        errors = bridge.validate_code(yaml_code, WorkflowFormat.YAML)
+
+        assert any("Duplicate node ID" in e for e in errors)
+
+    @patch("src.ui.views.code_editor.workflow_bridge.get_storage")
+    @patch("src.ui.views.code_editor.workflow_bridge.NodeRegistry")
+    def test_validate_invalid_connection(self, mock_registry_class, mock_get_storage):
+        """Connection to nonexistent node returns error."""
+        mock_registry = MagicMock()
+        mock_registry.node_types = ["manual_trigger"]
+        mock_registry_class.return_value = mock_registry
+        mock_get_storage.return_value = MagicMock()
+
+        bridge = WorkflowBridge()
+        yaml_code = """
+name: Invalid Connection
+version: "1.0.0"
+nodes:
+  - id: n1
+    type: manual_trigger
+    name: Start
+    position: {x: 0, y: 0}
+    config: {}
+    enabled: true
+connections:
+  - source_node_id: n1
+    target_node_id: nonexistent
+    source_port: output
+    target_port: input
+variables: {}
+settings: {}
+tags: []
+"""
+        errors = bridge.validate_code(yaml_code, WorkflowFormat.YAML)
+
+        assert any("unknown target node" in e for e in errors)
+
+    @patch("src.ui.views.code_editor.workflow_bridge.get_storage")
+    def test_validate_missing_name(self, mock_get_storage):
+        """Missing workflow name returns error."""
+        mock_get_storage.return_value = MagicMock()
+
+        bridge = WorkflowBridge()
+        yaml_code = """
+name: ""
+version: "1.0.0"
+nodes: []
+connections: []
+variables: {}
+settings: {}
+tags: []
+"""
+        errors = bridge.validate_code(yaml_code, WorkflowFormat.YAML)
+
+        assert any("name is required" in e for e in errors)
+
+    @patch("src.ui.views.code_editor.workflow_bridge.get_storage")
+    def test_validate_syntax_error(self, mock_get_storage):
+        """Syntax error returns parse error."""
+        mock_get_storage.return_value = MagicMock()
+
+        bridge = WorkflowBridge()
+        errors = bridge.validate_code("invalid: yaml: :", WorkflowFormat.YAML)
+
+        assert len(errors) == 1
+        assert "syntax error" in errors[0].lower() or "error" in errors[0].lower()
+
+    @patch("src.ui.views.code_editor.workflow_bridge.get_storage")
+    @patch("src.ui.views.code_editor.workflow_bridge.NodeRegistry")
+    def test_validate_and_save_blocks_unknown_type(
+        self, mock_registry_class, mock_get_storage
+    ):
+        """validate_and_save blocks save for unknown node types."""
+        mock_registry = MagicMock()
+        mock_registry.node_types = ["manual_trigger"]
+        mock_registry_class.return_value = mock_registry
+        mock_storage = MagicMock()
+        mock_get_storage.return_value = mock_storage
+
+        bridge = WorkflowBridge()
+        yaml_code = """
+name: Blocked
+version: "1.0.0"
+nodes:
+  - id: n1
+    type: unknown_type
+    name: Unknown
+    position: {x: 0, y: 0}
+    config: {}
+    enabled: true
+connections: []
+variables: {}
+settings: {}
+tags: []
+"""
+        success, errors = bridge.validate_and_save(
+            "wf-id", yaml_code, WorkflowFormat.YAML
+        )
+
+        assert success is False
+        assert any("Unknown node type" in e for e in errors)
+        mock_storage.save_workflow.assert_not_called()
+
+
 class TestWorkflowPythonDSL:
     """Tests for Workflow Python DSL methods."""
 

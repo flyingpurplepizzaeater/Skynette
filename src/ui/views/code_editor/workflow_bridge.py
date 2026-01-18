@@ -11,6 +11,7 @@ import logging
 import yaml
 
 from src.core.workflow.models import Workflow, WorkflowNode, WorkflowConnection
+from src.core.nodes.registry import NodeRegistry
 from src.data.storage import get_storage
 
 logger = logging.getLogger(__name__)
@@ -223,3 +224,124 @@ class WorkflowBridge:
         """
         workflow = self._storage.load_workflow(workflow_id)
         return workflow.name if workflow else None
+
+    def validate_code(self, code: str, format: WorkflowFormat) -> list[str]:
+        """Validate workflow code without saving.
+
+        Args:
+            code: Code content to validate.
+            format: Format of the code.
+
+        Returns:
+            List of validation errors. Empty list if valid.
+        """
+        errors: list[str] = []
+
+        # Try to parse
+        try:
+            if format == WorkflowFormat.YAML:
+                workflow = self._parse_yaml(code)
+            elif format == WorkflowFormat.JSON:
+                workflow = self._parse_json(code)
+            elif format == WorkflowFormat.PYTHON_DSL:
+                workflow = Workflow.from_python_dsl(code)
+            else:
+                return [f"Unknown format: {format}"]
+        except yaml.YAMLError as e:
+            return [f"YAML syntax error: {e}"]
+        except json.JSONDecodeError as e:
+            return [f"JSON syntax error: {e}"]
+        except ValueError as e:
+            return [str(e)]
+        except Exception as e:
+            return [f"Parse error: {e}"]
+
+        # Validate workflow structure
+        errors.extend(self._validate_workflow(workflow))
+
+        return errors
+
+    def _validate_workflow(self, workflow: Workflow) -> list[str]:
+        """Validate workflow structure.
+
+        Args:
+            workflow: Parsed workflow to validate.
+
+        Returns:
+            List of validation errors.
+        """
+        errors: list[str] = []
+
+        # Required field: name
+        if not workflow.name or not workflow.name.strip():
+            errors.append("Workflow name is required")
+
+        # Validate node types exist in registry
+        try:
+            registry = NodeRegistry()
+            valid_types = set(registry.node_types)
+
+            for node in workflow.nodes:
+                if node.type not in valid_types:
+                    errors.append(f"Unknown node type: '{node.type}'")
+
+        except Exception as e:
+            # If registry fails to load, log but don't block
+            logger.warning(f"Could not load node registry: {e}")
+
+        # Check for duplicate node IDs
+        node_ids = [node.id for node in workflow.nodes]
+        seen_ids = set()
+        for node_id in node_ids:
+            if node_id in seen_ids:
+                errors.append(f"Duplicate node ID: '{node_id}'")
+            seen_ids.add(node_id)
+
+        # Validate connections reference existing nodes
+        for conn in workflow.connections:
+            if conn.source_node_id not in seen_ids:
+                errors.append(
+                    f"Connection references unknown source node: '{conn.source_node_id}'"
+                )
+            if conn.target_node_id not in seen_ids:
+                errors.append(
+                    f"Connection references unknown target node: '{conn.target_node_id}'"
+                )
+
+        return errors
+
+    def validate_and_save(
+        self, workflow_id: str, code: str, format: WorkflowFormat
+    ) -> tuple[bool, list[str]]:
+        """Validate and save workflow code.
+
+        Args:
+            workflow_id: Original workflow ID.
+            code: Code content.
+            format: Format of the code.
+
+        Returns:
+            Tuple of (success, errors). On success errors may contain warnings.
+        """
+        # Validate first
+        errors = self.validate_code(code, format)
+
+        # Check for blocking errors
+        blocking_errors = [
+            e for e in errors
+            if "Unknown node type" in e or "Duplicate node ID" in e
+        ]
+
+        if blocking_errors:
+            return False, blocking_errors
+
+        # Non-blocking errors are warnings
+        warnings = [e for e in errors if e not in blocking_errors]
+
+        # Try to save
+        success, save_error = self.save_from_code(workflow_id, code, format)
+
+        if not success:
+            return False, [save_error]
+
+        return True, warnings

@@ -92,6 +92,8 @@ class CodeEditorView(ft.Column):
         self._workflow_bridge: WorkflowBridge | None = None
         self._current_workflow_id: str | None = None
         self._workflow_format: WorkflowFormat = WorkflowFormat.YAML
+        self._validation_task: asyncio.Task | None = None
+        self._validation_errors: list[str] = []
 
         # File picker (must be added to page overlay before use)
         self._folder_picker = ft.FilePicker()
@@ -295,6 +297,10 @@ class CodeEditorView(ft.Column):
         """
         if self.state.active_file_index >= 0:
             self.state.set_content(self.state.active_file_index, content)
+
+        # Trigger workflow validation if editing workflow
+        if self._current_workflow_id and self._workflow_bridge:
+            self._schedule_validation(content)
 
     def _handle_completion_request(self, code: str, language: str) -> None:
         """Handle completion request from editor.
@@ -541,8 +547,76 @@ class CodeEditorView(ft.Column):
         """Clear workflow editing state."""
         self._current_workflow_id = None
         self._workflow_format = WorkflowFormat.YAML
+        self._validation_errors = []
+        if self._validation_task:
+            self._validation_task.cancel()
+            self._validation_task = None
         if self._toolbar:
             self._toolbar.set_workflow_mode(False)
+
+    def _schedule_validation(self, content: str) -> None:
+        """Schedule debounced workflow validation.
+
+        Args:
+            content: Current editor content.
+        """
+        # Cancel any pending validation
+        if self._validation_task:
+            self._validation_task.cancel()
+
+        # Schedule new validation after 500ms
+        self._validation_task = asyncio.create_task(
+            self._validate_after_delay(content, 0.5)
+        )
+
+    async def _validate_after_delay(self, content: str, delay: float) -> None:
+        """Validate workflow content after delay.
+
+        Args:
+            content: Content to validate.
+            delay: Delay in seconds.
+        """
+        try:
+            await asyncio.sleep(delay)
+
+            if not self._workflow_bridge:
+                return
+
+            # Run validation
+            errors = self._workflow_bridge.validate_code(content, self._workflow_format)
+
+            # Update validation state
+            self._validation_errors = errors
+
+            # Show validation status in snackbar if errors
+            if errors:
+                self._show_validation_warnings(errors)
+
+        except asyncio.CancelledError:
+            # Validation was cancelled - normal when typing continues
+            pass
+        except Exception as e:
+            logger.warning(f"Validation error: {e}")
+
+    def _show_validation_warnings(self, errors: list[str]) -> None:
+        """Show validation warnings in snackbar.
+
+        Args:
+            errors: List of validation errors/warnings.
+        """
+        # Only show first few errors
+        shown_errors = errors[:3]
+        message = " | ".join(shown_errors)
+        if len(errors) > 3:
+            message += f" (+{len(errors) - 3} more)"
+
+        self._page_ref.snack_bar = ft.SnackBar(
+            content=ft.Text(f"Warnings: {message}"),
+            bgcolor=SkynetteTheme.WARNING,
+            duration=3000,
+        )
+        self._page_ref.snack_bar.open = True
+        self._page_ref.update()
 
     def _open_folder(self) -> None:
         """Open folder picker."""
