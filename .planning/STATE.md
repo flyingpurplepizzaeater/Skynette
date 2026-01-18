@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 Phase: 5 of 5 (Advanced Integration)
 Plan: 3 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-18 -- Completed 05-03-PLAN.md (Code Execution Node)
+Last activity: 2026-01-18 -- Completed 05-02-PLAN.md (Project-Level RAG)
 
 Progress: [######################] 96%
 
@@ -21,7 +21,7 @@ Progress: [######################] 96%
 **Velocity:**
 - Total plans completed: 23
 - Average duration: 8.0 min
-- Total execution time: 3.05 hours
+- Total execution time: 3.12 hours
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [######################] 96%
 | 2. Provider Foundation | 5/5 | 34 min | 7 min |
 | 3. Code Editor Core | 5/5 | 31 min | 6 min |
 | 4. AI-Assisted Editing | 6/6 | 21 min | 3.5 min |
-| 5. Advanced Integration | 3/4 | 15 min | 5 min |
+| 5. Advanced Integration | 3/4 | 17 min | 5.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-03 (5 min), 05-02 (5 min), 05-01 (5 min), 04-06 (3 min), 04-05 (5 min)
+- Last 5 plans: 05-02 (7 min), 05-03 (5 min), 05-01 (5 min), 04-06 (3 min), 04-05 (5 min)
 - Trend: Fast
 
 *Updated after each plan completion*
@@ -97,7 +97,11 @@ Recent decisions affecting current work:
 - [04-06]: Test state management directly rather than full UI rendering
 - [05-01]: WorkflowBridge with YAML, JSON, Python DSL format support
 - [05-01]: yaml.safe_load for security, restricted exec for Python DSL
-- [05-02]: DimensionValidator for embedding consistency across providers
+- [05-02]: DimensionValidator validates embedding dimensions before all ChromaDB writes
+- [05-02]: Lazy project indexing triggers on first chat query, not folder open
+- [05-02]: 50KB file size limit for indexing to prevent performance issues
+- [05-02]: RAG context prepended to system prompt, not user message
+- [05-02]: Collapsible Sources via ExpansionTile in AI response messages
 - [05-03]: 300 second max timeout cap for code execution safety
 - [05-03]: PowerShell uses -ExecutionPolicy Bypass for script execution
 - [05-03]: Variable injection uses repr/JSON for safe escaping
@@ -116,5 +120,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 05-03-PLAN.md (Code Execution Node)
+Stopped at: Re-executed 05-01-PLAN.md (Workflow Script Editing)
 Resume file: None
