@@ -314,3 +314,41 @@ class OllamaProvider(BaseProvider):
     def is_available(self) -> bool:
         """Check if provider is available."""
         return self._is_available and bool(self._available_models)
+
+    async def check_status(self) -> tuple[bool, list[str], str | None]:
+        """
+        Check Ollama connection status and available models.
+
+        Returns:
+            Tuple of (is_connected, model_names, error_message)
+            - is_connected: True if Ollama is running and responsive
+            - model_names: List of available model names (empty if not connected)
+            - error_message: Human-readable error if not connected, None otherwise
+        """
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{self.base_url}/api/tags")
+                response.raise_for_status()
+                data = response.json()
+
+            models = data.get("models", [])
+            model_names = [m.get("name", "") for m in models]
+            self._available_models = models
+            self._is_available = bool(models)
+
+            return (True, model_names, None)
+
+        except httpx.ConnectError:
+            return (False, [], "Ollama is not running. Start with: ollama serve")
+        except httpx.TimeoutException:
+            return (False, [], "Ollama is slow to respond. Check if models are loading.")
+        except Exception as e:
+            return (False, [], f"Could not connect to Ollama: {e}")
+
+    async def refresh_models(self) -> list[str]:
+        """Force refresh of available models list. Returns model names."""
+        connected, models, _ = await self.check_status()
+        if connected and models and not self.model:
+            # Auto-select first model if none specified
+            self.model = models[0]
+        return models
