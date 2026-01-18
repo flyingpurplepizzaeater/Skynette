@@ -283,7 +283,8 @@ class CodeEditorView(ft.Column):
 
     def _open_folder(self) -> None:
         """Open folder picker."""
-        picker = ft.FilePicker(on_result=self._on_folder_picked)
+        picker = ft.FilePicker()
+        picker.on_result = self._on_folder_picked
         self._page_ref.overlay.append(picker)
         self._page_ref.update()
         picker.get_directory_path()
