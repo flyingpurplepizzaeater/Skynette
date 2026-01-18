@@ -222,11 +222,12 @@ class TestProvidersTab:
         """Verify build includes all expected providers."""
         from src.ui.views.ai_hub.providers import PROVIDER_DEFINITIONS
 
-        # Should have 5 providers defined
-        assert len(PROVIDER_DEFINITIONS) == 5
+        # Should have 6 providers defined (including Ollama)
+        assert len(PROVIDER_DEFINITIONS) == 6
         provider_ids = [p["id"] for p in PROVIDER_DEFINITIONS]
         assert "openai" in provider_ids
         assert "anthropic" in provider_ids
+        assert "ollama" in provider_ids
         assert "local" in provider_ids
 
 

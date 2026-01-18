@@ -5,6 +5,8 @@ Extracted from AIHubView to improve modularity and testability.
 Handles provider configuration including API key management.
 """
 
+import asyncio
+
 import flet as ft
 
 from src.ui.theme import Theme
@@ -17,6 +19,7 @@ PROVIDER_DEFINITIONS = [
     {"id": "anthropic", "name": "Anthropic", "icon": ft.Icons.CLOUD, "color": "#d4a574"},
     {"id": "google", "name": "Google AI", "icon": ft.Icons.CLOUD, "color": "#4285f4"},
     {"id": "groq", "name": "Groq", "icon": ft.Icons.BOLT, "color": "#f55036"},
+    {"id": "ollama", "name": "Ollama (Local)", "icon": ft.Icons.MEMORY, "color": "#0ea5e9"},
     {"id": "local", "name": "Local (llama.cpp)", "icon": ft.Icons.COMPUTER, "color": Theme.SUCCESS},
 ]
 
@@ -34,6 +37,64 @@ class ProvidersTab(ft.Column):
         self.state = state
         self.expand = True
 
+    def did_mount(self):
+        """Called when component is mounted. Trigger Ollama status refresh."""
+        # Schedule the async refresh
+        asyncio.create_task(self._refresh_ollama_status())
+
+    async def _refresh_ollama_status(self):
+        """Refresh Ollama connection status asynchronously."""
+        self.state.set_ollama_refreshing(True)
+        if self._page:
+            self._page.update()
+
+        from src.ai.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+        connected, models, error = await provider.check_status()
+
+        self.state.set_ollama_refreshing(False)
+        self.state.set_ollama_status(connected, models, error)
+        if self._page:
+            self._page.update()
+
+    def _on_refresh_ollama(self, e):
+        """Handle refresh button click."""
+        asyncio.create_task(self._refresh_ollama_status())
+
+    def _build_ollama_status(self) -> ft.Control:
+        """Build Ollama status indicator with refresh button."""
+        if self.state.ollama_refreshing:
+            status_icon = ft.ProgressRing(width=16, height=16, stroke_width=2)
+            status_text = "Refreshing..."
+            status_color = ft.Colors.BLUE
+        elif self.state.ollama_connected:
+            status_icon = ft.Icon(ft.Icons.CHECK_CIRCLE, color=ft.Colors.GREEN, size=16)
+            model_count = len(self.state.ollama_models)
+            status_text = f"Connected ({model_count} model{'s' if model_count != 1 else ''})"
+            status_color = ft.Colors.GREEN
+        else:
+            status_icon = ft.Icon(ft.Icons.WARNING, color=ft.Colors.RED, size=16)
+            status_text = self.state.ollama_error or "Not connected"
+            status_color = ft.Colors.RED
+
+        refresh_btn = ft.IconButton(
+            icon=ft.Icons.REFRESH,
+            tooltip="Refresh models",
+            on_click=self._on_refresh_ollama,
+            disabled=self.state.ollama_refreshing,
+            icon_size=20,
+        )
+
+        return ft.Row(
+            controls=[
+                status_icon,
+                ft.Text(status_text, color=status_color, size=12),
+                refresh_btn,
+            ],
+            spacing=4,
+        )
+
     def build(self):
         """Build the providers tab UI."""
         from src.ai.security import has_api_key
@@ -47,6 +108,14 @@ class ProvidersTab(ft.Column):
                     **p_def,
                     "status": "Ready (Demo mode)",
                     "configured": True,
+                })
+            elif p_def["id"] == "ollama":
+                # Ollama handled specially with status indicator
+                providers.append({
+                    **p_def,
+                    "status": None,  # Status shown via _build_ollama_status
+                    "configured": self.state.ollama_connected,
+                    "is_ollama": True,
                 })
             elif p_def["id"] == "groq":
                 # Groq has free tier
@@ -67,29 +136,44 @@ class ProvidersTab(ft.Column):
 
         provider_cards = []
         for p in providers:
+            # Build status content - special handling for Ollama
+            if p.get("is_ollama"):
+                status_content = self._build_ollama_status()
+            else:
+                status_content = ft.Text(
+                    p["status"],
+                    size=12,
+                    color=Theme.SUCCESS if p["configured"] else Theme.TEXT_SECONDARY,
+                )
+
+            # Build card content
+            card_content = [
+                ft.Icon(p["icon"], size=24, color=p["color"]),
+                ft.Column(
+                    controls=[
+                        ft.Text(p["name"], size=14, weight=ft.FontWeight.W_500),
+                        status_content,
+                    ],
+                    spacing=2,
+                    expand=True,
+                ),
+            ]
+
+            # Add configure button only for non-Ollama providers
+            # (Ollama doesn't need API key configuration)
+            if not p.get("is_ollama"):
+                card_content.append(
+                    ft.Button(
+                        "Configure" if not p["configured"] else "Edit",
+                        bgcolor=Theme.SURFACE if p["configured"] else Theme.PRIMARY,
+                        on_click=lambda e, provider=p: self._configure_provider(provider),
+                    )
+                )
+
             provider_cards.append(
                 ft.Container(
                     content=ft.Row(
-                        controls=[
-                            ft.Icon(p["icon"], size=24, color=p["color"]),
-                            ft.Column(
-                                controls=[
-                                    ft.Text(p["name"], size=14, weight=ft.FontWeight.W_500),
-                                    ft.Text(
-                                        p["status"],
-                                        size=12,
-                                        color=Theme.SUCCESS if p["configured"] else Theme.TEXT_SECONDARY,
-                                    ),
-                                ],
-                                spacing=2,
-                                expand=True,
-                            ),
-                            ft.Button(
-                                "Configure" if not p["configured"] else "Edit",
-                                bgcolor=Theme.SURFACE if p["configured"] else Theme.PRIMARY,
-                                on_click=lambda e, provider=p: self._configure_provider(provider),
-                            ),
-                        ],
+                        controls=card_content,
                         spacing=Theme.SPACING_MD,
                     ),
                     bgcolor=Theme.SURFACE,
