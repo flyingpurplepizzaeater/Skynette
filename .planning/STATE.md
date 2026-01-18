@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Phase: 3 of 5 (Code Editor Core)
-Plan: 1 of 5 in current phase
+Plan: 3 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-18 -- Completed 03-01-PLAN.md (Editor Services)
+Last activity: 2026-01-18 -- Completed 03-03-PLAN.md (File Tree & Layout)
 
-Progress: [#########...........] 43%
+Progress: [###########.........] 52%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 12 min
-- Total execution time: 2.0 hours
+- Total plans completed: 12
+- Average duration: 11 min
+- Total execution time: 2.2 hours
 
 **By Phase:**
 
@@ -29,12 +29,12 @@ Progress: [#########...........] 43%
 |-------|-------|-------|----------|
 | 1. Stability & Audit | 4/4 | 80 min | 20 min |
 | 2. Provider Foundation | 5/5 | 34 min | 7 min |
-| 3. Code Editor Core | 1/5 | 8 min | 8 min |
+| 3. Code Editor Core | 3/5 | 18 min | 6 min |
 | 4. AI-Assisted Editing | 0/5 | - | - |
 | 5. Advanced Integration | 0/4 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (8 min), 02-05 (9 min), 02-04 (4 min), 02-03 (8 min), 02-02 (5 min)
+- Last 5 plans: 03-03 (5 min), 03-02 (5 min), 03-01 (8 min), 02-05 (9 min), 02-04 (4 min)
 - Trend: Fast
 
 *Updated after each plan completion*
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - [03-01]: GitHub Dark theme colors for Pygments syntax highlighting
 - [03-01]: File size limits: 50KB warn, 500KB refuse for editor performance
 - [03-01]: Hierarchical token lookup in Pygments for reasonable color defaults
+- [03-03]: ft.Column base class for custom controls (Flet 0.80 removed UserControl)
+- [03-03]: ListView item_extent=28 enables virtualization for large file trees
+- [03-03]: GestureDetector for drag-based resize interactions
 
 ### Pending Todos
 
@@ -84,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 03-01-PLAN.md (Editor Services)
+Stopped at: Completed 03-03-PLAN.md (File Tree & Layout)
 Resume file: None
