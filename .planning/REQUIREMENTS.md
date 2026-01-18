@@ -92,32 +92,32 @@
 | PROV-03 | Phase 2 | Pending |
 | PROV-04 | Phase 2 | Pending |
 | PROV-05 | Phase 2 | Pending |
+| QUAL-01 | Phase 2 | Pending |
 | EDIT-01 | Phase 3 | Pending |
 | EDIT-02 | Phase 3 | Pending |
 | EDIT-03 | Phase 3 | Pending |
 | EDIT-04 | Phase 3 | Pending |
 | EDIT-05 | Phase 3 | Pending |
 | EDIT-06 | Phase 3 | Pending |
+| QUAL-02 | Phase 3 | Pending |
 | AIED-01 | Phase 4 | Pending |
 | AIED-02 | Phase 4 | Pending |
 | AIED-03 | Phase 4 | Pending |
 | AIED-04 | Phase 4 | Pending |
 | AIED-05 | Phase 4 | Pending |
+| QUAL-03 | Phase 4 | Pending |
 | INTG-01 | Phase 5 | Pending |
 | INTG-02 | Phase 5 | Pending |
 | INTG-03 | Phase 5 | Pending |
 | INTG-04 | Phase 5 | Pending |
-| QUAL-01 | Phase 2 | Pending |
-| QUAL-02 | Phase 3 | Pending |
-| QUAL-03 | Phase 4 | Pending |
 | QUAL-04 | Phase 5 | Pending |
 | QUAL-05 | Phase 5 | Pending |
 
 **Coverage:**
 - v2 requirements: 30 total
 - Mapped to phases: 30
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-18*
-*Last updated: 2026-01-18 after initial definition*
+*Last updated: 2026-01-18 after roadmap creation*
