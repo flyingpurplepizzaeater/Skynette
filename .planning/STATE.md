@@ -5,36 +5,36 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** One app to replace separate AI chat clients, model managers, and workflow tools -- accessible to everyone
-**Current focus:** Phase 2 - Provider Foundation
+**Current focus:** Phase 3 - Code Editor Core (starting next)
 
 ## Current Position
 
-Phase: 2 of 5 (Provider Foundation)
-Plan: 4 of 5 in current phase
-Status: In progress
-Last activity: 2026-01-18 -- Completed 02-04-PLAN.md (Rate Limit & Streaming Error Handling)
+Phase: 2 of 5 (Provider Foundation) - COMPLETE
+Plan: 5 of 5 in current phase
+Status: Phase complete
+Last activity: 2026-01-18 -- Completed 02-05-PLAN.md (Provider Integration Tests)
 
-Progress: [########............] 35%
+Progress: [##########..........] 39%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 14 min
-- Total execution time: 1.7 hours
+- Total plans completed: 9
+- Average duration: 13 min
+- Total execution time: 1.9 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Stability & Audit | 4/4 | 80 min | 20 min |
-| 2. Provider Foundation | 4/5 | 25 min | 6 min |
+| 2. Provider Foundation | 5/5 | 34 min | 7 min |
 | 3. Code Editor Core | 0/5 | - | - |
 | 4. AI-Assisted Editing | 0/5 | - | - |
 | 5. Advanced Integration | 0/4 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 02-04 (4 min), 02-03 (8 min), 02-02 (5 min), 02-01 (8 min), 01-02 (9 min)
+- Last 5 plans: 02-05 (9 min), 02-04 (4 min), 02-03 (8 min), 02-02 (5 min), 02-01 (8 min)
 - Trend: Fast
 
 *Updated after each plan completion*
@@ -65,6 +65,7 @@ Recent decisions affecting current work:
 - [02-04]: Streaming recovery wrapper catches all exceptions, yields interrupt marker, re-raises wrapped
 - [02-04]: Rate limit threshold at 80% for is_approaching_limit flag
 - [02-04]: _raw_chat_stream pattern separates internal implementation from public chat_stream
+- [02-05]: Provider tests verify behavior without requiring actual SDK packages
 
 ### Pending Todos
 
@@ -80,5 +81,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 02-04-PLAN.md (Rate Limit & Streaming Error Handling)
+Stopped at: Completed 02-05-PLAN.md (Provider Integration Tests) - Phase 2 complete
 Resume file: None
