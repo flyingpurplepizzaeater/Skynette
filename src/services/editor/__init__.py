@@ -3,7 +3,12 @@
 
 from src.services.editor.highlighter import PygmentsHighlighter
 from src.services.editor.file_service import FileService, FileInfo
-from src.services.editor.file_icons import get_file_icon, LANGUAGE_ICONS
+from src.services.editor.file_icons import (
+    get_file_icon,
+    LANGUAGE_ICONS,
+    FOLDER_ICON,
+    FOLDER_OPEN_ICON,
+)
 
 __all__ = [
     "PygmentsHighlighter",
@@ -11,4 +16,6 @@ __all__ = [
     "FileInfo",
     "get_file_icon",
     "LANGUAGE_ICONS",
+    "FOLDER_ICON",
+    "FOLDER_OPEN_ICON",
 ]
