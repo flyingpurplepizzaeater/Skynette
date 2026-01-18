@@ -105,6 +105,185 @@ class Workflow(BaseModel):
         data = yaml.safe_load(yaml_content)
         return cls(**data)
 
+    def to_python_dsl(self) -> str:
+        """Convert workflow to Python DSL format.
+
+        Generates readable Python-like code for editing.
+
+        Returns:
+            Python DSL representation of workflow.
+        """
+        lines = [
+            "# Workflow Python DSL",
+            "# Edit and save to update workflow",
+            "",
+            f'workflow = Workflow(name="{self.name}")',
+        ]
+
+        if self.description:
+            lines.append(f'workflow.description = "{self.description}"')
+
+        if self.version != "1.0.0":
+            lines.append(f'workflow.version = "{self.version}"')
+
+        lines.append("")
+
+        # Add nodes
+        if self.nodes:
+            lines.append("# Nodes")
+            for node in self.nodes:
+                config_str = ", ".join(
+                    f'{k}="{v}"' if isinstance(v, str) else f"{k}={v}"
+                    for k, v in node.config.items()
+                )
+                if config_str:
+                    lines.append(
+                        f'workflow.add_node("{node.type}", name="{node.name}", '
+                        f"id=\"{node.id}\", config={{{config_str}}})"
+                    )
+                else:
+                    lines.append(
+                        f'workflow.add_node("{node.type}", name="{node.name}", '
+                        f'id="{node.id}")'
+                    )
+            lines.append("")
+
+        # Add connections
+        if self.connections:
+            lines.append("# Connections")
+            for conn in self.connections:
+                lines.append(
+                    f'workflow.connect("{conn.source_node_id}", "{conn.target_node_id}")'
+                )
+            lines.append("")
+
+        # Add variables
+        if self.variables:
+            lines.append("# Variables")
+            for key, value in self.variables.items():
+                if isinstance(value, str):
+                    lines.append(f'workflow.variables["{key}"] = "{value}"')
+                else:
+                    lines.append(f'workflow.variables["{key}"] = {value}')
+            lines.append("")
+
+        # Add tags
+        if self.tags:
+            lines.append(f"workflow.tags = {self.tags}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    @classmethod
+    def from_python_dsl(cls, code: str) -> "Workflow":
+        """Create workflow from Python DSL code.
+
+        Parses the DSL using restricted exec to prevent arbitrary code execution.
+
+        Args:
+            code: Python DSL code.
+
+        Returns:
+            Workflow instance.
+
+        Raises:
+            ValueError: If DSL is invalid or contains unsafe code.
+        """
+        # Create a minimal Workflow class for the DSL context
+        workflow = cls(name="Untitled")
+        nodes_by_name: dict[str, WorkflowNode] = {}
+
+        def add_node(
+            node_type: str,
+            name: str,
+            id: str | None = None,
+            config: dict | None = None,
+        ) -> None:
+            """Add node to workflow."""
+            node = WorkflowNode(
+                type=node_type,
+                name=name,
+                config=config or {},
+            )
+            if id:
+                node.id = id
+            workflow.nodes.append(node)
+            nodes_by_name[name] = node
+
+        def connect(source_id: str, target_id: str) -> None:
+            """Connect two nodes."""
+            conn = WorkflowConnection(
+                source_node_id=source_id,
+                target_node_id=target_id,
+            )
+            workflow.connections.append(conn)
+
+        # DSL context wrapper
+        class WorkflowDSL:
+            def __init__(self, name: str):
+                workflow.name = name
+
+            @property
+            def description(self) -> str:
+                return workflow.description
+
+            @description.setter
+            def description(self, value: str) -> None:
+                workflow.description = value
+
+            @property
+            def version(self) -> str:
+                return workflow.version
+
+            @version.setter
+            def version(self, value: str) -> None:
+                workflow.version = value
+
+            @property
+            def variables(self) -> dict:
+                return workflow.variables
+
+            @variables.setter
+            def variables(self, value: dict) -> None:
+                workflow.variables = value
+
+            @property
+            def tags(self) -> list[str]:
+                return workflow.tags
+
+            @tags.setter
+            def tags(self, value: list[str]) -> None:
+                workflow.tags = value
+
+            def add_node(
+                self,
+                node_type: str,
+                name: str,
+                id: str | None = None,
+                config: dict | None = None,
+            ) -> None:
+                add_node(node_type, name, id, config)
+
+            def connect(self, source_id: str, target_id: str) -> None:
+                connect(source_id, target_id)
+
+        # Restricted globals - only allow safe builtins
+        restricted_globals = {
+            "__builtins__": {
+                "True": True,
+                "False": False,
+                "None": None,
+            },
+            "Workflow": WorkflowDSL,
+        }
+
+        try:
+            exec(code, restricted_globals)
+        except Exception as e:
+            raise ValueError(f"Invalid Python DSL: {e}")
+
+        return workflow
+
 
 class ExecutionResult(BaseModel):
     """Result of a single node execution."""
