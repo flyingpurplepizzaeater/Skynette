@@ -3,17 +3,21 @@
 
 Provides a chat interface for users to interact with AI about their code.
 Features message history with streaming support, provider selection,
-and code context attachment.
+code context attachment, and RAG-based codebase context.
 """
 
 import asyncio
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import flet as ft
 
 from src.ai.gateway import AIGateway, AIMessage, AIStreamChunk
 from src.ui.theme import SkynetteTheme
 from src.ui.views.code_editor.ai_panel.chat_state import ChatMessage, ChatState
+
+if TYPE_CHECKING:
+    from src.ui.views.code_editor.ai_panel.rag_context import RAGContextProvider
 
 
 class ChatPanel(ft.Column):
@@ -38,6 +42,8 @@ class ChatPanel(ft.Column):
         gateway: AIGateway,
         on_include_code: Callable[[], str] | None = None,
         on_code_suggestion: Callable[[str], None] | None = None,
+        rag_provider: "RAGContextProvider | None" = None,
+        get_project_root: Callable[[], str | None] | None = None,
     ):
         """Initialize the chat panel.
 
@@ -47,6 +53,8 @@ class ChatPanel(ft.Column):
             gateway: AIGateway instance for AI communication.
             on_include_code: Optional callback to get selected code from editor.
             on_code_suggestion: Optional callback when AI suggests code changes.
+            rag_provider: Optional RAGContextProvider for codebase context.
+            get_project_root: Optional callback to get current project root path.
         """
         super().__init__()
         self._page_ref = page
@@ -54,12 +62,17 @@ class ChatPanel(ft.Column):
         self.gateway = gateway
         self._on_include_code_callback = on_include_code
         self._on_code_suggestion = on_code_suggestion
+        self._rag_provider = rag_provider
+        self._get_project_root = get_project_root
 
         self.expand = True
         self.spacing = 0
 
         # Pending code context for next message
         self._pending_code_context: str | None = None
+
+        # Last retrieved RAG sources for display
+        self._last_sources: list[dict] = []
 
         # UI components (initialized in build)
         self._message_list: ft.ListView | None = None
@@ -202,11 +215,14 @@ class ChatPanel(ft.Column):
             input_row,
         ]
 
-    def _build_message_bubble(self, msg: ChatMessage) -> ft.Control:
+    def _build_message_bubble(
+        self, msg: ChatMessage, sources: list[dict] | None = None
+    ) -> ft.Control:
         """Build a message bubble for display.
 
         Args:
             msg: ChatMessage to render.
+            sources: Optional list of RAG sources to display for assistant messages.
 
         Returns:
             Container with styled message bubble.
@@ -265,6 +281,11 @@ class ChatPanel(ft.Column):
             )
         )
 
+        # Sources display for assistant messages (collapsible)
+        if not is_user and sources:
+            sources_panel = self._build_sources_panel(sources)
+            content_controls.append(sources_panel)
+
         # Role indicator
         role_text = "You" if is_user else "AI"
         role_color = SkynetteTheme.PRIMARY if is_user else SkynetteTheme.SECONDARY
@@ -293,14 +314,107 @@ class ChatPanel(ft.Column):
             ),
         )
 
+    def _build_sources_panel(self, sources: list[dict]) -> ft.Control:
+        """Build a collapsible sources panel.
+
+        Args:
+            sources: List of source dicts with path, snippet, language, similarity.
+
+        Returns:
+            ExpansionTile control for sources display.
+        """
+        source_items = []
+        for source in sources:
+            path = source.get("path", "unknown")
+            snippet = source.get("snippet", "")
+            similarity = source.get("similarity", 0)
+
+            # Extract filename from path
+            import os
+            filename = os.path.basename(path)
+
+            source_item = ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Row(
+                            [
+                                ft.Icon(
+                                    ft.icons.INSERT_DRIVE_FILE,
+                                    size=14,
+                                    color=SkynetteTheme.TEXT_MUTED,
+                                ),
+                                ft.Text(
+                                    filename,
+                                    size=SkynetteTheme.FONT_XS,
+                                    color=SkynetteTheme.TEXT_SECONDARY,
+                                    weight=ft.FontWeight.W_500,
+                                ),
+                                ft.Container(expand=True),
+                                ft.Text(
+                                    f"{similarity:.0%}",
+                                    size=SkynetteTheme.FONT_XS,
+                                    color=SkynetteTheme.TEXT_MUTED,
+                                ),
+                            ],
+                            spacing=4,
+                        ),
+                        ft.Text(
+                            path,
+                            size=SkynetteTheme.FONT_XS - 1,
+                            color=SkynetteTheme.TEXT_MUTED,
+                        ),
+                        ft.Container(
+                            content=ft.Text(
+                                snippet,
+                                size=SkynetteTheme.FONT_XS,
+                                font_family="monospace",
+                                color=SkynetteTheme.TEXT_SECONDARY,
+                            ),
+                            bgcolor=SkynetteTheme.BG_PRIMARY,
+                            border_radius=4,
+                            padding=SkynetteTheme.SPACING_XS,
+                        ),
+                    ],
+                    spacing=2,
+                ),
+                padding=ft.padding.only(bottom=SkynetteTheme.SPACING_XS),
+            )
+            source_items.append(source_item)
+
+        return ft.ExpansionTile(
+            title=ft.Text(
+                f"Sources ({len(sources)} files)",
+                size=SkynetteTheme.FONT_XS,
+                color=SkynetteTheme.TEXT_MUTED,
+            ),
+            initially_expanded=False,
+            controls=source_items,
+            bgcolor=SkynetteTheme.BG_PRIMARY,
+            collapsed_bgcolor=SkynetteTheme.BG_PRIMARY,
+            tile_padding=ft.padding.symmetric(
+                horizontal=SkynetteTheme.SPACING_XS,
+                vertical=0,
+            ),
+        )
+
     def _rebuild_message_list(self) -> None:
         """Rebuild the message list from current state."""
         if self._message_list is None:
             return
 
-        self._message_list.controls = [
-            self._build_message_bubble(msg) for msg in self.state.messages
-        ]
+        controls = []
+        for i, msg in enumerate(self.state.messages):
+            # Pass sources to the last assistant message
+            sources = None
+            if (
+                msg.role == "assistant"
+                and i == len(self.state.messages) - 1
+                and self._last_sources
+            ):
+                sources = self._last_sources
+            controls.append(self._build_message_bubble(msg, sources))
+
+        self._message_list.controls = controls
 
     def _on_state_change(self) -> None:
         """Handle state changes - rebuild message list and update UI."""
@@ -389,11 +503,38 @@ class ChatPanel(ft.Column):
         Uses gateway.chat_stream() for streaming chat responses.
         Updates the last message incrementally as chunks arrive.
         Handles errors gracefully by appending error text to message.
+        Retrieves RAG context if rag_provider is configured.
         """
         self.state.set_streaming(True)
 
-        # Build messages for API
-        messages = self._build_api_messages()
+        # Clear previous sources
+        self._last_sources = []
+
+        # Get RAG context if available
+        rag_context = ""
+        if self._rag_provider and self._get_project_root:
+            project_root = self._get_project_root()
+            if project_root:
+                # Get the user's last message for context query
+                last_user_msg = ""
+                for msg in reversed(self.state.messages):
+                    if msg.role == "user":
+                        last_user_msg = msg.content
+                        break
+
+                if last_user_msg:
+                    try:
+                        rag_context, sources = await self._rag_provider.get_context(
+                            last_user_msg, project_root
+                        )
+                        self._last_sources = sources
+                    except Exception as e:
+                        # Log but don't fail if RAG fails
+                        import logging
+                        logging.warning(f"RAG context retrieval failed: {e}")
+
+        # Build messages for API (with RAG context)
+        messages = self._build_api_messages(rag_context)
 
         # Add empty assistant message for streaming
         self.state.add_message("assistant", "")
@@ -422,18 +563,28 @@ class ChatPanel(ft.Column):
 
         finally:
             self.state.set_streaming(False)
+            # Rebuild to show sources
+            self._rebuild_message_list()
+            try:
+                if self._message_list:
+                    self._message_list.update()
+            except Exception:
+                pass
             # Check if response contains code suggestion
             if self.state.messages:
                 final_content = self.state.messages[-1].content
                 self._check_for_code_suggestion(final_content)
 
-    def _build_api_messages(self) -> list[AIMessage]:
+    def _build_api_messages(self, rag_context: str = "") -> list[AIMessage]:
         """Convert ChatMessages to AIMessages for API.
 
         Builds the message list for the API call, including:
-        - System message with coding assistant context
+        - System message with coding assistant context and RAG context
         - All chat history messages
         - Code context prepended to user messages that have it
+
+        Args:
+            rag_context: Optional RAG context string to include in system prompt.
 
         Returns:
             List of AIMessage objects ready for gateway.chat_stream().
@@ -446,6 +597,15 @@ class ChatPanel(ft.Column):
             "Help the user understand, write, and improve their code. "
             "Be concise but thorough. Use code blocks with language tags when showing code."
         )
+
+        # Add RAG context if available
+        if rag_context:
+            system_prompt = (
+                f"{system_prompt}\n\n"
+                f"Use this codebase context to inform your responses:\n\n"
+                f"{rag_context}"
+            )
+
         api_messages.append(AIMessage(role="system", content=system_prompt))
 
         # Convert chat history

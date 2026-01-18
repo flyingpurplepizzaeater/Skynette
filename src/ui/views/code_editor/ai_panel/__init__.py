@@ -5,13 +5,15 @@ Provides ChatState for managing chat panel state and ChatMessage
 for representing individual messages in the conversation.
 Also provides ChatPanel for the main chat interface,
 GhostTextOverlay for inline code suggestions,
-and DiffPreview for reviewing AI-suggested code changes.
+DiffPreview for reviewing AI-suggested code changes,
+and RAGContextProvider for codebase context retrieval.
 """
 
 from .chat_panel import ChatPanel
 from .chat_state import ChatMessage, ChatState
 from .diff_preview import DiffPreview
 from .ghost_text import GhostTextOverlay, Suggestion
+from .rag_context import RAGContextProvider
 
 __all__ = [
     "ChatMessage",
@@ -19,5 +21,6 @@ __all__ = [
     "ChatState",
     "DiffPreview",
     "GhostTextOverlay",
+    "RAGContextProvider",
     "Suggestion",
 ]
