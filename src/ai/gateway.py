@@ -51,11 +51,51 @@ class AIResponse:
 
 
 @dataclass
+class RateLimitInfo:
+    """Rate limit information from provider response headers."""
+    limit_requests: int = 0  # Max requests per window
+    remaining_requests: int = 0  # Requests remaining
+    reset_time: float | None = None  # Unix timestamp when limit resets
+    limit_tokens: int = 0  # Max tokens per window (if applicable)
+    remaining_tokens: int = 0  # Tokens remaining
+
+    @property
+    def usage_percentage(self) -> float:
+        """Calculate usage percentage (0.0 to 1.0)."""
+        if self.limit_requests == 0:
+            return 0.0
+        return 1.0 - (self.remaining_requests / self.limit_requests)
+
+    @property
+    def is_approaching_limit(self) -> bool:
+        """True if usage is at 80% or above."""
+        return self.usage_percentage >= 0.8
+
+    @property
+    def seconds_until_reset(self) -> float | None:
+        """Seconds until rate limit resets, or None if unknown."""
+        if self.reset_time is None:
+            return None
+        import time
+        return max(0, self.reset_time - time.time())
+
+
+class StreamInterruptedError(Exception):
+    """Raised when a stream is interrupted mid-response."""
+    def __init__(self, partial_content: str, cause: Exception):
+        self.partial_content = partial_content
+        self.cause = cause
+        super().__init__(f"Stream interrupted after {len(partial_content)} chars: {cause}")
+
+
+@dataclass
 class AIStreamChunk:
     """A chunk from a streaming response."""
     content: str
     is_final: bool = False
     usage: Optional[dict] = None
+    error: Optional[dict] = None  # Error info if stream interrupted
+    rate_limit: Optional["RateLimitInfo"] = None  # Rate limit info from response
 
 
 @dataclass
