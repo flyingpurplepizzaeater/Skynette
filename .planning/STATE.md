@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** One app to replace separate AI chat clients, model managers, and workflow tools -- accessible to everyone
-**Current focus:** Phase 3 - Code Editor Core
+**Current focus:** Phase 4 - AI-Assisted Editing
 
 ## Current Position
 
-Phase: 3 of 5 (Code Editor Core)
-Plan: 5 of 5 in current phase
-Status: Phase complete
-Last activity: 2026-01-18 -- Completed 03-05-PLAN.md (Disposal & Tests)
+Phase: 4 of 5 (AI-Assisted Editing)
+Plan: 1 of 5 in current phase
+Status: In progress
+Last activity: 2026-01-18 -- Completed 04-01-PLAN.md (Foundation Services)
 
-Progress: [##############......] 61%
+Progress: [###############.....] 65%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 10 min
-- Total execution time: 2.4 hours
+- Total execution time: 2.5 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [##############......] 61%
 | 1. Stability & Audit | 4/4 | 80 min | 20 min |
 | 2. Provider Foundation | 5/5 | 34 min | 7 min |
 | 3. Code Editor Core | 5/5 | 31 min | 6 min |
-| 4. AI-Assisted Editing | 0/5 | - | - |
+| 4. AI-Assisted Editing | 1/5 | 4 min | 4 min |
 | 5. Advanced Integration | 0/4 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 03-05 (3 min), 03-04 (10 min), 03-03 (5 min), 03-02 (5 min), 03-01 (8 min)
+- Last 5 plans: 04-01 (4 min), 03-05 (3 min), 03-04 (10 min), 03-03 (5 min), 03-02 (5 min)
 - Trend: Fast
 
 *Updated after each plan completion*
@@ -78,6 +78,9 @@ Recent decisions affecting current work:
 - [03-04]: FilePicker must be initialized in __init__ and added to page.overlay before use
 - [03-05]: Dispose chains from view to children to state for complete cleanup
 - [03-05]: App navigation calls dispose in _update_content() before switching views
+- [04-01]: tiktoken cl100k_base for OpenAI, p50k_base fallback for other providers
+- [04-01]: ChatState follows EditorState listener/notify pattern
+- [04-01]: DiffService uses difflib.unified_diff for cross-platform diff generation
 
 ### Pending Todos
 
@@ -93,5 +96,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 03-05-PLAN.md (Disposal & Tests) - Phase 3 complete
+Stopped at: Completed 04-01-PLAN.md (Foundation Services)
 Resume file: None
