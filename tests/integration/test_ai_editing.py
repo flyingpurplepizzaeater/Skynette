@@ -233,4 +233,163 @@ class TestGhostTextOverlay:
         assert result is None
 
 
+class TestCompletionService:
+    """Tests for CompletionService with mocked gateway."""
+
+    @pytest.fixture
+    def mock_gateway(self):
+        """Create a mock AIGateway."""
+        gateway = MagicMock(spec=AIGateway)
+        response = MagicMock()
+        response.content = "completion_text"
+
+        async def mock_generate(*args, **kwargs):
+            return response
+
+        gateway.generate = mock_generate
+        return gateway
+
+    @pytest.mark.asyncio
+    async def test_get_completion_returns_suggestion(self, mock_gateway):
+        """Should return completion from gateway."""
+        service = CompletionService(mock_gateway)
+        service.DEBOUNCE_DELAY = 0  # Skip debounce for test
+
+        request = CompletionRequest(
+            code_before="def hello():",
+            code_after="",
+            language="python",
+        )
+
+        result = await service.get_completion(request)
+
+        assert result is not None
+        assert result == "completion_text"
+
+    @pytest.mark.asyncio
+    async def test_caches_completions(self, mock_gateway):
+        """Should cache completions for same context."""
+        service = CompletionService(mock_gateway)
+        service.DEBOUNCE_DELAY = 0
+
+        request = CompletionRequest(
+            code_before="test_cache_key",
+            code_after="",
+            language="python",
+        )
+
+        # First call
+        result1 = await service.get_completion(request)
+        # Second call should use cache
+        result2 = await service.get_completion(request)
+
+        assert result1 == result2
+        # Both should return the same completion
+        assert result1 == "completion_text"
+
+    def test_clear_cache(self, mock_gateway):
+        """clear_cache should empty the cache."""
+        service = CompletionService(mock_gateway)
+        service._cache["test"] = "cached"
+
+        service.clear_cache()
+
+        assert len(service._cache) == 0
+
+
+class TestDiffPreview:
+    """Tests for DiffPreview component logic."""
+
+    def test_detects_changes(self):
+        """Should detect differences between original and modified."""
+        original = "line1\nline2"
+        modified = "line1\nline2\nline3"
+
+        preview = DiffPreview(original, modified)
+        # Use internal diff service to verify change detection
+        preview._diff_service = DiffService()
+        hunks = preview._diff_service.generate_diff(original, modified)
+
+        assert len(hunks) > 0
+
+    def test_no_changes_detected(self):
+        """Should detect no changes for identical content."""
+        content = "line1\nline2"
+        preview = DiffPreview(content, content)
+        preview._diff_service = DiffService()
+        hunks = preview._diff_service.generate_diff(content, content)
+
+        assert len(hunks) == 0
+
+    def test_get_result_without_accepts(self):
+        """get_result should return original if nothing accepted."""
+        original = "original"
+        modified = "modified"
+        preview = DiffPreview(original, modified)
+        preview._diff_service = DiffService()
+        preview._hunks = preview._diff_service.generate_diff(original, modified)
+        preview._accepted_hunks = set()
+
+        result = preview.get_result()
+
+        assert result == original
+
+    def test_has_pending_changes(self):
+        """has_pending_changes should reflect acceptance state."""
+        original = "a\nb"
+        modified = "a\nc"
+        preview = DiffPreview(original, modified)
+        preview._diff_service = DiffService()
+        preview._hunks = preview._diff_service.generate_diff(original, modified)
+        preview._accepted_hunks = set()
+
+        assert preview.has_pending_changes()
+
+        # Accept all hunks
+        preview._accepted_hunks = set(range(len(preview._hunks)))
+        assert not preview.has_pending_changes()
+
+
+class TestChatMessageFlow:
+    """Tests for end-to-end chat message flow."""
+
+    def test_message_with_code_context(self):
+        """Messages can have code context attached."""
+        state = ChatState()
+
+        state.add_message("user", "Explain this", code_context="x = 5")
+
+        assert state.messages[0].code_context == "x = 5"
+
+    def test_provider_selection_persists(self):
+        """Provider selection should persist across messages."""
+        state = ChatState()
+
+        state.set_provider("anthropic")
+        state.add_message("user", "Hello")
+
+        assert state.selected_provider == "anthropic"
+
+    def test_streaming_flag_toggles(self):
+        """is_streaming should toggle correctly."""
+        state = ChatState()
+
+        assert not state.is_streaming
+
+        state.set_streaming(True)
+        assert state.is_streaming
+
+        state.set_streaming(False)
+        assert not state.is_streaming
+
+    def test_context_mode_setting(self):
+        """Context mode should be settable."""
+        state = ChatState()
+
+        assert state.context_mode == "current_file"  # Default
+
+        state.set_context_mode("project")
+        assert state.context_mode == "project"
+
+
 # Run with: pytest tests/integration/test_ai_editing.py -v
