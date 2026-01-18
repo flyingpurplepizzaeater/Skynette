@@ -1,10 +1,12 @@
 """Simple Mode Editor - Step-by-step workflow builder for beginners."""
 
-import flet as ft
 from uuid import uuid4
-from src.ui.theme import Theme
+
+import flet as ft
+
 from src.core.nodes.registry import NodeRegistry
-from src.core.workflow.models import Workflow, WorkflowNode, WorkflowConnection
+from src.core.workflow.models import Workflow, WorkflowConnection, WorkflowNode
+from src.ui.theme import Theme
 
 
 class SimpleModeView(ft.Column):
@@ -25,6 +27,7 @@ class SimpleModeView(ft.Column):
         self.registry = NodeRegistry()
         self._steps_column = None
         self._properties_container = None
+        self._current_dialog = None  # Track current dialog for proper close
 
     def build(self):
         self._steps_column = ft.Column(
@@ -215,8 +218,6 @@ class SimpleModeView(ft.Column):
         if node_def:
             icon = self._get_node_icon(node_def.icon)
             color = node_def.color
-
-        steps = self._get_ordered_steps()
 
         return ft.Container(
             content=ft.Row(
@@ -616,7 +617,7 @@ class SimpleModeView(ft.Column):
             )
 
         if hasattr(self, 'page') and self.page:
-            dialog = ft.AlertDialog(
+            self._current_dialog = ft.AlertDialog(
                 title=ft.Text("Choose a Trigger"),
                 content=ft.Container(
                     content=ft.Column(controls=options, scroll=ft.ScrollMode.AUTO),
@@ -624,9 +625,7 @@ class SimpleModeView(ft.Column):
                     height=300,
                 ),
             )
-            self.page.dialog = dialog
-            dialog.open = True
-            self.page.update()
+            self.page.open(self._current_dialog)
 
     def _show_step_picker(self):
         """Show dialog to pick a step type."""
@@ -681,7 +680,7 @@ class SimpleModeView(ft.Column):
             )
 
         if hasattr(self, 'page') and self.page:
-            dialog = ft.AlertDialog(
+            self._current_dialog = ft.AlertDialog(
                 title=ft.Text("Add Step"),
                 content=ft.Container(
                     content=ft.Tabs(content=tabs, length=len(tabs), expand=True) if tabs else ft.Text("No nodes available"),
@@ -689,9 +688,7 @@ class SimpleModeView(ft.Column):
                     height=350,
                 ),
             )
-            self.page.dialog = dialog
-            dialog.open = True
-            self.page.update()
+            self.page.open(self._current_dialog)
 
     def _set_trigger(self, trigger_type: str):
         """Set the workflow trigger."""
@@ -727,9 +724,9 @@ class SimpleModeView(ft.Column):
             ))
 
         # Close dialog and refresh
-        if hasattr(self, 'page') and self.page:
-            self.page.dialog.open = False
-            self.page.update()
+        if hasattr(self, 'page') and self.page and self._current_dialog:
+            self.page.close(self._current_dialog)
+            self._current_dialog = None
 
         self._notify_change()
         self._refresh()
@@ -748,6 +745,12 @@ class SimpleModeView(ft.Column):
             if node.position.get("y", 0) > max_y:
                 max_y = node.position.get("y", 0)
 
+        # Get the previous node BEFORE adding the new node
+        # BUG FIX (01-03): Must get steps before adding new node to correctly
+        # identify the previous step for connection
+        existing_steps = self._get_ordered_steps()
+        prev_node = existing_steps[-1] if existing_steps else None
+
         # Create new node
         new_node = WorkflowNode(
             id=str(uuid4()),
@@ -758,18 +761,15 @@ class SimpleModeView(ft.Column):
         )
         self.workflow.nodes.append(new_node)
 
-        # Connect to previous node
-        steps = self._get_ordered_steps()
-        if len(steps) > 0:
-            # Connect from previous step
-            prev_node = steps[-1] if len(steps) > 1 else None
-            if prev_node and prev_node.id != new_node.id:
-                self.workflow.connections.append(WorkflowConnection(
-                    source_node_id=prev_node.id,
-                    target_node_id=new_node.id,
-                ))
+        # Connect to previous node (or trigger if no previous steps)
+        if prev_node:
+            # Connect from previous step to new step
+            self.workflow.connections.append(WorkflowConnection(
+                source_node_id=prev_node.id,
+                target_node_id=new_node.id,
+            ))
         else:
-            # Connect from trigger
+            # Connect from trigger (first step after trigger)
             trigger = self._get_trigger()
             if trigger:
                 self.workflow.connections.append(WorkflowConnection(
@@ -778,9 +778,9 @@ class SimpleModeView(ft.Column):
                 ))
 
         # Close dialog and refresh
-        if hasattr(self, 'page') and self.page:
-            self.page.dialog.open = False
-            self.page.update()
+        if hasattr(self, 'page') and self.page and self._current_dialog:
+            self.page.close(self._current_dialog)
+            self._current_dialog = None
 
         # Select the new step
         self.selected_step_index = len(self._get_ordered_steps()) - 1
