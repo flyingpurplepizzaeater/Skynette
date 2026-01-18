@@ -186,3 +186,8 @@ class FileTree(ft.Column):
     def refresh(self) -> None:
         """Refresh current tree (e.g., after file creation)."""
         self._rebuild()
+
+    def dispose(self) -> None:
+        """Clean up file tree resources."""
+        self.items.clear()
+        self.expanded_paths.clear()

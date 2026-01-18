@@ -165,3 +165,9 @@ class CodeEditor(ft.Container):
             Current content string.
         """
         return self._code_content
+
+    def dispose(self) -> None:
+        """Clean up editor resources."""
+        self._text_field = None
+        self._line_numbers = None
+        self._highlighted_text = None

@@ -1465,6 +1465,10 @@ class SkynetteApp:
 
     def _update_content(self):
         """Update the main content area based on current view."""
+        # Dispose previous view if it has a dispose method
+        if hasattr(self.content_area.content, 'dispose'):
+            self.content_area.content.dispose()
+
         if self.current_view == "workflows":
             self._show_loading("Loading workflows...")
             try:

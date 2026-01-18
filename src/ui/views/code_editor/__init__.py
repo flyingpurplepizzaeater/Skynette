@@ -362,8 +362,25 @@ class CodeEditorView(ft.Column):
         self._page_ref.update()
 
     def dispose(self) -> None:
-        """Clean up resources."""
+        """Clean up all resources when view is destroyed."""
+        # Remove state listener
         self.state.remove_listener(self._on_state_change)
+
+        # Dispose child components
+        if self._editor:
+            self._editor.dispose()
+        if self._file_tree:
+            self._file_tree.dispose()
+
+        # Clear state
+        self.state.dispose()
+
+        # Clear component references
+        self._toolbar = None
+        self._tab_bar = None
+        self._file_tree = None
+        self._editor = None
+        self._split_panel = None
 
 
 # Export re-exports for backward compatibility

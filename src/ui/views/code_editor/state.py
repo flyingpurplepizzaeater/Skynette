@@ -164,3 +164,9 @@ class EditorState:
         """
         self.file_tree_root = path
         self.notify()
+
+    def dispose(self) -> None:
+        """Clear all state and listeners."""
+        self._listeners.clear()
+        self.open_files.clear()
+        self.active_file_index = -1
