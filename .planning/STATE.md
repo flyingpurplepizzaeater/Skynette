@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Phase: 4 of 5 (AI-Assisted Editing)
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-18 -- Completed 04-01-PLAN.md (Foundation Services)
+Last activity: 2026-01-18 -- Completed 04-02-PLAN.md (ChatPanel UI Component)
 
-Progress: [###############.....] 65%
+Progress: [################....] 70%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: 10 min
-- Total execution time: 2.5 hours
+- Total plans completed: 16
+- Average duration: 9.6 min
+- Total execution time: 2.6 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [###############.....] 65%
 | 1. Stability & Audit | 4/4 | 80 min | 20 min |
 | 2. Provider Foundation | 5/5 | 34 min | 7 min |
 | 3. Code Editor Core | 5/5 | 31 min | 6 min |
-| 4. AI-Assisted Editing | 1/5 | 4 min | 4 min |
+| 4. AI-Assisted Editing | 2/5 | 7 min | 3.5 min |
 | 5. Advanced Integration | 0/4 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (4 min), 03-05 (3 min), 03-04 (10 min), 03-03 (5 min), 03-02 (5 min)
+- Last 5 plans: 04-02 (3 min), 04-01 (4 min), 03-05 (3 min), 03-04 (10 min), 03-03 (5 min)
 - Trend: Fast
 
 *Updated after each plan completion*
@@ -81,6 +81,9 @@ Recent decisions affecting current work:
 - [04-01]: tiktoken cl100k_base for OpenAI, p50k_base fallback for other providers
 - [04-01]: ChatState follows EditorState listener/notify pattern
 - [04-01]: DiffService uses difflib.unified_diff for cross-platform diff generation
+- [04-02]: Use gateway.chat_stream() for streaming responses (not generate())
+- [04-02]: Coding assistant system prompt for API messages
+- [04-02]: User-friendly error messages for missing AI providers
 
 ### Pending Todos
 
@@ -96,5 +99,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 04-01-PLAN.md (Foundation Services)
+Stopped at: Completed 04-02-PLAN.md (ChatPanel UI Component)
 Resume file: None
