@@ -66,14 +66,14 @@ Plans:
   3. User can browse project directories via file tree and open files by clicking
   4. User can open multiple files in tabs and switch between them
   5. User can close files/tabs without memory leaks (proper resource disposal)
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 03-01: Create CodeEditor component with Pygments
-- [ ] 03-02: Build CodeEditorView with toolbar and navigation
-- [ ] 03-03: Implement file operations and file tree
-- [ ] 03-04: Implement tabbed interface for multiple files
-- [ ] 03-05: Implement resource disposal and unit tests
+- [ ] 03-01-PLAN.md - Core editor services (Pygments highlighter, file I/O, icons)
+- [ ] 03-02-PLAN.md - EditorState and CodeEditor component with line numbers
+- [ ] 03-03-PLAN.md - FileTree and ResizableSplitPanel components
+- [ ] 03-04-PLAN.md - TabBar, Toolbar, CodeEditorView assembly, app navigation
+- [ ] 03-05-PLAN.md - Resource disposal and unit tests (QUAL-02)
 
 ### Phase 4: AI-Assisted Editing
 **Goal**: Users can get AI help while coding, with suggestions they can accept or reject
@@ -121,7 +121,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Stability & Audit | 4/4 | Complete | 2026-01-18 |
 | 2. Provider Foundation | 5/5 | Complete | 2026-01-18 |
-| 3. Code Editor Core | 0/5 | Ready | - |
+| 3. Code Editor Core | 0/5 | Planned | - |
 | 4. AI-Assisted Editing | 0/5 | Not started | - |
 | 5. Advanced Integration | 0/4 | Not started | - |
 
