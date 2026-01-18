@@ -23,12 +23,12 @@
 
 ### Code Editor — Core
 
-- [ ] **EDIT-01**: Create CodeEditor component with Pygments syntax highlighting (598 languages)
-- [ ] **EDIT-02**: Build CodeEditorView with toolbar and navigation
-- [ ] **EDIT-03**: Implement file open/save/create/delete operations
-- [ ] **EDIT-04**: Add file tree navigation for browsing project directories
-- [ ] **EDIT-05**: Support multiple open files with tabbed interface
-- [ ] **EDIT-06**: Implement proper resource disposal to prevent memory leaks
+- [x] **EDIT-01**: Create CodeEditor component with Pygments syntax highlighting (598 languages)
+- [x] **EDIT-02**: Build CodeEditorView with toolbar and navigation
+- [x] **EDIT-03**: Implement file open/save/create/delete operations
+- [x] **EDIT-04**: Add file tree navigation for browsing project directories
+- [x] **EDIT-05**: Support multiple open files with tabbed interface
+- [x] **EDIT-06**: Implement proper resource disposal to prevent memory leaks
 
 ### Code Editor — AI Assistance
 
@@ -48,7 +48,7 @@
 ### Quality
 
 - [x] **QUAL-01**: Unit tests for all new provider integrations
-- [ ] **QUAL-02**: Unit tests for code editor components
+- [x] **QUAL-02**: Unit tests for code editor components
 - [ ] **QUAL-03**: Integration tests for AI-assisted editing flow
 - [ ] **QUAL-04**: E2E tests for critical user journeys
 - [ ] **QUAL-05**: Security audit — ensure API keys not exposed in memory
@@ -93,13 +93,13 @@
 | PROV-04 | Phase 2 | Complete |
 | PROV-05 | Phase 2 | Complete |
 | QUAL-01 | Phase 2 | Complete |
-| EDIT-01 | Phase 3 | Pending |
-| EDIT-02 | Phase 3 | Pending |
-| EDIT-03 | Phase 3 | Pending |
-| EDIT-04 | Phase 3 | Pending |
-| EDIT-05 | Phase 3 | Pending |
-| EDIT-06 | Phase 3 | Pending |
-| QUAL-02 | Phase 3 | Pending |
+| EDIT-01 | Phase 3 | Complete |
+| EDIT-02 | Phase 3 | Complete |
+| EDIT-03 | Phase 3 | Complete |
+| EDIT-04 | Phase 3 | Complete |
+| EDIT-05 | Phase 3 | Complete |
+| EDIT-06 | Phase 3 | Complete |
+| QUAL-02 | Phase 3 | Complete |
 | AIED-01 | Phase 4 | Pending |
 | AIED-02 | Phase 4 | Pending |
 | AIED-03 | Phase 4 | Pending |

@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Stability & Audit** - Fix what is broken before building new
 - [x] **Phase 2: Provider Foundation** - Gemini, Grok, and Ollama improvements
-- [ ] **Phase 3: Code Editor Core** - Syntax highlighting, file operations, navigation
+- [x] **Phase 3: Code Editor Core** - Syntax highlighting, file operations, navigation
 - [ ] **Phase 4: AI-Assisted Editing** - Completions, diff preview, accept/reject
 - [ ] **Phase 5: Advanced Integration** - Workflow scripts, RAG, execution node, final tests
 
@@ -69,11 +69,11 @@ Plans:
 **Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 03-01-PLAN.md - Core editor services (Pygments highlighter, file I/O, icons)
-- [ ] 03-02-PLAN.md - EditorState and CodeEditor component with line numbers
-- [ ] 03-03-PLAN.md - FileTree and ResizableSplitPanel components
-- [ ] 03-04-PLAN.md - TabBar, Toolbar, CodeEditorView assembly, app navigation
-- [ ] 03-05-PLAN.md - Resource disposal and unit tests (QUAL-02)
+- [x] 03-01-PLAN.md - Core editor services (Pygments highlighter, file I/O, icons)
+- [x] 03-02-PLAN.md - EditorState and CodeEditor component with line numbers
+- [x] 03-03-PLAN.md - FileTree and ResizableSplitPanel components
+- [x] 03-04-PLAN.md - TabBar, Toolbar, CodeEditorView assembly, app navigation
+- [x] 03-05-PLAN.md - Resource disposal and unit tests (QUAL-02)
 
 ### Phase 4: AI-Assisted Editing
 **Goal**: Users can get AI help while coding, with suggestions they can accept or reject
@@ -121,7 +121,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Stability & Audit | 4/4 | Complete | 2026-01-18 |
 | 2. Provider Foundation | 5/5 | Complete | 2026-01-18 |
-| 3. Code Editor Core | 0/5 | Planned | - |
+| 3. Code Editor Core | 5/5 | Complete | 2026-01-18 |
 | 4. AI-Assisted Editing | 0/5 | Not started | - |
 | 5. Advanced Integration | 0/4 | Not started | - |
 
