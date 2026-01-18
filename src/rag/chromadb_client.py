@@ -11,6 +11,7 @@ from typing import List, Dict, Any
 from pathlib import Path
 
 from src.rag.models import Chunk
+from src.rag.dimension_validator import DimensionValidator
 
 
 class InMemoryVectorStore:
@@ -142,16 +143,23 @@ class ChromaDBClient:
     async def create_collection(
         self,
         collection_id: str,
-        embedding_dim: int = 384
+        embedding_dim: int = 384,
+        model_name: str = "all-MiniLM-L6-v2",
     ):
-        """Create new collection."""
+        """Create new collection.
+
+        Args:
+            collection_id: Unique identifier for the collection.
+            embedding_dim: Dimension of embedding vectors.
+            model_name: Name of the embedding model used.
+        """
         if not self.client:
             await self.initialize()
 
-        # Create or get collection
+        # Create or get collection with model metadata
         collection = self.client.get_or_create_collection(
             name=collection_id,
-            metadata={"embedding_dim": embedding_dim}
+            metadata={"embedding_dim": embedding_dim, "model_name": model_name}
         )
 
         self.collections[collection_id] = collection
@@ -181,9 +189,26 @@ class ChromaDBClient:
         self,
         collection_id: str,
         chunks: List[Chunk],
-        embeddings: List[List[float]]
+        embeddings: List[List[float]],
+        model_name: str = "all-MiniLM-L6-v2",
     ):
-        """Add chunks with embeddings to collection."""
+        """Add chunks with embeddings to collection.
+
+        Args:
+            collection_id: Target collection ID.
+            chunks: List of Chunk objects to add.
+            embeddings: Corresponding embedding vectors.
+            model_name: Embedding model used (for dimension validation).
+
+        Raises:
+            DimensionMismatchError: If embedding dimensions don't match.
+        """
+        # Validate dimensions before write
+        validator = DimensionValidator()
+        await validator.validate_before_write(
+            collection_id, embeddings, self, model_name
+        )
+
         if collection_id not in self.collections:
             collection = self.client.get_collection(collection_id)
             self.collections[collection_id] = collection
