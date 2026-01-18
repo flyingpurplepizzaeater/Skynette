@@ -29,13 +29,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can list, add, and switch between local and cloud AI models
   3. User can create, save, and execute workflows without crashes
   4. AIHubView state management handles large conversation histories without degradation
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 01-01: Audit AI Chat
-- [ ] 01-02: Audit Model Management
-- [ ] 01-03: Audit Workflow Builder
-- [ ] 01-04: Refactor state management
+- [ ] 01-01-PLAN.md - Audit AI Chat functionality (STAB-01)
+- [ ] 01-02-PLAN.md - Audit Model Management (STAB-02)
+- [ ] 01-03-PLAN.md - Audit Workflow Builder (STAB-03)
+- [ ] 01-04-PLAN.md - Refactor AIHubView state management (STAB-04)
 
 ### Phase 2: Provider Foundation
 **Goal**: Users can access Gemini, Grok, and improved Ollama alongside existing providers
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Stability & Audit | 0/4 | Not started | - |
+| 1. Stability & Audit | 0/4 | Planned | - |
 | 2. Provider Foundation | 0/5 | Not started | - |
 | 3. Code Editor Core | 0/5 | Not started | - |
 | 4. AI-Assisted Editing | 0/5 | Not started | - |
