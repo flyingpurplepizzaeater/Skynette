@@ -58,41 +58,46 @@ class AIHubView(ft.Column):
         self._wizard = SetupWizard(page=self._page, state=self.state)
         self._providers = ProvidersTab(page=self._page, state=self.state)
         self._library = ModelLibraryTab(page=self._page)
-
-        # Create tabs
-        setup_tab = ft.Tab(label="Setup", icon=ft.Icons.ROCKET_LAUNCH)
-        setup_tab.content = self._wizard.build()
-
-        providers_tab = ft.Tab(label="My Providers", icon=ft.Icons.CLOUD)
-        providers_tab.content = self._providers.build()
-
-        library_tab = ft.Tab(label="Model Library", icon=ft.Icons.FOLDER)
-        library_tab.content = self._library.build()
-
-        usage_tab = ft.Tab(label="Usage", icon=ft.Icons.ANALYTICS)
         usage_dashboard = UsageDashboardView(page=self._page)
-        usage_tab.content = usage_dashboard.build()
-
-        knowledge_bases_tab = ft.Tab(label="Knowledge Bases", icon=ft.Icons.LIBRARY_BOOKS)
         knowledge_bases_view = KnowledgeBasesView(page=self._page)
-        knowledge_bases_tab.content = knowledge_bases_view.build()
 
-        main_tabs = [
-            setup_tab,
-            providers_tab,
-            library_tab,
-            usage_tab,
-            knowledge_bases_tab,
-        ]
+        # Create tab headers (Flet 0.80+ API: Tab only has label/icon, no content)
+        tab_bar = ft.TabBar(
+            tabs=[
+                ft.Tab(label="Setup", icon=ft.Icons.ROCKET_LAUNCH),
+                ft.Tab(label="My Providers", icon=ft.Icons.CLOUD),
+                ft.Tab(label="Model Library", icon=ft.Icons.FOLDER),
+                ft.Tab(label="Usage", icon=ft.Icons.ANALYTICS),
+                ft.Tab(label="Knowledge Bases", icon=ft.Icons.LIBRARY_BOOKS),
+            ],
+        )
+
+        # Create tab content view (each control corresponds to a tab)
+        tab_view = ft.TabBarView(
+            controls=[
+                self._wizard.build(),
+                self._providers.build(),
+                self._library.build(),
+                usage_dashboard.build(),
+                knowledge_bases_view.build(),
+            ],
+            expand=True,
+        )
+
+        # Wrap in Tabs controller
+        tabs_control = ft.Tabs(
+            content=ft.Column(
+                controls=[tab_bar, tab_view],
+                expand=True,
+            ),
+            length=5,
+            expand=True,
+        )
 
         return ft.Column(
             controls=[
                 self._build_header(),
-                ft.Tabs(
-                    content=main_tabs,
-                    length=len(main_tabs),
-                    expand=True,
-                ),
+                tabs_control,
             ],
             expand=True,
             spacing=Theme.SPACING_MD,

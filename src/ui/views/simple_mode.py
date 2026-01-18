@@ -631,7 +631,8 @@ class SimpleModeView(ft.Column):
         """Show dialog to pick a step type."""
         categories = self.registry.categories
 
-        tabs = []
+        tab_headers = []
+        tab_contents = []
         for category in sorted(categories):
             if category == "trigger":
                 continue  # Skip triggers in step picker
@@ -666,24 +667,36 @@ class SimpleModeView(ft.Column):
                     )
                 )
 
-            tabs.append(
-                ft.Tab(
-                    text=category.title(),
-                    content=ft.Container(
-                        content=ft.Column(
-                            controls=node_tiles,
-                            scroll=ft.ScrollMode.AUTO,
-                        ),
-                        padding=8,
+            # Add tab header (Flet 0.80+ API: Tab only has label, no content)
+            tab_headers.append(ft.Tab(label=category.title()))
+            # Add corresponding content
+            tab_contents.append(
+                ft.Container(
+                    content=ft.Column(
+                        controls=node_tiles,
+                        scroll=ft.ScrollMode.AUTO,
                     ),
+                    padding=8,
                 )
             )
 
         if hasattr(self, 'page') and self.page:
+            # Build tabs control using Flet 0.80+ pattern
+            if tab_headers:
+                tab_bar = ft.TabBar(tabs=tab_headers)
+                tab_view = ft.TabBarView(controls=tab_contents, expand=True)
+                tabs_control = ft.Tabs(
+                    content=ft.Column(controls=[tab_bar, tab_view], expand=True),
+                    length=len(tab_headers),
+                    expand=True,
+                )
+            else:
+                tabs_control = ft.Text("No nodes available")
+
             self._current_dialog = ft.AlertDialog(
                 title=ft.Text("Add Step"),
                 content=ft.Container(
-                    content=ft.Tabs(content=tabs, length=len(tabs), expand=True) if tabs else ft.Text("No nodes available"),
+                    content=tabs_control,
                     width=450,
                     height=350,
                 ),

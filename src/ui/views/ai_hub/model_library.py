@@ -54,23 +54,35 @@ class ModelLibraryTab(ft.Column):
 
     def build(self):
         """Build the Model Library tab with sub-tabs."""
-        my_models_tab = ft.Tab(label="My Models", icon=ft.Icons.FOLDER)
-        my_models_tab.content = self._build_installed_tab()
+        # Create tab headers (Flet 0.80+ API: Tab only has label/icon, no content)
+        tab_bar = ft.TabBar(
+            tabs=[
+                ft.Tab(label="My Models", icon=ft.Icons.FOLDER),
+                ft.Tab(label="Hugging Face", icon=ft.Icons.CLOUD_DOWNLOAD),
+                ft.Tab(label="Ollama", icon=ft.Icons.TERMINAL),
+                ft.Tab(label="Import", icon=ft.Icons.UPLOAD_FILE),
+            ],
+        )
 
-        huggingface_tab = ft.Tab(label="Hugging Face", icon=ft.Icons.CLOUD_DOWNLOAD)
-        huggingface_tab.content = self._build_huggingface_tab()
+        # Create tab content view (each control corresponds to a tab)
+        tab_view = ft.TabBarView(
+            controls=[
+                self._build_installed_tab(),
+                self._build_huggingface_tab(),
+                self._build_ollama_tab(),
+                self._build_import_tab(),
+            ],
+            expand=True,
+        )
 
-        ollama_tab = ft.Tab(label="Ollama", icon=ft.Icons.TERMINAL)
-        ollama_tab.content = self._build_ollama_tab()
-
-        import_tab = ft.Tab(label="Import", icon=ft.Icons.UPLOAD_FILE)
-        import_tab.content = self._build_import_tab()
-
-        subtabs = [my_models_tab, huggingface_tab, ollama_tab, import_tab]
+        # Wrap in Tabs controller
         return ft.Container(
             content=ft.Tabs(
-                content=subtabs,
-                length=len(subtabs),
+                content=ft.Column(
+                    controls=[tab_bar, tab_view],
+                    expand=True,
+                ),
+                length=4,
                 expand=True,
             ),
             expand=True,

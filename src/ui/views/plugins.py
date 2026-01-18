@@ -12,28 +12,39 @@ class PluginsView(ft.Column):
         self.expand = True
 
     def build(self):
-        plugin_tabs = [
-            ft.Tab(
-                text="Installed",
-                content=self._build_installed_tab(),
+        # Create tab headers (Flet 0.80+ API: Tab only has label/icon, no content)
+        tab_bar = ft.TabBar(
+            tabs=[
+                ft.Tab(label="Installed"),
+                ft.Tab(label="Marketplace"),
+                ft.Tab(label="Develop"),
+            ],
+        )
+
+        # Create tab content view
+        tab_view = ft.TabBarView(
+            controls=[
+                self._build_installed_tab(),
+                self._build_marketplace_tab(),
+                self._build_develop_tab(),
+            ],
+            expand=True,
+        )
+
+        # Wrap in Tabs controller
+        tabs_control = ft.Tabs(
+            content=ft.Column(
+                controls=[tab_bar, tab_view],
+                expand=True,
             ),
-            ft.Tab(
-                text="Marketplace",
-                content=self._build_marketplace_tab(),
-            ),
-            ft.Tab(
-                text="Develop",
-                content=self._build_develop_tab(),
-            ),
-        ]
+            length=3,
+            expand=True,
+        )
+
         return ft.Column(
             controls=[
                 self._build_header(),
-                ft.Tabs(
-                    content=plugin_tabs,
-                    length=len(plugin_tabs),
-                    expand=True,
-                ),
+                tabs_control,
             ],
             expand=True,
             spacing=Theme.SPACING_MD,
