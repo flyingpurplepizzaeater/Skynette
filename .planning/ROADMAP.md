@@ -105,13 +105,13 @@ Plans:
   3. User can add a code execution node to workflows that runs snippets
   4. RAG writes are validated for embedding dimension consistency (no corruption)
   5. Critical user journeys pass E2E tests, security audit confirms no API key exposure
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 05-01: Enable workflow script editing in code editor
-- [ ] 05-02: Implement project-level RAG for codebase context
-- [ ] 05-03: Add code execution node for workflows
-- [ ] 05-04: Comprehensive test coverage (E2E, security audit)
+- [ ] 05-01-PLAN.md — Workflow-Editor bridge for script editing (INTG-01)
+- [ ] 05-02-PLAN.md — Project-level RAG with dimension validation (INTG-02, INTG-04)
+- [ ] 05-03-PLAN.md — Code execution node for workflows (INTG-03)
+- [ ] 05-04-PLAN.md — E2E tests and security audit (STAB-05, QUAL-04, QUAL-05)
 
 ## Progress
 
