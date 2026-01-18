@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Phase: 4 of 5 (AI-Assisted Editing)
-Plan: 2 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-18 -- Completed 04-02-PLAN.md (ChatPanel UI Component)
+Last activity: 2026-01-18 -- Completed 04-04-PLAN.md (Diff Preview)
 
-Progress: [################....] 70%
+Progress: [##################..] 78%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: 9.6 min
-- Total execution time: 2.6 hours
+- Total plans completed: 18
+- Average duration: 9.2 min
+- Total execution time: 2.75 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [################....] 70%
 | 1. Stability & Audit | 4/4 | 80 min | 20 min |
 | 2. Provider Foundation | 5/5 | 34 min | 7 min |
 | 3. Code Editor Core | 5/5 | 31 min | 6 min |
-| 4. AI-Assisted Editing | 2/5 | 7 min | 3.5 min |
+| 4. AI-Assisted Editing | 4/5 | 13 min | 3.25 min |
 | 5. Advanced Integration | 0/4 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 04-02 (3 min), 04-01 (4 min), 03-05 (3 min), 03-04 (10 min), 03-03 (5 min)
+- Last 5 plans: 04-04 (3 min), 04-03 (3 min), 04-02 (3 min), 04-01 (4 min), 03-05 (3 min)
 - Trend: Fast
 
 *Updated after each plan completion*
@@ -84,6 +84,9 @@ Recent decisions affecting current work:
 - [04-02]: Use gateway.chat_stream() for streaming responses (not generate())
 - [04-02]: Coding assistant system prompt for API messages
 - [04-02]: User-friendly error messages for missing AI providers
+- [04-04]: GitHub-style diff colors for familiarity (green add, red remove)
+- [04-04]: Per-hunk acceptance tracked in _accepted_hunks set for O(1) lookup
+- [04-04]: Visual feedback via border color/width and check icon for accepted state
 
 ### Pending Todos
 
@@ -99,5 +102,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 04-02-PLAN.md (ChatPanel UI Component)
+Stopped at: Completed 04-04-PLAN.md (Diff Preview)
 Resume file: None
