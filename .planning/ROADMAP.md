@@ -47,14 +47,14 @@ Plans:
   3. User can see Ollama connection status and available models in UI
   4. User receives clear feedback when rate limits are approached (pre-emptive throttling)
   5. User sees graceful error messages when streaming fails mid-response (no corrupt state)
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 02-01: Implement Gemini provider
-- [ ] 02-02: Implement Grok provider
-- [ ] 02-03: Enhance Ollama service discovery and status UI
-- [ ] 02-04: Implement rate limit handling and streaming failure recovery
-- [ ] 02-05: Unit tests for provider integrations
+- [ ] 02-01-PLAN.md - Implement Gemini provider (PROV-01)
+- [ ] 02-02-PLAN.md - Implement Grok provider (PROV-02)
+- [ ] 02-03-PLAN.md - Enhance Ollama service discovery and status UI (PROV-03)
+- [ ] 02-04-PLAN.md - Implement rate limit handling and streaming failure recovery (PROV-04, PROV-05)
+- [ ] 02-05-PLAN.md - Unit tests for provider integrations (QUAL-01)
 
 ### Phase 3: Code Editor Core
 **Goal**: Users can open, edit, and save code files with syntax highlighting
@@ -120,7 +120,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Stability & Audit | 4/4 | Complete | 2026-01-18 |
-| 2. Provider Foundation | 0/5 | Not started | - |
+| 2. Provider Foundation | 0/5 | Ready | - |
 | 3. Code Editor Core | 0/5 | Not started | - |
 | 4. AI-Assisted Editing | 0/5 | Not started | - |
 | 5. Advanced Integration | 0/4 | Not started | - |
