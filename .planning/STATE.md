@@ -84,6 +84,9 @@ Recent decisions affecting current work:
 - [04-02]: Use gateway.chat_stream() for streaming responses (not generate())
 - [04-02]: Coding assistant system prompt for API messages
 - [04-02]: User-friendly error messages for missing AI providers
+- [04-03]: 500ms debounce delay for completion requests
+- [04-03]: Temperature 0.2 for deterministic inline completions
+- [04-03]: Stop sequences for natural completion boundaries
 - [04-04]: GitHub-style diff colors for familiarity (green add, red remove)
 - [04-04]: Per-hunk acceptance tracked in _accepted_hunks set for O(1) lookup
 - [04-04]: Visual feedback via border color/width and check icon for accepted state
