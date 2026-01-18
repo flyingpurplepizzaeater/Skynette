@@ -1,6 +1,7 @@
 # src/ui/views/ai_hub/state.py
 """Centralized state for AI Hub components."""
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -22,6 +23,9 @@ class AIHubState:
     # Ollama status
     ollama_connected: bool = False
     ollama_models: list[str] = field(default_factory=list)
+    ollama_error: str | None = None
+    ollama_last_refresh: float | None = None
+    ollama_refreshing: bool = False
 
     # Listeners for reactive updates
     _listeners: list[Callable[[], None]] = field(default_factory=list, repr=False)
@@ -66,11 +70,24 @@ class AIHubState:
         self.provider_configs[provider][key] = value
         self.notify()
 
-    def set_ollama_status(self, connected: bool, models: list[str] = None) -> None:
+    def set_ollama_status(
+        self,
+        connected: bool,
+        models: list[str] | None = None,
+        error: str | None = None,
+    ) -> None:
         """Update Ollama connection status."""
         self.ollama_connected = connected
         if models is not None:
             self.ollama_models = models
+        self.ollama_error = error
+        if connected:
+            self.ollama_last_refresh = time.time()
+        self.notify()
+
+    def set_ollama_refreshing(self, refreshing: bool) -> None:
+        """Set refreshing state (for loading indicator)."""
+        self.ollama_refreshing = refreshing
         self.notify()
 
     def reset_wizard(self) -> None:
