@@ -13,6 +13,7 @@ from src.ai.gateway import (
     AIResponse,
     AIStreamChunk,
     GenerationConfig,
+    StreamInterruptedError,
 )
 from src.ai.providers.base import BaseProvider
 
@@ -140,7 +141,22 @@ class OpenAIProvider(BaseProvider):
         messages: list[AIMessage],
         config: GenerationConfig,
     ) -> AsyncIterator[AIStreamChunk]:
-        """Stream a chat response."""
+        """Stream a chat response with error recovery."""
+        try:
+            async for chunk in self._stream_with_recovery(
+                self._raw_chat_stream(messages, config)
+            ):
+                yield chunk
+        except StreamInterruptedError:
+            # Error already yielded as final chunk, just return
+            return
+
+    async def _raw_chat_stream(
+        self,
+        messages: list[AIMessage],
+        config: GenerationConfig,
+    ) -> AsyncIterator[AIStreamChunk]:
+        """Internal streaming implementation."""
         if not self._client:
             await self.initialize()
 

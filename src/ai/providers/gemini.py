@@ -14,6 +14,7 @@ from src.ai.gateway import (
     AIResponse,
     AIStreamChunk,
     GenerationConfig,
+    StreamInterruptedError,
 )
 from src.ai.providers.base import BaseProvider
 
@@ -186,7 +187,7 @@ class GeminiProvider(BaseProvider):
         messages: list[AIMessage],
         config: GenerationConfig,
     ) -> AsyncIterator[AIStreamChunk]:
-        """Stream a chat response."""
+        """Stream a chat response with error recovery."""
         if not self._aclient:
             await self.initialize()
 
@@ -198,57 +199,62 @@ class GeminiProvider(BaseProvider):
             return
 
         try:
-            from google.genai import types
-
-            # Extract system instruction and build contents
-            system_instruction = None
-            contents = []
-
-            for msg in messages:
-                if msg.role == "system":
-                    system_instruction = msg.content
-                else:
-                    role = "model" if msg.role == "assistant" else "user"
-                    contents.append(types.Content(
-                        role=role,
-                        parts=[types.Part(text=msg.content)]
-                    ))
-
-            # Build generation config
-            gen_config = types.GenerateContentConfig(
-                max_output_tokens=config.max_tokens,
-                temperature=config.temperature,
-                top_p=config.top_p,
-                stop_sequences=config.stop_sequences or None,
-                system_instruction=system_instruction,
-            )
-
-            # Stream the response
-            async for chunk in await self._aclient.models.generate_content_stream(
-                model=self.model,
-                contents=contents,
-                config=gen_config,
+            async for chunk in self._stream_with_recovery(
+                self._raw_chat_stream(messages, config)
             ):
-                if chunk.text:
-                    yield AIStreamChunk(
-                        content=chunk.text,
-                        is_final=False,
-                    )
+                yield chunk
+        except StreamInterruptedError:
+            # Error already yielded as final chunk, just return
+            return
 
-            # Final chunk
-            yield AIStreamChunk(
-                content="",
-                is_final=True,
-            )
+    async def _raw_chat_stream(
+        self,
+        messages: list[AIMessage],
+        config: GenerationConfig,
+    ) -> AsyncIterator[AIStreamChunk]:
+        """Internal streaming implementation."""
+        from google.genai import types
 
-        except Exception as e:
-            error_msg = str(e)
-            if "API key" in error_msg.lower() or "unauthorized" in error_msg.lower():
-                error_msg = "Invalid or missing GOOGLE_API_KEY"
-            yield AIStreamChunk(
-                content=f"\n\n[Error: {error_msg}]",
-                is_final=True,
-            )
+        # Extract system instruction and build contents
+        system_instruction = None
+        contents = []
+
+        for msg in messages:
+            if msg.role == "system":
+                system_instruction = msg.content
+            else:
+                role = "model" if msg.role == "assistant" else "user"
+                contents.append(types.Content(
+                    role=role,
+                    parts=[types.Part(text=msg.content)]
+                ))
+
+        # Build generation config
+        gen_config = types.GenerateContentConfig(
+            max_output_tokens=config.max_tokens,
+            temperature=config.temperature,
+            top_p=config.top_p,
+            stop_sequences=config.stop_sequences or None,
+            system_instruction=system_instruction,
+        )
+
+        # Stream the response
+        async for chunk in await self._aclient.models.generate_content_stream(
+            model=self.model,
+            contents=contents,
+            config=gen_config,
+        ):
+            if chunk.text:
+                yield AIStreamChunk(
+                    content=chunk.text,
+                    is_final=False,
+                )
+
+        # Final chunk
+        yield AIStreamChunk(
+            content="",
+            is_final=True,
+        )
 
     async def cleanup(self) -> None:
         """Clean up resources."""

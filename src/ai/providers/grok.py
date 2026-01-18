@@ -13,6 +13,7 @@ from src.ai.gateway import (
     AIResponse,
     AIStreamChunk,
     GenerationConfig,
+    StreamInterruptedError,
 )
 from src.ai.providers.base import BaseProvider
 
@@ -155,7 +156,7 @@ class GrokProvider(BaseProvider):
         messages: list[AIMessage],
         config: GenerationConfig,
     ) -> AsyncIterator[AIStreamChunk]:
-        """Stream a chat response."""
+        """Stream a chat response with error recovery."""
         if not self._client:
             await self.initialize()
 
@@ -167,40 +168,46 @@ class GrokProvider(BaseProvider):
             return
 
         try:
-            from xai_sdk.chat import assistant, system, user
+            async for chunk in self._stream_with_recovery(
+                self._raw_chat_stream(messages, config)
+            ):
+                yield chunk
+        except StreamInterruptedError:
+            # Error already yielded as final chunk, just return
+            return
 
-            # Create a new chat session
-            chat = self._client.chat.create(model=self.model)
+    async def _raw_chat_stream(
+        self,
+        messages: list[AIMessage],
+        config: GenerationConfig,
+    ) -> AsyncIterator[AIStreamChunk]:
+        """Internal streaming implementation."""
+        from xai_sdk.chat import assistant, system, user
 
-            # Add messages to chat
-            for msg in messages:
-                if msg.role == "system":
-                    chat.append(system(msg.content))
-                elif msg.role == "user":
-                    chat.append(user(msg.content))
-                elif msg.role == "assistant":
-                    chat.append(assistant(msg.content))
+        # Create a new chat session
+        chat = self._client.chat.create(model=self.model)
 
-            # Stream the response
-            # xai-sdk uses sync streaming, so we yield chunks as they arrive
-            for response, chunk in chat.stream():
-                content = chunk.content if hasattr(chunk, "content") else str(chunk)
-                yield AIStreamChunk(
-                    content=content,
-                    is_final=False,
-                )
+        # Add messages to chat
+        for msg in messages:
+            if msg.role == "system":
+                chat.append(system(msg.content))
+            elif msg.role == "user":
+                chat.append(user(msg.content))
+            elif msg.role == "assistant":
+                chat.append(assistant(msg.content))
 
-            # Final chunk
+        # Stream the response
+        # xai-sdk uses sync streaming, so we yield chunks as they arrive
+        for response, chunk in chat.stream():
+            content = chunk.content if hasattr(chunk, "content") else str(chunk)
             yield AIStreamChunk(
-                content="",
-                is_final=True,
-                usage={},  # xai-sdk doesn't expose usage stats
+                content=content,
+                is_final=False,
             )
-        except Exception as e:
-            error_msg = str(e)
-            if "DEADLINE_EXCEEDED" in error_msg:
-                error_msg = "Request timed out. The model may be processing a complex request."
-            yield AIStreamChunk(
-                content=f"\n\n[Error: {error_msg}]",
-                is_final=True,
-            )
+
+        # Final chunk
+        yield AIStreamChunk(
+            content="",
+            is_final=True,
+            usage={},  # xai-sdk doesn't expose usage stats
+        )
