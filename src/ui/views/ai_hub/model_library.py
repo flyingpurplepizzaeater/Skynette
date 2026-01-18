@@ -981,7 +981,7 @@ class ModelLibraryTab(ft.Column):
                                     text_align=ft.TextAlign.CENTER,
                                 ),
                                 ft.Container(height=Theme.SPACING_MD),
-                                ft.ElevatedButton(
+                                ft.Button(
                                     "Select GGUF File",
                                     icon=ft.Icons.FOLDER_OPEN,
                                     bgcolor=Theme.PRIMARY,
