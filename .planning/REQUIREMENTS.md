@@ -1,0 +1,123 @@
+# Requirements: Skynette v2
+
+**Defined:** 2026-01-18
+**Core Value:** One app to replace separate AI chat clients, model managers, and workflow tools — accessible to everyone
+
+## v2 Requirements
+
+### Stability & Audit
+
+- [ ] **STAB-01**: Audit AI Chat functionality — identify and fix all bugs
+- [ ] **STAB-02**: Audit Model Management (local + cloud) — identify and fix all bugs
+- [ ] **STAB-03**: Audit Workflow Builder — identify and fix all bugs
+- [ ] **STAB-04**: Refactor state management to handle scale (address AIHubView complexity)
+- [ ] **STAB-05**: Achieve comprehensive test coverage for all existing features
+
+### AI Providers
+
+- [ ] **PROV-01**: Add Gemini provider using `google-genai>=1.59.0` SDK
+- [ ] **PROV-02**: Add Grok provider using `xai-sdk>=1.5.0` SDK
+- [ ] **PROV-03**: Enhance Ollama with better service discovery and status UI
+- [ ] **PROV-04**: Implement provider-specific rate limit handling with pre-emptive throttling
+- [ ] **PROV-05**: Handle streaming mid-stream failures gracefully (buffer, track state, notify user)
+
+### Code Editor — Core
+
+- [ ] **EDIT-01**: Create CodeEditor component with Pygments syntax highlighting (598 languages)
+- [ ] **EDIT-02**: Build CodeEditorView with toolbar and navigation
+- [ ] **EDIT-03**: Implement file open/save/create/delete operations
+- [ ] **EDIT-04**: Add file tree navigation for browsing project directories
+- [ ] **EDIT-05**: Support multiple open files with tabbed interface
+- [ ] **EDIT-06**: Implement proper resource disposal to prevent memory leaks
+
+### Code Editor — AI Assistance
+
+- [ ] **AIED-01**: Add AI chat panel with code context awareness
+- [ ] **AIED-02**: Implement inline suggestions (ghost text with Tab to accept)
+- [ ] **AIED-03**: Add diff preview showing changes before applying
+- [ ] **AIED-04**: Implement accept/reject controls for AI changes
+- [ ] **AIED-05**: Connect editor to existing AI Gateway for completions
+
+### Integration
+
+- [ ] **INTG-01**: Enable workflow script editing in code editor
+- [ ] **INTG-02**: Implement project-level RAG for codebase context (leverage ChromaDB)
+- [ ] **INTG-03**: Add code execution node for running snippets in workflows
+- [ ] **INTG-04**: Validate embedding dimensions before writes (prevent RAG corruption)
+
+### Quality
+
+- [ ] **QUAL-01**: Unit tests for all new provider integrations
+- [ ] **QUAL-02**: Unit tests for code editor components
+- [ ] **QUAL-03**: Integration tests for AI-assisted editing flow
+- [ ] **QUAL-04**: E2E tests for critical user journeys
+- [ ] **QUAL-05**: Security audit — ensure API keys not exposed in memory
+
+## v2+ Requirements (Deferred)
+
+### Advanced AI Features
+
+- **ADVN-01**: Agent mode for autonomous coding tasks (requires safety testing)
+- **ADVN-02**: Next edit prediction with fine-tuned models
+- **ADVN-03**: MCP tool integration (wait for standard stability)
+
+### Platform Expansion
+
+- **PLAT-01**: Mobile-optimized code editor (Monaco doesn't support mobile)
+- **PLAT-02**: Plugin marketplace launch
+- **PLAT-03**: Collaborative editing (multi-user)
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Mobile native apps | Web/desktop first; mobile can access via web |
+| Real-time collaboration | Single-user focus for v2; complexity too high |
+| Plugin marketplace | SDK exists but marketplace deferred to v2+ |
+| Custom model training | Use pre-trained models only |
+| Agent mode | Requires extensive safety testing; defer to v2+ |
+| MCP integration | Emerging standard; wait for stability |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| STAB-01 | Phase 1 | Pending |
+| STAB-02 | Phase 1 | Pending |
+| STAB-03 | Phase 1 | Pending |
+| STAB-04 | Phase 1 | Pending |
+| STAB-05 | Phase 5 | Pending |
+| PROV-01 | Phase 2 | Pending |
+| PROV-02 | Phase 2 | Pending |
+| PROV-03 | Phase 2 | Pending |
+| PROV-04 | Phase 2 | Pending |
+| PROV-05 | Phase 2 | Pending |
+| EDIT-01 | Phase 3 | Pending |
+| EDIT-02 | Phase 3 | Pending |
+| EDIT-03 | Phase 3 | Pending |
+| EDIT-04 | Phase 3 | Pending |
+| EDIT-05 | Phase 3 | Pending |
+| EDIT-06 | Phase 3 | Pending |
+| AIED-01 | Phase 4 | Pending |
+| AIED-02 | Phase 4 | Pending |
+| AIED-03 | Phase 4 | Pending |
+| AIED-04 | Phase 4 | Pending |
+| AIED-05 | Phase 4 | Pending |
+| INTG-01 | Phase 5 | Pending |
+| INTG-02 | Phase 5 | Pending |
+| INTG-03 | Phase 5 | Pending |
+| INTG-04 | Phase 5 | Pending |
+| QUAL-01 | Phase 2 | Pending |
+| QUAL-02 | Phase 3 | Pending |
+| QUAL-03 | Phase 4 | Pending |
+| QUAL-04 | Phase 5 | Pending |
+| QUAL-05 | Phase 5 | Pending |
+
+**Coverage:**
+- v2 requirements: 30 total
+- Mapped to phases: 30
+- Unmapped: 0 ✓
+
+---
+*Requirements defined: 2026-01-18*
+*Last updated: 2026-01-18 after initial definition*
