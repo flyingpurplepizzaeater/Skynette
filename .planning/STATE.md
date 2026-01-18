@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Phase: 3 of 5 (Code Editor Core)
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-18 -- Completed 03-03-PLAN.md (File Tree & Layout)
+Last activity: 2026-01-18 -- Completed 03-04-PLAN.md (TabBar, Toolbar, Assembly)
 
-Progress: [###########.........] 52%
+Progress: [############........] 56%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 11 min
-- Total execution time: 2.2 hours
+- Total execution time: 2.4 hours
 
 **By Phase:**
 
@@ -29,12 +29,12 @@ Progress: [###########.........] 52%
 |-------|-------|-------|----------|
 | 1. Stability & Audit | 4/4 | 80 min | 20 min |
 | 2. Provider Foundation | 5/5 | 34 min | 7 min |
-| 3. Code Editor Core | 3/5 | 18 min | 6 min |
+| 3. Code Editor Core | 4/5 | 28 min | 7 min |
 | 4. AI-Assisted Editing | 0/5 | - | - |
 | 5. Advanced Integration | 0/4 | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 03-03 (5 min), 03-02 (5 min), 03-01 (8 min), 02-05 (9 min), 02-04 (4 min)
+- Last 5 plans: 03-04 (10 min), 03-03 (5 min), 03-02 (5 min), 03-01 (8 min), 02-05 (9 min)
 - Trend: Fast
 
 *Updated after each plan completion*
@@ -72,10 +72,14 @@ Recent decisions affecting current work:
 - [03-03]: ft.Column base class for custom controls (Flet 0.80 removed UserControl)
 - [03-03]: ListView item_extent=28 enables virtualization for large file trees
 - [03-03]: GestureDetector for drag-based resize interactions
+- [03-04]: Use _page_ref instead of page to avoid Flet read-only property conflict
+- [03-04]: ft.alignment.Alignment(0, 0) instead of ft.alignment.center
+- [03-04]: FilePicker.on_result assigned as property, not constructor kwarg
+- [03-04]: FilePicker must be initialized in __init__ and added to page.overlay before use
 
 ### Pending Todos
 
-None yet.
+- [03-04]: Manual verification of CodeEditorView (open folder, file tree, tabs, save, dirty indicator, sidebar resize)
 
 ### Blockers/Concerns
 
