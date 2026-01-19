@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Code Editor Core** - Syntax highlighting, file operations, navigation
 - [x] **Phase 4: AI-Assisted Editing** - Completions, diff preview, accept/reject
 - [x] **Phase 5: Advanced Integration** - Workflow scripts, RAG, execution node, final tests
-- [ ] **Phase 6: RAG Context Wiring** - Connect RAGContextProvider to ChatPanel (GAP CLOSURE)
+- [x] **Phase 6: RAG Context Wiring** - Connect RAGContextProvider to ChatPanel (GAP CLOSURE)
 
 ## Phase Details
 
@@ -126,7 +126,7 @@ Plans:
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 06-01-PLAN.md — Wire RAGContextProvider to ChatPanel
+- [x] 06-01-PLAN.md — Wire RAGContextProvider to ChatPanel
 
 ## Progress
 
@@ -140,8 +140,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Code Editor Core | 5/5 | Complete | 2026-01-18 |
 | 4. AI-Assisted Editing | 6/6 | Complete | 2026-01-18 |
 | 5. Advanced Integration | 4/4 | Complete | 2026-01-19 |
-| 6. RAG Context Wiring | 0/1 | Pending | — |
+| 6. RAG Context Wiring | 1/1 | Complete | 2026-01-19 |
 
 ---
 *Roadmap created: 2026-01-18*
-*Last updated: 2026-01-19*
+*Last updated: 2026-01-19 — v2 complete*
