@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** One app to replace separate AI chat clients, model managers, and workflow tools -- accessible to everyone
-**Current focus:** Gap closure — wiring RAGContextProvider to ChatPanel
+**Current focus:** Milestone v2 complete
 
 ## Current Position
 
 Phase: 6 of 6 (RAG Context Wiring)
-Plan: 0 of 1 in current phase
-Status: **Gap closure phase added**
-Last activity: 2026-01-19 -- Added Phase 6 to close audit gap
+Plan: 1 of 1 in current phase
+Status: **Phase complete - Milestone v2 achieved**
+Last activity: 2026-01-19 -- Completed 06-01-PLAN.md (RAG wiring)
 
-Progress: [#######################-] 96%
+Progress: [#########################] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
-- Average duration: 7.8 min
-- Total execution time: 3.25 hours
+- Total plans completed: 25
+- Average duration: 7.6 min
+- Total execution time: 3.3 hours
 
 **By Phase:**
 
@@ -32,9 +32,10 @@ Progress: [#######################-] 96%
 | 3. Code Editor Core | 5/5 | 31 min | 6 min |
 | 4. AI-Assisted Editing | 6/6 | 21 min | 3.5 min |
 | 5. Advanced Integration | 4/4 | 25 min | 6.25 min |
+| 6. RAG Context Wiring | 1/1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-04 (8 min), 05-02 (7 min), 05-03 (5 min), 05-01 (5 min), 04-06 (3 min)
+- Last 5 plans: 06-01 (3 min), 05-04 (8 min), 05-02 (7 min), 05-03 (5 min), 05-01 (5 min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -108,6 +109,8 @@ Recent decisions affecting current work:
 - [05-04]: E2E critical journeys use conftest.py fixtures for live app testing
 - [05-04]: Security tests verify keyring usage without actual keyring calls
 - [05-04]: Phase 5 module tests verify importability and configuration
+- [06-01]: tempfile.gettempdir() for RAG persist directory (project-agnostic temp storage)
+- [06-01]: lambda callback for get_project_root to avoid circular dependency
 
 ### Pending Todos
 
@@ -123,12 +126,12 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Milestone v2 complete — ready for audit
+Stopped at: Completed 06-01-PLAN.md - Milestone v2 complete
 Resume file: None
 
-## Gap Closure In Progress
+## Milestone v2 Complete
 
-Phases 1-5 completed successfully. Phase 6 added to close audit gap.
+All 6 phases completed successfully. RAG wiring gap closed.
 
 ### Phase Summary
 
@@ -139,13 +142,13 @@ Phases 1-5 completed successfully. Phase 6 added to close audit gap.
 | 3. Code Editor Core | 5/5 | Syntax highlighting, editor state, file tree, UI, lifecycle |
 | 4. AI-Assisted Editing | 6/6 | Chat services, chat panel, completions, diff view, UX, tests |
 | 5. Advanced Integration | 4/4 | Workflow script, RAG, code execution, E2E tests |
-| 6. RAG Context Wiring | 0/1 | Wire RAGContextProvider to ChatPanel (gap closure) |
+| 6. RAG Context Wiring | 1/1 | Wire RAGContextProvider to ChatPanel (gap closure) |
 
 ### Key Deliverables
 
 - AI Gateway with multi-provider support (OpenAI, Anthropic, Gemini, Grok, Ollama, Groq)
 - Code Editor with syntax highlighting, file tree, AI assistance
 - Workflow system with code editing (YAML, JSON, Python DSL)
-- RAG-based code context for AI chat
+- RAG-based code context for AI chat (now fully wired)
 - Code execution node supporting Python, JavaScript, Bash, PowerShell
 - Comprehensive test suite (100+ tests for Phase 5 alone)
