@@ -12,12 +12,16 @@ This package contains the main code editor view and its components:
 """
 
 import asyncio
+import os
+import tempfile
 from collections.abc import Awaitable
 
 import flet as ft
 
 from src.ai.completions import CompletionService
 from src.ai.gateway import get_gateway
+from src.rag.chromadb_client import ChromaDBClient
+from src.rag.embeddings import EmbeddingManager
 from src.services.editor import FileService, PygmentsHighlighter
 from src.ui.components.code_editor import ResizableSplitPanel
 from src.ui.theme import SkynetteTheme
@@ -28,6 +32,7 @@ from src.ui.views.code_editor.ai_panel import (
     GhostTextOverlay,
     Suggestion,
 )
+from src.ui.views.code_editor.ai_panel.rag_context import RAGContextProvider
 from src.ui.views.code_editor.editor import CodeEditor
 from src.ui.views.code_editor.file_tree import FileTree
 from src.ui.views.code_editor.state import EditorState, OpenFile
@@ -95,6 +100,11 @@ class CodeEditorView(ft.Column):
         self._validation_task: asyncio.Task | None = None
         self._validation_errors: list[str] = []
 
+        # RAG context for AI chat
+        self._chromadb_client: ChromaDBClient | None = None
+        self._embedding_manager: EmbeddingManager | None = None
+        self._rag_provider: RAGContextProvider | None = None
+
         # File picker (must be added to page overlay before use)
         self._folder_picker = ft.FilePicker()
         self._folder_picker.on_result = self._on_folder_picked
@@ -154,6 +164,15 @@ class CodeEditorView(ft.Column):
             spacing=0,
         )
 
+        # Initialize RAG components for AI chat context
+        rag_persist_dir = os.path.join(tempfile.gettempdir(), "skynette_rag")
+        self._chromadb_client = ChromaDBClient(rag_persist_dir)
+        self._embedding_manager = EmbeddingManager()
+        self._rag_provider = RAGContextProvider(
+            chromadb_client=self._chromadb_client,
+            embedding_manager=self._embedding_manager,
+        )
+
         # Chat panel (initially hidden)
         self._chat_panel = ChatPanel(
             page=self._page_ref,
@@ -161,6 +180,8 @@ class CodeEditorView(ft.Column):
             gateway=self._gateway,
             on_include_code=self._get_selected_code,
             on_code_suggestion=self.show_diff_from_ai,
+            rag_provider=self._rag_provider,
+            get_project_root=lambda: self.state.file_tree_root,
         )
 
         # AI panel container (for visibility toggle)
@@ -810,6 +831,14 @@ class CodeEditorView(ft.Column):
 
         # Remove state listener
         self.state.remove_listener(self._on_state_change)
+
+        # Dispose RAG components
+        if self._embedding_manager:
+            self._embedding_manager.shutdown()
+        # ChromaDBClient and RAGContextProvider don't need explicit shutdown
+        self._rag_provider = None
+        self._chromadb_client = None
+        self._embedding_manager = None
 
         # Dispose AI components
         if self._chat_panel:
