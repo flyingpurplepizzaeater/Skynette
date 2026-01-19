@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** One app to replace separate AI chat clients, model managers, and workflow tools -- accessible to everyone
-**Current focus:** Milestone complete — Skynette v2 delivered
+**Current focus:** Gap closure — wiring RAGContextProvider to ChatPanel
 
 ## Current Position
 
-Phase: 5 of 5 (Advanced Integration)
-Plan: 4 of 4 in current phase
-Status: **Milestone complete**
-Last activity: 2026-01-19 -- All phases verified, milestone ready for audit
+Phase: 6 of 6 (RAG Context Wiring)
+Plan: 0 of 1 in current phase
+Status: **Gap closure phase added**
+Last activity: 2026-01-19 -- Added Phase 6 to close audit gap
 
-Progress: [########################] 100%
+Progress: [#######################-] 96%
 
 ## Performance Metrics
 
@@ -126,19 +126,20 @@ Last session: 2026-01-19
 Stopped at: Milestone v2 complete — ready for audit
 Resume file: None
 
-## Project Complete
+## Gap Closure In Progress
 
-All 5 phases and 24 plans have been executed successfully.
+Phases 1-5 completed successfully. Phase 6 added to close audit gap.
 
 ### Phase Summary
 
 | Phase | Plans | Description |
 |-------|-------|-------------|
-| 1. Stability & Audit | 4 | AIGateway tests, bug fixes, workflow audit, UI refactor |
-| 2. Provider Foundation | 5 | Gemini, Grok, Ollama, streaming recovery, provider tests |
-| 3. Code Editor Core | 5 | Syntax highlighting, editor state, file tree, UI, lifecycle |
-| 4. AI-Assisted Editing | 6 | Chat services, chat panel, completions, diff view, UX, tests |
-| 5. Advanced Integration | 4 | Workflow script, RAG, code execution, E2E tests |
+| 1. Stability & Audit | 4/4 | AIGateway tests, bug fixes, workflow audit, UI refactor |
+| 2. Provider Foundation | 5/5 | Gemini, Grok, Ollama, streaming recovery, provider tests |
+| 3. Code Editor Core | 5/5 | Syntax highlighting, editor state, file tree, UI, lifecycle |
+| 4. AI-Assisted Editing | 6/6 | Chat services, chat panel, completions, diff view, UX, tests |
+| 5. Advanced Integration | 4/4 | Workflow script, RAG, code execution, E2E tests |
+| 6. RAG Context Wiring | 0/1 | Wire RAGContextProvider to ChatPanel (gap closure) |
 
 ### Key Deliverables
 
