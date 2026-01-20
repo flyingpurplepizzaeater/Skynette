@@ -16,7 +16,7 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 - Phases 7-14: v3.0 Agent (current milestone)
 - Decimal phases (e.g., 7.1): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 7: Agent Core Infrastructure** - Data models, event system, state management, tool registry
+- [x] **Phase 7: Agent Core Infrastructure** - Data models, event system, state management, tool registry
 - [ ] **Phase 8: Planning and Execution** - Planner, executor, orchestrator, model routing
 - [ ] **Phase 9: MCP Integration** - MCP host, transports, tool discovery, server management
 - [ ] **Phase 10: Built-in Tools** - Web search, browser, filesystem, GitHub, code execution
@@ -40,9 +40,9 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 07-01-PLAN.md — Agent data models (state, plan, events)
-- [ ] 07-02-PLAN.md — Tool infrastructure (registry, base class, mock tool)
-- [ ] 07-03-PLAN.md — Agent runtime (budget, events, planner, executor)
+- [x] 07-01-PLAN.md — Agent data models (state, plan, events)
+- [x] 07-02-PLAN.md — Tool infrastructure (registry, base class, mock tool)
+- [x] 07-03-PLAN.md — Agent runtime (budget, events, planner, executor)
 
 ### Phase 8: Planning and Execution
 **Goal**: Agent can plan, execute, and report on multi-step tasks with model flexibility
@@ -161,7 +161,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 7. Agent Core Infrastructure | v3.0 | 0/3 | Planned | - |
+| 7. Agent Core Infrastructure | v3.0 | 3/3 | Complete | 2026-01-20 |
 | 8. Planning and Execution | v3.0 | 0/TBD | Not started | - |
 | 9. MCP Integration | v3.0 | 0/TBD | Not started | - |
 | 10. Built-in Tools | v3.0 | 0/TBD | Not started | - |
@@ -172,4 +172,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-20*
+*Last updated: 2026-01-20 (Phase 7 complete)*
