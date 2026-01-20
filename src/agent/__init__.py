@@ -5,6 +5,8 @@ Core agent infrastructure for autonomous task execution.
 """
 
 from src.agent.models import (
+    AgentEvent,
+    AgentEventType,
     AgentPlan,
     AgentSession,
     AgentState,
@@ -29,6 +31,9 @@ __all__ = [
     "StepStatus",
     "PlanStep",
     "AgentPlan",
+    # Event models
+    "AgentEvent",
+    "AgentEventType",
     # Tool models
     "ToolDefinition",
     "ToolCall",
