@@ -105,58 +105,70 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AGNT-01 | TBD | Pending |
-| AGNT-02 | TBD | Pending |
-| AGNT-03 | TBD | Pending |
-| AGNT-04 | TBD | Pending |
-| AGNT-05 | TBD | Pending |
-| AGNT-06 | TBD | Pending |
-| AGNT-07 | TBD | Pending |
-| MCP-01 | TBD | Pending |
-| MCP-02 | TBD | Pending |
-| MCP-03 | TBD | Pending |
-| MCP-04 | TBD | Pending |
-| MCP-05 | TBD | Pending |
-| MCP-06 | TBD | Pending |
-| MCP-07 | TBD | Pending |
-| TOOL-01 | TBD | Pending |
-| TOOL-02 | TBD | Pending |
-| TOOL-03 | TBD | Pending |
-| TOOL-04 | TBD | Pending |
-| TOOL-05 | TBD | Pending |
-| TOOL-06 | TBD | Pending |
-| SAFE-01 | TBD | Pending |
-| SAFE-02 | TBD | Pending |
-| SAFE-03 | TBD | Pending |
-| SAFE-04 | TBD | Pending |
-| SAFE-05 | TBD | Pending |
-| SAFE-06 | TBD | Pending |
-| SAFE-07 | TBD | Pending |
-| AUTO-01 | TBD | Pending |
-| AUTO-02 | TBD | Pending |
-| AUTO-03 | TBD | Pending |
-| AUTO-04 | TBD | Pending |
-| AUTO-05 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| UI-06 | TBD | Pending |
-| AI-01 | TBD | Pending |
-| AI-02 | TBD | Pending |
-| AI-03 | TBD | Pending |
-| QUAL-01 | TBD | Pending |
-| QUAL-02 | TBD | Pending |
-| QUAL-03 | TBD | Pending |
-| QUAL-04 | TBD | Pending |
-| QUAL-05 | TBD | Pending |
+| AGNT-01 | Phase 7 | Pending |
+| AGNT-02 | Phase 7 | Pending |
+| AGNT-03 | Phase 8 | Pending |
+| AGNT-04 | Phase 7 | Pending |
+| AGNT-05 | Phase 7 | Pending |
+| AGNT-06 | Phase 8 | Pending |
+| AGNT-07 | Phase 8 | Pending |
+| MCP-01 | Phase 9 | Pending |
+| MCP-02 | Phase 9 | Pending |
+| MCP-03 | Phase 9 | Pending |
+| MCP-04 | Phase 9 | Pending |
+| MCP-05 | Phase 9 | Pending |
+| MCP-06 | Phase 9 | Pending |
+| MCP-07 | Phase 9 | Pending |
+| TOOL-01 | Phase 10 | Pending |
+| TOOL-02 | Phase 10 | Pending |
+| TOOL-03 | Phase 10 | Pending |
+| TOOL-04 | Phase 10 | Pending |
+| TOOL-05 | Phase 10 | Pending |
+| TOOL-06 | Phase 10 | Pending |
+| SAFE-01 | Phase 11 | Pending |
+| SAFE-02 | Phase 11 | Pending |
+| SAFE-03 | Phase 11 | Pending |
+| SAFE-04 | Phase 11 | Pending |
+| SAFE-05 | Phase 11 | Pending |
+| SAFE-06 | Phase 11 | Pending |
+| SAFE-07 | Phase 14 | Pending |
+| AUTO-01 | Phase 13 | Pending |
+| AUTO-02 | Phase 13 | Pending |
+| AUTO-03 | Phase 13 | Pending |
+| AUTO-04 | Phase 13 | Pending |
+| AUTO-05 | Phase 14 | Pending |
+| UI-01 | Phase 12 | Pending |
+| UI-02 | Phase 12 | Pending |
+| UI-03 | Phase 12 | Pending |
+| UI-04 | Phase 12 | Pending |
+| UI-05 | Phase 12 | Pending |
+| UI-06 | Phase 12 | Pending |
+| AI-01 | Phase 8 | Pending |
+| AI-02 | Phase 8 | Pending |
+| AI-03 | Phase 7 | Pending |
+| QUAL-01 | Phase 8 | Pending |
+| QUAL-02 | Phase 9 | Pending |
+| QUAL-03 | Phase 10 | Pending |
+| QUAL-04 | Phase 11 | Pending |
+| QUAL-05 | Phase 12 | Pending |
 
 **Coverage:**
-- v3 requirements: 45 total
-- Mapped to phases: 0 (awaiting roadmap)
-- Unmapped: 45
+- v3 requirements: 46 total
+- Mapped to phases: 46
+- Unmapped: 0
+
+**By Phase:**
+| Phase | Count | Requirements |
+|-------|-------|--------------|
+| Phase 7 | 5 | AGNT-01, AGNT-02, AGNT-04, AGNT-05, AI-03 |
+| Phase 8 | 6 | AGNT-03, AGNT-06, AGNT-07, AI-01, AI-02, QUAL-01 |
+| Phase 9 | 8 | MCP-01 through MCP-07, QUAL-02 |
+| Phase 10 | 7 | TOOL-01 through TOOL-06, QUAL-03 |
+| Phase 11 | 7 | SAFE-01 through SAFE-06, QUAL-04 |
+| Phase 12 | 7 | UI-01 through UI-06, QUAL-05 |
+| Phase 13 | 4 | AUTO-01 through AUTO-04 |
+| Phase 14 | 2 | AUTO-05, SAFE-07 |
 
 ---
 *Requirements defined: 2026-01-20*
-*Last updated: 2026-01-20 after initial definition*
+*Last updated: 2026-01-20 after roadmap creation*
