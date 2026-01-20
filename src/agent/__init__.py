@@ -4,7 +4,11 @@ Agent Module
 Core agent infrastructure for autonomous task execution.
 """
 
+from src.agent.budget import TokenBudget
+from src.agent.events import AgentEventEmitter, EventSubscription
+from src.agent.loop import AgentExecutor, AgentPlanner, ToolExecutionError
 from src.agent.models import (
+    AgentEvent,
     AgentPlan,
     AgentSession,
     AgentState,
@@ -29,10 +33,21 @@ __all__ = [
     "StepStatus",
     "PlanStep",
     "AgentPlan",
+    # Event models
+    "AgentEvent",
     # Tool models
     "ToolDefinition",
     "ToolCall",
     "ToolResult",
+    # Budget
+    "TokenBudget",
+    # Events
+    "AgentEventEmitter",
+    "EventSubscription",
+    # Loop
+    "AgentExecutor",
+    "AgentPlanner",
+    "ToolExecutionError",
     # Registry
     "AgentContext",
     "BaseTool",
