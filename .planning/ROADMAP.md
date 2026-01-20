@@ -54,11 +54,12 @@ Plans:
   3. Agent traces are viewable for debugging (what happened, in what order)
   4. Agent suggests appropriate model for different task types
   5. Unit tests pass for all agent core components
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
+- [ ] 08-01-PLAN.md — Trace storage and enhanced events (observability foundation)
+- [ ] 08-02-PLAN.md — Cancellation controls and status display (user visibility)
+- [ ] 08-03-PLAN.md — Model routing and unit tests (intelligence and quality)
 
 ### Phase 9: MCP Integration
 **Goal**: Agent can discover and use tools from external MCP servers
@@ -162,7 +163,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 7. Agent Core Infrastructure | v3.0 | 3/3 | Complete | 2026-01-20 |
-| 8. Planning and Execution | v3.0 | 0/TBD | Not started | - |
+| 8. Planning and Execution | v3.0 | 0/3 | Planned | - |
 | 9. MCP Integration | v3.0 | 0/TBD | Not started | - |
 | 10. Built-in Tools | v3.0 | 0/TBD | Not started | - |
 | 11. Safety and Approval | v3.0 | 0/TBD | Not started | - |
@@ -172,4 +173,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-20 (Phase 7 complete)*
+*Last updated: 2026-01-20 (Phase 8 planned)*
