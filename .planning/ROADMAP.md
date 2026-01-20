@@ -37,11 +37,12 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
   3. Agent maintains conversation context within a task session
   4. Agent retries a failed tool call with exponential backoff
   5. Agent respects configured token budget limits
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md — Agent data models (state, plan, events)
+- [ ] 07-02-PLAN.md — Tool infrastructure (registry, base class, mock tool)
+- [ ] 07-03-PLAN.md — Agent runtime (budget, events, planner, executor)
 
 ### Phase 8: Planning and Execution
 **Goal**: Agent can plan, execute, and report on multi-step tasks with model flexibility
@@ -160,7 +161,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 7. Agent Core Infrastructure | v3.0 | 0/TBD | Not started | - |
+| 7. Agent Core Infrastructure | v3.0 | 0/3 | Planned | - |
 | 8. Planning and Execution | v3.0 | 0/TBD | Not started | - |
 | 9. MCP Integration | v3.0 | 0/TBD | Not started | - |
 | 10. Built-in Tools | v3.0 | 0/TBD | Not started | - |
