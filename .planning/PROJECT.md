@@ -2,11 +2,23 @@
 
 ## What This Is
 
-An all-in-one, open-source AI workspace that combines chat, model management, workflow automation, and code editing in a single unified interface. Users can run it as a desktop app or self-host it as a web application. It supports both local AI models (via Ollama, llama.cpp) and cloud providers (OpenAI, Anthropic, Gemini, Grok) seamlessly. The integrated code editor provides AI-assisted development with syntax highlighting, inline suggestions, and RAG-powered codebase awareness.
+An all-in-one, open-source AI workspace that combines chat, model management, workflow automation, code editing, and autonomous agent capabilities in a single unified interface. Users can run it as a desktop app or self-host it as a web application. It supports both local AI models (via Ollama, llama.cpp) and cloud providers (OpenAI, Anthropic, Gemini, Grok) seamlessly. The integrated agent can build apps, browse the web, interact with external services, and execute multi-step tasks autonomously or with human oversight.
 
 ## Core Value
 
-One app to replace the need for separate AI chat clients, local model managers, workflow automation tools, and code editors - accessible to everyone, not just developers.
+One app to replace the need for separate AI chat clients, local model managers, workflow automation tools, code editors, and AI assistants - accessible to everyone, not just developers.
+
+## Current Milestone: v3.0 Agent
+
+**Goal:** Transform Skynette from an AI workspace into a general-purpose AI assistant that can autonomously execute tasks, interact with external services, and build software.
+
+**Target features:**
+- Agent framework with planning, execution, and progress feedback
+- MCP integration for extensible tool use
+- Built-in tools: web search, browser automation, code execution
+- Configurable approval levels with YOLO bypass mode
+- Smart model routing (agent suggests best model per task)
+- GitHub integration for project creation
 
 ## Requirements
 
@@ -42,7 +54,37 @@ One app to replace the need for separate AI chat clients, local model managers, 
 
 ### Active
 
-(None - define with `/gsd:new-milestone`)
+**Agent Framework:**
+- [ ] Agent planning phase (asks clarifying questions before execution)
+- [ ] Agent execution loop with tool use
+- [ ] Visual progress feedback (thinking indicator, status updates)
+- [ ] Both autonomous (background) and interactive modes
+- [ ] Configurable per-action approval levels
+- [ ] YOLO bypass mode for power users
+
+**MCP Integration:**
+- [ ] MCP host implementation (connect to MCP servers)
+- [ ] Support for stdio, SSE, and HTTP transports
+- [ ] Tool discovery and registration from MCP servers
+- [ ] Built-in MCP server management UI
+
+**Built-in Tools:**
+- [ ] Web search via search APIs (Google, Bing, etc.)
+- [ ] Headless browser for complex web interactions
+- [ ] Filesystem operations (read, write, create, delete)
+- [ ] Code execution (extend existing node)
+- [ ] GitHub integration (create repos, push code)
+
+**AI Backend:**
+- [ ] Smart model routing (suggest best model per task)
+- [ ] User-configurable model defaults per task type
+- [ ] Agent uses existing multi-provider gateway
+
+**Safety & Control:**
+- [ ] Action classification (safe, moderate, destructive)
+- [ ] Approval workflow for flagged actions
+- [ ] Audit log of agent actions
+- [ ] Kill switch to stop running agent tasks
 
 ### Out of Scope
 
@@ -50,8 +92,8 @@ One app to replace the need for separate AI chat clients, local model managers, 
 - Real-time collaboration - single-user focus, complexity too high
 - Plugin marketplace - SDK exists but marketplace deferred
 - Custom model training - use pre-trained models only
-- Agent mode - requires extensive safety testing
-- MCP integration - emerging standard, wait for stability
+- Email integration - defer to MCP servers (users can add their own)
+- Stock market integration - defer to MCP servers
 
 ## Context
 
@@ -62,6 +104,8 @@ One app to replace the need for separate AI chat clients, local model managers, 
 **Provider support:** OpenAI, Anthropic, Gemini, Grok, Ollama, local llama.cpp
 
 **Test coverage:** 477+ tests covering all major subsystems
+
+**v3.0 direction:** Agent mode transforms Skynette from a tool into an assistant. Users can give it tasks ("build me an app", "research this topic", "check the news") and it executes autonomously with appropriate oversight.
 
 **Known issues:**
 - Manual CodeEditorView verification pending
@@ -74,6 +118,7 @@ One app to replace the need for separate AI chat clients, local model managers, 
 - **AI providers**: Must support OpenAI, Anthropic, Ollama, Gemini, Grok
 - **Local-first**: Core features must work offline with local models
 - **Open source**: All code public, self-hostable, privacy-respecting
+- **Safety**: Agent actions must be auditable and controllable
 
 ## Key Decisions
 
@@ -89,6 +134,8 @@ One app to replace the need for separate AI chat clients, local model managers, 
 | DimensionValidator for embeddings | Prevents ChromaDB corruption from model changes | ✓ Good |
 | RAG context in system prompt | Maintains conversation history integrity | ✓ Good |
 | Lazy project indexing | Avoid slow startup, index on first query | ✓ Good |
+| MCP for extensibility | Standard protocol, community ecosystem, future-proof | — Pending |
+| Configurable approval levels | Balance autonomy with safety | — Pending |
 
 ---
-*Last updated: 2026-01-20 after v2.0 milestone*
+*Last updated: 2026-01-20 after v3.0 milestone initialization*
