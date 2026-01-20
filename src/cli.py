@@ -420,7 +420,7 @@ Examples:
         """
     )
 
-    parser.add_argument('--version', action='version', version='Skynette CLI 1.0.0')
+    parser.add_argument('--version', action='version', version='Skynette CLI 2.0.0')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument('--no-banner', action='store_true', help='Suppress banner')
 
