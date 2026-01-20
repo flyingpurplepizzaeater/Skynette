@@ -18,6 +18,7 @@ from src.agent.models import (
     ToolDefinition,
     ToolResult,
 )
+from src.agent.observability import TraceEntry, TraceSession, TraceStore, TraceViewer
 from src.agent.registry import (
     AgentContext,
     BaseTool,
@@ -53,4 +54,9 @@ __all__ = [
     "BaseTool",
     "ToolRegistry",
     "get_tool_registry",
+    # Observability
+    "TraceEntry",
+    "TraceSession",
+    "TraceStore",
+    "TraceViewer",
 ]
