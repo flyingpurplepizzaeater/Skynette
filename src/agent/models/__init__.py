@@ -4,6 +4,12 @@ Agent Models
 Data models for the agent system including state, plans, and events.
 """
 
+from src.agent.models.cancel import (
+    CancelMode,
+    CancellationRequest,
+    CancellationResult,
+    ResultMode,
+)
 from src.agent.models.event import AgentEvent, AgentEventType
 from src.agent.models.plan import AgentPlan, PlanStep, StepStatus
 from src.agent.models.state import AgentSession, AgentState
@@ -20,4 +26,9 @@ __all__ = [
     "ToolDefinition",
     "ToolCall",
     "ToolResult",
+    # Cancellation models
+    "CancelMode",
+    "ResultMode",
+    "CancellationRequest",
+    "CancellationResult",
 ]
