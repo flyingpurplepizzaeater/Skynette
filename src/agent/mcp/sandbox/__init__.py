@@ -1,5 +1,6 @@
 """MCP Sandbox - Docker-based isolation for untrusted MCP servers."""
 
+from src.agent.mcp.sandbox.docker_sandbox import DockerSandbox, is_docker_available
 from src.agent.mcp.sandbox.policy import (
     DEFAULT_POLICY,
     VERIFIED_POLICY,
@@ -8,6 +9,8 @@ from src.agent.mcp.sandbox.policy import (
 )
 
 __all__ = [
+    "DockerSandbox",
+    "is_docker_available",
     "SandboxPolicy",
     "DEFAULT_POLICY",
     "VERIFIED_POLICY",
