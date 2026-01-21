@@ -10,8 +10,13 @@ import logging
 from contextlib import AsyncExitStack
 from typing import Optional
 
+from typing import TYPE_CHECKING
+
 from src.agent.mcp.client.connection import MCPConnection
 from src.agent.mcp.models.server import MCPServerConfig, MCPServerStatus
+
+if TYPE_CHECKING:
+    from src.agent.mcp.sandbox.docker_sandbox import DockerSandbox
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +37,7 @@ class MCPClientManager:
     _initialized: bool
     _reconnect_tasks: dict[str, asyncio.Task]
     _server_configs: dict[str, MCPServerConfig]
+    _sandboxes: dict[str, "DockerSandbox"]  # Server ID -> sandbox instance
 
     # Reconnect settings (per 09-CONTEXT.md: exponential backoff)
     RECONNECT_BASE_DELAY = 1.0  # Initial delay in seconds
@@ -53,6 +59,7 @@ class MCPClientManager:
         self._exit_stack = AsyncExitStack()
         self._reconnect_tasks = {}
         self._server_configs = {}
+        self._sandboxes = {}
         self._initialized = True
         logger.info("MCPClientManager initialized")
 
@@ -92,31 +99,61 @@ class MCPClientManager:
             raise ConnectionError(f"Failed to connect to {config.name}: {e}") from e
 
     async def _connect_stdio(self, config: MCPServerConfig) -> MCPConnection:
-        """Connect via stdio transport.
+        """Connect via stdio transport, using sandbox for untrusted servers.
 
         Spawns a subprocess running the MCP server and communicates
-        via stdin/stdout.
+        via stdin/stdout. For USER_ADDED servers with sandbox_enabled=True,
+        runs the server in a Docker container for isolation.
         """
         from mcp import ClientSession
         from mcp.client.stdio import stdio_client, StdioServerParameters
+        from src.agent.mcp.sandbox.docker_sandbox import DockerSandbox, is_docker_available
+        from src.agent.mcp.sandbox.policy import get_policy_for_trust_level
 
         if not config.command:
             raise ValueError(f"stdio transport requires 'command' for server {config.name}")
 
-        server_params = StdioServerParameters(
-            command=config.command,
-            args=config.args,
-            env=config.env or None,
+        # Check if sandbox is needed
+        use_sandbox = (
+            config.sandbox_enabled
+            and config.trust_level == "user_added"
         )
 
-        transport = await self._exit_stack.enter_async_context(
-            stdio_client(server_params)
-        )
-        read_stream, write_stream = transport
+        if use_sandbox:
+            if not is_docker_available():
+                logger.warning(
+                    f"Docker not available for sandboxing {config.name}. "
+                    "Running without sandbox (less secure)."
+                )
+                use_sandbox = False
 
-        session = await self._exit_stack.enter_async_context(
-            ClientSession(read_stream, write_stream)
-        )
+        if use_sandbox:
+            # Start sandboxed server
+            policy = get_policy_for_trust_level(config.trust_level)
+            sandbox = DockerSandbox(config, policy)
+            read_stream, write_stream = await sandbox.start()
+            self._sandboxes[config.id] = sandbox
+
+            session = await self._exit_stack.enter_async_context(
+                ClientSession(read_stream, write_stream)
+            )
+        else:
+            # Direct stdio connection
+            server_params = StdioServerParameters(
+                command=config.command,
+                args=config.args,
+                env=config.env or None,
+            )
+
+            transport = await self._exit_stack.enter_async_context(
+                stdio_client(server_params)
+            )
+            read_stream, write_stream = transport
+
+            session = await self._exit_stack.enter_async_context(
+                ClientSession(read_stream, write_stream)
+            )
+
         await session.initialize()
 
         return MCPConnection(
@@ -232,6 +269,11 @@ class MCPClientManager:
             self._reconnect_tasks[server_id].cancel()
             del self._reconnect_tasks[server_id]
 
+        # Cleanup sandbox if exists
+        if server_id in self._sandboxes:
+            await self._sandboxes[server_id].stop()
+            del self._sandboxes[server_id]
+
         if server_id in self._connections:
             # Note: AsyncExitStack handles cleanup
             del self._connections[server_id]
@@ -243,12 +285,17 @@ class MCPClientManager:
     async def disconnect_all(self) -> None:
         """Disconnect from all servers and cleanup.
 
-        Ensures no orphaned processes remain.
+        Ensures no orphaned processes or containers remain.
         """
         # Cancel all reconnect tasks
         for task in self._reconnect_tasks.values():
             task.cancel()
         self._reconnect_tasks.clear()
+
+        # Stop all sandboxes
+        for sandbox in self._sandboxes.values():
+            await sandbox.stop()
+        self._sandboxes.clear()
 
         self._connections.clear()
         self._server_configs.clear()
@@ -296,6 +343,17 @@ class MCPClientManager:
             True if reconnection is in progress
         """
         return server_id in self._reconnect_tasks
+
+    def is_sandboxed(self, server_id: str) -> bool:
+        """Check if a server is running in a sandbox.
+
+        Args:
+            server_id: ID of the server
+
+        Returns:
+            True if running in a Docker container sandbox
+        """
+        return server_id in self._sandboxes
 
     async def list_tools(self, server_id: str) -> list[dict]:
         """List tools from a specific server.
