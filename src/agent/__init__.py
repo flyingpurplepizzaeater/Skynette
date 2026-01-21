@@ -18,12 +18,25 @@ from src.agent.models import (
     ToolDefinition,
     ToolResult,
 )
+from src.agent.models.cancel import (
+    CancelMode,
+    CancellationRequest,
+    CancellationResult,
+    ResultMode,
+)
 from src.agent.observability import TraceEntry, TraceSession, TraceStore, TraceViewer
 from src.agent.registry import (
     AgentContext,
     BaseTool,
     ToolRegistry,
     get_tool_registry,
+)
+from src.agent.routing import (
+    ModelRecommendation,
+    ModelRouter,
+    RoutingRule,
+    RoutingRules,
+    TaskCategory,
 )
 
 __all__ = [
@@ -59,4 +72,15 @@ __all__ = [
     "TraceSession",
     "TraceStore",
     "TraceViewer",
+    # Cancellation
+    "CancelMode",
+    "ResultMode",
+    "CancellationRequest",
+    "CancellationResult",
+    # Routing
+    "ModelRouter",
+    "ModelRecommendation",
+    "TaskCategory",
+    "RoutingRules",
+    "RoutingRule",
 ]
