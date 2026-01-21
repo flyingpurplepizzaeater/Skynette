@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 9 of 14 (MCP Integration)
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-21 - Completed 09-01-PLAN.md (MCP Foundation Models)
+Last activity: 2026-01-21 - Completed 09-02-PLAN.md (MCP Client Implementation)
 
-Progress: [######              ] 27%
+Progress: [######              ] 29%
 
 ## Milestone History
 
@@ -25,9 +25,9 @@ Progress: [######              ] 27%
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7 (v3.0)
+- Total plans completed: 8 (v3.0)
 - Average duration: ~10 minutes
-- Total execution time: ~1.1 hours
+- Total execution time: ~1.2 hours
 
 **By Phase:**
 
@@ -35,11 +35,11 @@ Progress: [######              ] 27%
 |-------|-------|-------|----------|
 | 7 | 3 | ~37min | ~12min |
 | 8 | 3 | ~29min | ~10min |
-| 9 | 1 | ~8min | ~8min |
+| 9 | 2 | ~14min | ~7min |
 
 **Recent Trend:**
-- Last 5 plans: 07-03, 08-01, 08-02, 08-03, 09-01
-- Trend: Consistent ~8-10min velocity
+- Last 5 plans: 08-01, 08-02, 08-03, 09-01, 09-02
+- Trend: Consistent ~6-10min velocity
 
 *Updated after each plan completion*
 
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - 09-01: Use Literal types for MCP enums (TrustLevel, TransportType, ServerCategory)
 - 09-01: Fixed IDs for curated servers to enable key-based lookup
 - 09-01: Default enabled=False for curated servers (allowlist approach)
+- 09-02: Use official MCP SDK (mcp>=1.25.0) for client implementation
+- 09-02: Exponential backoff reconnect: 1s base, 60s max, 5 attempts max
+- 09-02: Tool caching in MCPConnection to avoid repeated list_tools calls
 
 ### Pending Todos
 
@@ -82,11 +85,11 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-21
-Stopped at: Completed 09-01-PLAN.md (MCP Foundation Models)
+Stopped at: Completed 09-02-PLAN.md (MCP Client Implementation)
 Resume file: None
 
 ## Next Steps
 
-Phase 9 Plan 1 complete. Continue with 09-02 (MCP Client Implementation).
+Phase 9 Plan 2 complete. Continue with 09-03 (Tool Discovery and Registry Integration).
 
-Run `/gsd:execute-phase 09-02` to continue MCP Integration phase.
+Run `/gsd:execute-phase 09-03` to continue MCP Integration phase.
