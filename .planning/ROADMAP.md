@@ -91,11 +91,15 @@ Plans:
   3. Agent can read, write, create, and delete files in allowed directories
   4. Agent can execute code snippets and return output
   5. Agent can create GitHub repository and push code
-**Plans**: TBD
+**Plans**: 6 plans in 4 waves
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md — Foundation utilities (path validation, backup) and dependencies
+- [ ] 10-02-PLAN.md — Web search tool with DuckDuckGo and scraper fallback
+- [ ] 10-03-PLAN.md — Filesystem tools (read, write, delete, list) with security
+- [ ] 10-04-PLAN.md — Code execution tool with multi-language support
+- [ ] 10-05-PLAN.md — Browser automation (Playwright) and GitHub integration
+- [ ] 10-06-PLAN.md — Skynette system tools (RAG) and security tests (QUAL-03)
 
 ### Phase 11: Safety and Approval Systems
 **Goal**: User has control over what agent can do with appropriate oversight
@@ -169,7 +173,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 7. Agent Core Infrastructure | v3.0 | 3/3 | Complete | 2026-01-20 |
 | 8. Planning and Execution | v3.0 | 3/3 | Complete | 2026-01-21 |
 | 9. MCP Integration | v3.0 | 6/6 | Complete | 2026-01-21 |
-| 10. Built-in Tools | v3.0 | 0/TBD | Not started | - |
+| 10. Built-in Tools | v3.0 | 0/6 | Planned | - |
 | 11. Safety and Approval | v3.0 | 0/TBD | Not started | - |
 | 12. UI Integration | v3.0 | 0/TBD | Not started | - |
 | 13. Autonomy Levels | v3.0 | 0/TBD | Not started | - |
@@ -177,4 +181,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-21 (Phase 9 complete)*
+*Last updated: 2026-01-21 (Phase 10 planned)*
