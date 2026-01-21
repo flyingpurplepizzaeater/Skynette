@@ -20,6 +20,11 @@ from src.agent.mcp.curated import (
     list_curated_servers,
     is_curated_server,
 )
+from src.agent.mcp.client import (
+    MCPConnection,
+    MCPClientManager,
+    get_mcp_client_manager,
+)
 
 __all__ = [
     # Models
@@ -37,4 +42,8 @@ __all__ = [
     "get_curated_server",
     "list_curated_servers",
     "is_curated_server",
+    # Client
+    "MCPConnection",
+    "MCPClientManager",
+    "get_mcp_client_manager",
 ]
