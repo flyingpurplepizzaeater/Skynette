@@ -2,6 +2,7 @@
 
 import flet as ft
 from src.ui.theme import Theme
+from src.ui.views.settings_mcp import build_mcp_settings_content
 
 
 class SettingsView(ft.Column):
@@ -10,8 +11,40 @@ class SettingsView(ft.Column):
     def __init__(self):
         super().__init__()
         self.expand = True
+        self._mcp_container: ft.Container | None = None
+
+    def did_mount(self):
+        """Called when view is mounted to page."""
+        # Build MCP content now that page is available
+        if self._mcp_container and self.page:
+            self._mcp_container.content = build_mcp_settings_content(self.page)
+            self.page.update()
 
     def build(self):
+        # MCP container - content populated in did_mount when page available
+        self._mcp_container = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "MCP Servers",
+                        size=16,
+                        weight=ft.FontWeight.W_600,
+                        color=Theme.TEXT_PRIMARY,
+                    ),
+                    ft.Text(
+                        "Loading...",
+                        size=12,
+                        color=Theme.TEXT_SECONDARY,
+                    ),
+                ],
+                spacing=Theme.SPACING_SM,
+            ),
+            bgcolor=Theme.SURFACE,
+            padding=Theme.SPACING_MD,
+            border_radius=Theme.RADIUS_MD,
+            border=ft.Border.all(1, Theme.BORDER),
+        )
+
         return ft.Column(
             controls=[
                 self._build_header(),
@@ -21,6 +54,8 @@ class SettingsView(ft.Column):
                             self._build_section("Appearance", self._build_appearance_settings()),
                             self._build_section("AI Settings", self._build_ai_settings()),
                             self._build_section("Storage", self._build_storage_settings()),
+                            # MCP Servers section (has its own internal header)
+                            self._mcp_container,
                             self._build_section("Advanced", self._build_advanced_settings()),
                         ],
                         scroll=ft.ScrollMode.AUTO,
