@@ -7,7 +7,7 @@ Executes agent plans with tool invocation, retry logic, and budget enforcement.
 import asyncio
 import logging
 import time
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 
 from tenacity import (
     retry,
@@ -21,6 +21,12 @@ from src.agent.models.state import AgentState, AgentSession
 from src.agent.models.plan import AgentPlan, PlanStep, StepStatus
 from src.agent.models.event import AgentEvent
 from src.agent.models.tool import ToolResult
+from src.agent.models.cancel import (
+    CancelMode,
+    CancellationRequest,
+    CancellationResult,
+    ResultMode,
+)
 from src.agent.budget import TokenBudget
 from src.agent.events import AgentEventEmitter
 from src.agent.registry import get_tool_registry, AgentContext
@@ -48,11 +54,79 @@ class AgentExecutor:
         self.registry = get_tool_registry()
         self.emitter = AgentEventEmitter()
         self.budget = TokenBudget(max_tokens=session.token_budget)
-        self._cancelled = False
+        self._cancel_request: Optional[CancellationRequest] = None
+        self._current_step: Optional[PlanStep] = None
+        self._completed_steps: list[str] = []
 
     def cancel(self):
-        """Request cancellation of execution."""
-        self._cancelled = True
+        """
+        Request immediate cancellation of execution.
+
+        Backward-compatible method that creates an IMMEDIATE cancellation request.
+        For more control, use request_cancel() instead.
+        """
+        self.request_cancel(CancellationRequest(
+            cancel_mode=CancelMode.IMMEDIATE,
+            result_mode=ResultMode.KEEP,
+            reason="Legacy cancel() called"
+        ))
+
+    def request_cancel(self, request: CancellationRequest):
+        """
+        Request cancellation with specific mode and result handling.
+
+        Args:
+            request: CancellationRequest specifying cancel mode and result mode
+        """
+        self._cancel_request = request
+        # Try to emit cancellation_requested event if event loop is running
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.emitter.emit(AgentEvent(
+                type="cancelled",  # Use existing event type for request notification
+                data={
+                    "status": "requested",
+                    "cancel_mode": request.cancel_mode.value,
+                    "result_mode": request.result_mode.value,
+                    "reason": request.reason,
+                },
+                session_id=self.session.id
+            )))
+        except RuntimeError:
+            # No running event loop - event will be emitted when run() checks cancellation
+            pass
+
+    def _should_cancel(self) -> bool:
+        """
+        Check if execution should be cancelled based on current state.
+
+        Returns:
+            True if cancellation should proceed now, False otherwise
+        """
+        if self._cancel_request is None:
+            return False
+
+        if self._cancel_request.cancel_mode == CancelMode.IMMEDIATE:
+            return True
+
+        # AFTER_CURRENT mode: cancel only if no step is running
+        if self._cancel_request.cancel_mode == CancelMode.AFTER_CURRENT:
+            return self._current_step is None
+
+        return False
+
+    def _create_cancellation_result(self) -> CancellationResult:
+        """Create a CancellationResult from current state."""
+        cancelled_step = None
+        if self._current_step is not None:
+            cancelled_step = self._current_step.description
+
+        return CancellationResult(
+            completed_steps=self._completed_steps.copy(),
+            cancelled_step=cancelled_step,
+            cancel_mode=self._cancel_request.cancel_mode if self._cancel_request else CancelMode.IMMEDIATE,
+            result_mode=self._cancel_request.result_mode if self._cancel_request else ResultMode.KEEP,
+        )
 
     async def run(self, task: str) -> AsyncIterator[AgentEvent]:
         """
@@ -85,10 +159,22 @@ class AgentExecutor:
         start_time = time.time()
 
         while not plan.is_complete() and not plan.has_failed():
-            # Check cancellation
-            if self._cancelled:
+            # Check cancellation with mode-aware logic
+            if self._should_cancel():
                 self.session.state = AgentState.CANCELLED
-                yield AgentEvent(type="cancelled", data={}, session_id=self.session.id)
+                result = self._create_cancellation_result()
+                yield AgentEvent(
+                    type="cancelled",
+                    data={
+                        "status": "cancelled",
+                        "completed_steps": result.completed_steps,
+                        "cancelled_step": result.cancelled_step,
+                        "cancel_mode": result.cancel_mode.value,
+                        "result_mode": result.result_mode.value,
+                        "options": result.options,
+                    },
+                    session_id=self.session.id
+                )
                 return
 
             # Check iteration limit
@@ -134,6 +220,7 @@ class AgentExecutor:
                 continue
 
             # Execute step
+            self._current_step = step
             yield AgentEvent(
                 type="step_started",
                 data={"step_id": step.id, "description": step.description},
@@ -144,7 +231,29 @@ class AgentExecutor:
             async for event in self._execute_step(step):
                 yield event
 
+            # Track completed step
+            if step.status == StepStatus.COMPLETED:
+                self._completed_steps.append(step.description)
+            self._current_step = None
             self.session.steps_completed += 1
+
+            # Check for AFTER_CURRENT cancellation after step completes
+            if self._should_cancel():
+                self.session.state = AgentState.CANCELLED
+                result = self._create_cancellation_result()
+                yield AgentEvent(
+                    type="cancelled",
+                    data={
+                        "status": "cancelled",
+                        "completed_steps": result.completed_steps,
+                        "cancelled_step": result.cancelled_step,
+                        "cancel_mode": result.cancel_mode.value,
+                        "result_mode": result.result_mode.value,
+                        "options": result.options,
+                    },
+                    session_id=self.session.id
+                )
+                return
 
         # Determine final state
         if plan.has_failed():
