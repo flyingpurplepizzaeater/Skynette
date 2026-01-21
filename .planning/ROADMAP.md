@@ -71,11 +71,15 @@ Plans:
   3. Tools from connected MCP servers appear in agent tool registry
   4. User can add/remove MCP servers through settings UI
   5. Untrusted MCP servers run in sandboxed environment
-**Plans**: TBD
+**Plans**: 6 plans in 5 waves
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — MCP models, storage, and curated server definitions
+- [ ] 09-02-PLAN.md — MCP client manager with stdio and HTTP transports
+- [ ] 09-03-PLAN.md — Tool adapter and registry integration
+- [ ] 09-04-PLAN.md — Docker sandbox for untrusted servers
+- [ ] 09-05-PLAN.md — Server management UI (settings view and dialogs)
+- [ ] 09-06-PLAN.md — Unit and integration tests
 
 ### Phase 10: Built-in Tools
 **Goal**: Agent has concrete capabilities for web search, browsing, code, and GitHub
@@ -164,7 +168,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 |-------|-----------|----------------|--------|-----------|
 | 7. Agent Core Infrastructure | v3.0 | 3/3 | Complete | 2026-01-20 |
 | 8. Planning and Execution | v3.0 | 3/3 | Complete | 2026-01-21 |
-| 9. MCP Integration | v3.0 | 0/TBD | Not started | - |
+| 9. MCP Integration | v3.0 | 0/6 | Planned | - |
 | 10. Built-in Tools | v3.0 | 0/TBD | Not started | - |
 | 11. Safety and Approval | v3.0 | 0/TBD | Not started | - |
 | 12. UI Integration | v3.0 | 0/TBD | Not started | - |
@@ -173,4 +177,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-21 (Phase 8 complete)*
+*Last updated: 2026-01-21 (Phase 9 planned)*
