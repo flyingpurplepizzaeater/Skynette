@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** One app to replace separate AI chat clients, model managers, workflow tools, code editors, and AI assistants - accessible to everyone
-**Current focus:** Phase 10 - Agent Core (Phase 9 complete)
+**Current focus:** Phase 10 - Built-in Tools (Phase 9 complete)
 
 ## Current Position
 
@@ -105,6 +105,6 @@ Phase 9 (MCP Integration) complete. All 6 plans executed:
 - 09-05: UI components
 - 09-06: Unit and integration tests
 
-Ready to proceed to Phase 10 (Agent Core).
+Ready to proceed to Phase 10 (Built-in Tools).
 
-Run `/gsd:execute-phase 10-01` to begin Agent Core phase.
+Run `/gsd:discuss-phase 10` to gather context, or `/gsd:plan-phase 10` to plan directly.

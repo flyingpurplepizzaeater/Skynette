@@ -18,7 +18,7 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 
 - [x] **Phase 7: Agent Core Infrastructure** - Data models, event system, state management, tool registry
 - [x] **Phase 8: Planning and Execution** - Planner, executor, orchestrator, model routing
-- [ ] **Phase 9: MCP Integration** - MCP host, transports, tool discovery, server management
+- [x] **Phase 9: MCP Integration** - MCP host, transports, tool discovery, server management
 - [ ] **Phase 10: Built-in Tools** - Web search, browser, filesystem, GitHub, code execution
 - [ ] **Phase 11: Safety and Approval Systems** - Classification, HITL approval, audit, kill switch
 - [ ] **Phase 12: UI Integration** - Agent panel, progress display, approvals, plan visualization
@@ -74,12 +74,12 @@ Plans:
 **Plans**: 6 plans in 5 waves
 
 Plans:
-- [ ] 09-01-PLAN.md — MCP models, storage, and curated server definitions
-- [ ] 09-02-PLAN.md — MCP client manager with stdio and HTTP transports
-- [ ] 09-03-PLAN.md — Tool adapter and registry integration
-- [ ] 09-04-PLAN.md — Docker sandbox for untrusted servers
-- [ ] 09-05-PLAN.md — Server management UI (settings view and dialogs)
-- [ ] 09-06-PLAN.md — Unit and integration tests
+- [x] 09-01-PLAN.md — MCP models, storage, and curated server definitions
+- [x] 09-02-PLAN.md — MCP client manager with stdio and HTTP transports
+- [x] 09-03-PLAN.md — Tool adapter and registry integration
+- [x] 09-04-PLAN.md — Docker sandbox for untrusted servers
+- [x] 09-05-PLAN.md — Server management UI (settings view and dialogs)
+- [x] 09-06-PLAN.md — Unit and integration tests
 
 ### Phase 10: Built-in Tools
 **Goal**: Agent has concrete capabilities for web search, browsing, code, and GitHub
@@ -168,7 +168,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 |-------|-----------|----------------|--------|-----------|
 | 7. Agent Core Infrastructure | v3.0 | 3/3 | Complete | 2026-01-20 |
 | 8. Planning and Execution | v3.0 | 3/3 | Complete | 2026-01-21 |
-| 9. MCP Integration | v3.0 | 0/6 | Planned | - |
+| 9. MCP Integration | v3.0 | 6/6 | Complete | 2026-01-21 |
 | 10. Built-in Tools | v3.0 | 0/TBD | Not started | - |
 | 11. Safety and Approval | v3.0 | 0/TBD | Not started | - |
 | 12. UI Integration | v3.0 | 0/TBD | Not started | - |
@@ -177,4 +177,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-21 (Phase 9 planned)*
+*Last updated: 2026-01-21 (Phase 9 complete)*
