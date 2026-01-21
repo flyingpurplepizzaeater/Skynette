@@ -17,7 +17,7 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 - Decimal phases (e.g., 7.1): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 7: Agent Core Infrastructure** - Data models, event system, state management, tool registry
-- [ ] **Phase 8: Planning and Execution** - Planner, executor, orchestrator, model routing
+- [x] **Phase 8: Planning and Execution** - Planner, executor, orchestrator, model routing
 - [ ] **Phase 9: MCP Integration** - MCP host, transports, tool discovery, server management
 - [ ] **Phase 10: Built-in Tools** - Web search, browser, filesystem, GitHub, code execution
 - [ ] **Phase 11: Safety and Approval Systems** - Classification, HITL approval, audit, kill switch
@@ -57,9 +57,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 08-01-PLAN.md — Trace storage and enhanced events (observability foundation)
-- [ ] 08-02-PLAN.md — Cancellation controls and status display (user visibility)
-- [ ] 08-03-PLAN.md — Model routing and unit tests (intelligence and quality)
+- [x] 08-01-PLAN.md — Trace storage and enhanced events (observability foundation)
+- [x] 08-02-PLAN.md — Cancellation controls and status display (user visibility)
+- [x] 08-03-PLAN.md — Model routing and unit tests (intelligence and quality)
 
 ### Phase 9: MCP Integration
 **Goal**: Agent can discover and use tools from external MCP servers
@@ -163,7 +163,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 7. Agent Core Infrastructure | v3.0 | 3/3 | Complete | 2026-01-20 |
-| 8. Planning and Execution | v3.0 | 0/3 | Planned | - |
+| 8. Planning and Execution | v3.0 | 3/3 | Complete | 2026-01-21 |
 | 9. MCP Integration | v3.0 | 0/TBD | Not started | - |
 | 10. Built-in Tools | v3.0 | 0/TBD | Not started | - |
 | 11. Safety and Approval | v3.0 | 0/TBD | Not started | - |
@@ -173,4 +173,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-20 (Phase 8 planned)*
+*Last updated: 2026-01-21 (Phase 8 complete)*

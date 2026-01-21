@@ -107,11 +107,11 @@
 |-------------|-------|--------|
 | AGNT-01 | Phase 7 | Complete |
 | AGNT-02 | Phase 7 | Complete |
-| AGNT-03 | Phase 8 | Pending |
+| AGNT-03 | Phase 8 | Complete |
 | AGNT-04 | Phase 7 | Complete |
 | AGNT-05 | Phase 7 | Complete |
-| AGNT-06 | Phase 8 | Pending |
-| AGNT-07 | Phase 8 | Pending |
+| AGNT-06 | Phase 8 | Complete |
+| AGNT-07 | Phase 8 | Complete |
 | MCP-01 | Phase 9 | Pending |
 | MCP-02 | Phase 9 | Pending |
 | MCP-03 | Phase 9 | Pending |
@@ -143,10 +143,10 @@
 | UI-04 | Phase 12 | Pending |
 | UI-05 | Phase 12 | Pending |
 | UI-06 | Phase 12 | Pending |
-| AI-01 | Phase 8 | Pending |
-| AI-02 | Phase 8 | Pending |
+| AI-01 | Phase 8 | Complete |
+| AI-02 | Phase 8 | Complete |
 | AI-03 | Phase 7 | Complete |
-| QUAL-01 | Phase 8 | Pending |
+| QUAL-01 | Phase 8 | Complete |
 | QUAL-02 | Phase 9 | Pending |
 | QUAL-03 | Phase 10 | Pending |
 | QUAL-04 | Phase 11 | Pending |
@@ -171,4 +171,4 @@
 
 ---
 *Requirements defined: 2026-01-20*
-*Last updated: 2026-01-20 (Phase 7 complete: AGNT-01, AGNT-02, AGNT-04, AGNT-05, AI-03)*
+*Last updated: 2026-01-21 (Phase 8 complete: AGNT-03, AGNT-06, AGNT-07, AI-01, AI-02, QUAL-01)*
