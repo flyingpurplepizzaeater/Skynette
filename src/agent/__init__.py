@@ -38,6 +38,7 @@ from src.agent.routing import (
     RoutingRules,
     TaskCategory,
 )
+from src.agent.ui import AgentStatusIndicator, CancelDialog
 
 __all__ = [
     # State models
@@ -83,4 +84,7 @@ __all__ = [
     "TaskCategory",
     "RoutingRules",
     "RoutingRule",
+    # UI Components
+    "AgentStatusIndicator",
+    "CancelDialog",
 ]
