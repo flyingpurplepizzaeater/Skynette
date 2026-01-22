@@ -14,6 +14,22 @@ from pydantic import BaseModel, Field
 RiskLevel = Literal["safe", "moderate", "destructive", "critical"]
 
 
+# Risk level colors matching Theme patterns
+RISK_COLORS: dict[RiskLevel, str] = {
+    "safe": "#22C55E",       # Theme.SUCCESS (green)
+    "moderate": "#F59E0B",   # Theme.WARNING (amber)
+    "destructive": "#F97316",  # Orange
+    "critical": "#EF4444",   # Theme.ERROR (red)
+}
+
+RISK_LABELS: dict[RiskLevel, str] = {
+    "safe": "Safe",
+    "moderate": "Moderate",
+    "destructive": "Destructive",
+    "critical": "Critical",
+}
+
+
 class ActionClassification(BaseModel):
     """Classification result for a tool action."""
 
