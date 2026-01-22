@@ -9,6 +9,7 @@ from src.agent.tools.base import (
     backup_before_modify,
     cleanup_old_backups,
 )
+from src.agent.tools.browser import BrowserTool
 from src.agent.tools.code_execution import CodeExecutionTool
 from src.agent.tools.filesystem import (
     FileDeleteTool,
@@ -16,6 +17,7 @@ from src.agent.tools.filesystem import (
     FileReadTool,
     FileWriteTool,
 )
+from src.agent.tools.github import GitHubTool
 from src.agent.tools.web_search import WebSearchTool
 
 __all__ = [
@@ -30,4 +32,6 @@ __all__ = [
     "FileWriteTool",
     "FileDeleteTool",
     "FileListTool",
+    "BrowserTool",
+    "GitHubTool",
 ]

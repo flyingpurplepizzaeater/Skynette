@@ -47,12 +47,14 @@ class ToolRegistry:
 
         # Built-in tools
         from src.agent.tools import (
-            WebSearchTool,
+            BrowserTool,
             CodeExecutionTool,
-            FileReadTool,
-            FileWriteTool,
             FileDeleteTool,
             FileListTool,
+            FileReadTool,
+            FileWriteTool,
+            GitHubTool,
+            WebSearchTool,
         )
         self.register(WebSearchTool)
         self.register(CodeExecutionTool)
@@ -60,6 +62,8 @@ class ToolRegistry:
         self.register(FileWriteTool)
         self.register(FileDeleteTool)
         self.register(FileListTool)
+        self.register(BrowserTool)
+        self.register(GitHubTool)
 
         logger.info(f"Loaded {len(self._tools)} built-in tools")
 
