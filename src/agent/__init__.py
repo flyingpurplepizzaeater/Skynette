@@ -41,10 +41,15 @@ from src.agent.routing import (
 from src.agent.safety import (
     ActionClassification,
     ActionClassifier,
+    ApprovalDecision,
+    ApprovalManager,
+    ApprovalRequest,
+    ApprovalResult,
     KillSwitch,
     RISK_COLORS,
     RISK_LABELS,
     RiskLevel,
+    get_approval_manager,
     get_kill_switch,
 )
 from src.agent.ui import AgentStatusIndicator, CancelDialog
@@ -99,9 +104,14 @@ __all__ = [
     # Safety
     "ActionClassification",
     "ActionClassifier",
+    "ApprovalDecision",
+    "ApprovalManager",
+    "ApprovalRequest",
+    "ApprovalResult",
     "KillSwitch",
     "RISK_COLORS",
     "RISK_LABELS",
     "RiskLevel",
+    "get_approval_manager",
     "get_kill_switch",
 ]

@@ -251,3 +251,20 @@ class ApprovalManager:
 
         # For other tools: same tool name is enough
         return True
+
+
+# Module-level singleton
+_global_approval_manager: Optional[ApprovalManager] = None
+
+
+def get_approval_manager() -> ApprovalManager:
+    """
+    Get the global approval manager instance.
+
+    Returns:
+        Global ApprovalManager singleton
+    """
+    global _global_approval_manager
+    if _global_approval_manager is None:
+        _global_approval_manager = ApprovalManager()
+    return _global_approval_manager
