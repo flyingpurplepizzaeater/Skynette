@@ -40,14 +40,14 @@ class ToolRegistry:
         self._load_builtin_tools()
 
     def _load_builtin_tools(self) -> None:
-        """Load built-in tools. Extended in later phases."""
+        """Load built-in tools."""
         # Testing tool
         from src.agent.registry.mock_tool import MockTool
         self.register(MockTool)
 
-        # Built-in tools - loaded here as they're developed
-        # Web search, filesystem, code execution, browser, GitHub tools
-        # will be registered in this method as Plans 02-05 complete
+        # Built-in tools
+        from src.agent.tools import WebSearchTool
+        self.register(WebSearchTool)
 
         logger.info(f"Loaded {len(self._tools)} built-in tools")
 

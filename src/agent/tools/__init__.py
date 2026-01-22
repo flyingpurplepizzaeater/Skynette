@@ -9,9 +9,13 @@ from src.agent.tools.base import (
     backup_before_modify,
     cleanup_old_backups,
 )
+from src.agent.tools.web_search import WebSearchTool
 
 __all__ = [
+    # Base utilities
     "FileSystemValidator",
     "backup_before_modify",
     "cleanup_old_backups",
+    # Tools
+    "WebSearchTool",
 ]
