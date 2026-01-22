@@ -12,6 +12,17 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+# Default keyboard shortcut for kill switch (can be overridden in settings)
+# Using Ctrl+Shift+K as it's unlikely to conflict with other shortcuts
+KILL_SWITCH_SHORTCUT = "ctrl+shift+k"
+
+# Alternative shortcuts for different platforms
+KILL_SWITCH_SHORTCUTS = {
+    "windows": "ctrl+shift+k",
+    "darwin": "cmd+shift+k",  # macOS
+    "linux": "ctrl+shift+k",
+}
+
 
 class KillSwitch:
     """
