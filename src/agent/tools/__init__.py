@@ -10,6 +10,7 @@ from src.agent.tools.base import (
     cleanup_old_backups,
 )
 from src.agent.tools.web_search import WebSearchTool
+from src.agent.tools.code_execution import CodeExecutionTool
 
 __all__ = [
     # Base utilities
@@ -18,4 +19,5 @@ __all__ = [
     "cleanup_old_backups",
     # Tools
     "WebSearchTool",
+    "CodeExecutionTool",
 ]
