@@ -132,11 +132,16 @@ Plans:
   3. Approval dialogs allow accept, reject, or modify actions
   4. User sees visual plan before execution begins
   5. Step-by-step audit trail is visible and scrollable in UI
-**Plans**: TBD
+**Plans**: 7 plans in 4 waves
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
+- [ ] 12-01-PLAN.md — AgentPanel core (resizable sidebar, event subscription, preferences)
+- [ ] 12-02-PLAN.md — Step views (checklist, timeline, cards with animated switching)
+- [ ] 12-03-PLAN.md — Plan views (list, tree with dependency visualization)
+- [ ] 12-04-PLAN.md — Enhanced ApprovalSheet (editing, detail levels, batch approval)
+- [ ] 12-05-PLAN.md — Audit trail view (scrollable, filterable, real-time updates)
+- [ ] 12-06-PLAN.md — Task history with replay capability
+- [ ] 12-07-PLAN.md — Main app integration and E2E tests (QUAL-05)
 
 ### Phase 13: Autonomy Levels
 **Goal**: Users can configure how much oversight agent requires (L1-L4)
@@ -180,10 +185,10 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 9. MCP Integration | v3.0 | 6/6 | Complete | 2026-01-21 |
 | 10. Built-in Tools | v3.0 | 6/6 | Complete | 2026-01-22 |
 | 11. Safety and Approval | v3.0 | 7/7 | Complete | 2026-01-22 |
-| 12. UI Integration | v3.0 | 0/TBD | Not started | - |
+| 12. UI Integration | v3.0 | 0/7 | Planned | - |
 | 13. Autonomy Levels | v3.0 | 0/TBD | Not started | - |
 | 14. YOLO Mode | v3.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-22 (Phase 11 complete)*
+*Last updated: 2026-01-22 (Phase 12 planned)*
