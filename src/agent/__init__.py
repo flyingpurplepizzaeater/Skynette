@@ -45,11 +45,14 @@ from src.agent.safety import (
     ApprovalManager,
     ApprovalRequest,
     ApprovalResult,
+    AuditEntry,
+    AuditStore,
     KillSwitch,
     RISK_COLORS,
     RISK_LABELS,
     RiskLevel,
     get_approval_manager,
+    get_audit_store,
     get_kill_switch,
 )
 from src.agent.ui import AgentStatusIndicator, CancelDialog
@@ -108,10 +111,13 @@ __all__ = [
     "ApprovalManager",
     "ApprovalRequest",
     "ApprovalResult",
+    "AuditEntry",
+    "AuditStore",
     "KillSwitch",
     "RISK_COLORS",
     "RISK_LABELS",
     "RiskLevel",
     "get_approval_manager",
+    "get_audit_store",
     "get_kill_switch",
 ]

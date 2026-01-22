@@ -355,3 +355,42 @@ class AuditStore:
 
         logger.info(f"Cleaned up {deleted} audit entries older than {retention_days} days")
         return deleted
+
+    def export_json(self, session_id: str) -> str:
+        """Export session audit as JSON string."""
+        entries = self.query(session_id=session_id, limit=10000)
+        return json.dumps([e.to_dict() for e in entries], indent=2)
+
+    def export_csv(self, session_id: str) -> str:
+        """Export session audit as CSV string."""
+        entries = self.query(session_id=session_id, limit=10000)
+        if not entries:
+            return ""
+
+        headers = ["timestamp", "tool_name", "risk_level", "approval_decision", "success", "duration_ms", "error"]
+        lines = [",".join(headers)]
+
+        for e in entries:
+            row = [
+                e.timestamp.isoformat(),
+                e.tool_name,
+                e.risk_level,
+                e.approval_decision,
+                str(e.success),
+                str(e.duration_ms),
+                (e.error or "").replace(",", ";"),
+            ]
+            lines.append(",".join(row))
+
+        return "\n".join(lines)
+
+
+_global_audit_store: Optional[AuditStore] = None
+
+
+def get_audit_store() -> AuditStore:
+    """Get the global audit store instance."""
+    global _global_audit_store
+    if _global_audit_store is None:
+        _global_audit_store = AuditStore()
+    return _global_audit_store

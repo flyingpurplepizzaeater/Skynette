@@ -11,6 +11,11 @@ from src.agent.safety.approval import (
     ApprovalResult,
     get_approval_manager,
 )
+from src.agent.safety.audit import (
+    AuditEntry,
+    AuditStore,
+    get_audit_store,
+)
 from src.agent.safety.classification import (
     ActionClassification,
     ActionClassifier,
@@ -30,10 +35,13 @@ __all__ = [
     "ApprovalManager",
     "ApprovalRequest",
     "ApprovalResult",
+    "AuditEntry",
+    "AuditStore",
     "KillSwitch",
     "RISK_COLORS",
     "RISK_LABELS",
     "RiskLevel",
     "get_approval_manager",
+    "get_audit_store",
     "get_kill_switch",
 ]
