@@ -47,9 +47,7 @@ class ApprovalSheet(ft.BottomSheet):
 
         super().__init__(
             content=self._build_content(),
-            enable_drag=True,
             show_drag_handle=True,
-            is_scroll_controlled=True,
             # Critical: Don't dismiss on outside click - require explicit decision
             dismissible=False,
         )
