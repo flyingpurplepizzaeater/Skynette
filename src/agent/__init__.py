@@ -38,6 +38,7 @@ from src.agent.routing import (
     RoutingRules,
     TaskCategory,
 )
+from src.agent.safety import KillSwitch, get_kill_switch
 from src.agent.ui import AgentStatusIndicator, CancelDialog
 
 __all__ = [
@@ -87,4 +88,7 @@ __all__ = [
     # UI Components
     "AgentStatusIndicator",
     "CancelDialog",
+    # Safety
+    "KillSwitch",
+    "get_kill_switch",
 ]

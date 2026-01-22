@@ -99,3 +99,22 @@ class KillSwitch:
             "triggered_at": self._triggered_at.isoformat() if self._triggered_at else None,
             "reason": self._trigger_reason,
         }
+
+
+# Module-level singleton instance
+_global_kill_switch: Optional[KillSwitch] = None
+
+
+def get_kill_switch() -> KillSwitch:
+    """
+    Get the global kill switch instance.
+
+    Creates one if it doesn't exist (singleton pattern).
+
+    Returns:
+        Global KillSwitch instance
+    """
+    global _global_kill_switch
+    if _global_kill_switch is None:
+        _global_kill_switch = KillSwitch()
+    return _global_kill_switch
