@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** One app to replace separate AI chat clients, model managers, workflow tools, code editors, and AI assistants - accessible to everyone
-**Current focus:** Phase 11 Complete - Ready for Phase 12
+**Current focus:** Phase 12 (UI Integration) - In Progress
 
 ## Current Position
 
-Phase: 11 of 14 (Safety and Approval Systems) - COMPLETE
-Plan: 7 of 7 in current phase
-Status: Phase complete
-Last activity: 2026-01-22 - Completed 11-07-PLAN.md (Safety E2E Tests)
+Phase: 12 of 14 (UI Integration)
+Plan: 1 of 7 in current phase
+Status: In progress
+Last activity: 2026-01-22 - Completed 12-01-PLAN.md (Agent Panel Core)
 
-Progress: [####################] 100% (21/21 v3.0 plans for Phase 11)
+Progress: [###-----------------] 14% (1/7 plans for Phase 12)
 
 ## Milestone History
 
@@ -25,9 +25,9 @@ Progress: [####################] 100% (21/21 v3.0 plans for Phase 11)
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21 (v3.0)
-- Average duration: ~7 minutes
-- Total execution time: ~2.5 hours
+- Total plans completed: 22 (v3.0)
+- Average duration: ~6 minutes
+- Total execution time: ~2.6 hours
 
 **By Phase:**
 
@@ -38,10 +38,11 @@ Progress: [####################] 100% (21/21 v3.0 plans for Phase 11)
 | 9 | 6 | ~34min | ~6min |
 | 10 | 6 | ~30min | ~5min |
 | 11 | 7 | ~32min | ~5min |
+| 12 | 1 | ~3min | ~3min |
 
 **Recent Trend:**
-- Last 5 plans: 11-03, 11-04, 11-05, 11-06, 11-07
-- Trend: Consistent fast velocity (~5min)
+- Last 5 plans: 11-05, 11-06, 11-07, 12-01
+- Trend: Accelerating velocity (~3-5min)
 
 *Updated after each plan completion*
 
@@ -111,6 +112,9 @@ Recent decisions affecting current work:
 - 11-07: Structure E2E tests into 4 test classes by component (Classification, Approval, KillSwitch, Audit)
 - 11-07: Use asyncio.create_task for approval blocking tests
 - 11-07: Windows-compatible cleanup with gc.collect() and PermissionError handling (per 09-06)
+- 12-01: Panel width bounds MIN=280, MAX=600, DEFAULT=350
+- 12-01: Invert delta_x for right sidebar resize (moving left = wider)
+- 12-01: Badge count capped at 99 for pending event indicator
 
 ### Pending Todos
 
@@ -123,20 +127,18 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Completed 11-07-PLAN.md (Safety E2E Tests)
+Stopped at: Completed 12-01-PLAN.md (Agent Panel Core)
 Resume file: None
 
 ## Next Steps
 
-Phase 11 (Safety and Approval Systems) COMPLETE:
-- 11-01: Action Classification (RiskLevel, ActionClassification, ActionClassifier) - COMPLETE
-- 11-02: Kill Switch Mechanism (KillSwitch with multiprocessing.Event) - COMPLETE
-- 11-03: HITL Approval Flow (ApprovalManager with similarity caching) - COMPLETE
-- 11-04: Audit Trail (AuditEntry, AuditStore with SQLite) - COMPLETE
-- 11-05: UI Components (RiskBadge, ApprovalSheet) - COMPLETE
-- 11-06: Executor Integration - COMPLETE
-- 11-07: E2E Tests (QUAL-04: 18 tests covering all safety components) - COMPLETE
+Phase 12 (UI Integration) IN PROGRESS:
+- 12-01: Agent Panel Core (AgentPanel, PanelPreferences) - COMPLETE
+- 12-02: Step Views (checklist, timeline, cards)
+- 12-03: Plan Views (list, tree)
+- 12-04: Audit Trail View
+- 12-05: Task History View
+- 12-06: App Integration
+- 12-07: E2E Tests
 
-Next: Phase 12 (UI Integration)
-
-Run `/gsd:discuss-phase 12` to gather context before planning.
+Next: 12-02-PLAN.md (Step Views)
