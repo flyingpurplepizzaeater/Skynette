@@ -111,11 +111,16 @@ Plans:
   3. All agent actions are logged in queryable audit trail
   4. Kill switch stops agent immediately from outside agent process
   5. Similar low-risk actions can be batched for single approval
-**Plans**: TBD
+**Plans**: 7 plans in 5 waves
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md — Classification models and ActionClassifier (risk levels, rules)
+- [ ] 11-02-PLAN.md — Kill switch with multiprocessing.Event (emergency stop)
+- [ ] 11-03-PLAN.md — Approval models and ApprovalManager (HITL flow)
+- [ ] 11-04-PLAN.md — Audit store with SQLite persistence (logging, query, export)
+- [ ] 11-05-PLAN.md — Approval UI components (RiskBadge, ApprovalSheet)
+- [ ] 11-06-PLAN.md — Executor integration (wire safety into execution loop)
+- [ ] 11-07-PLAN.md — E2E tests for safety systems (QUAL-04)
 
 ### Phase 12: UI Integration
 **Goal**: Agent capabilities are accessible through intuitive UI with full visibility
@@ -174,11 +179,11 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 8. Planning and Execution | v3.0 | 3/3 | Complete | 2026-01-21 |
 | 9. MCP Integration | v3.0 | 6/6 | Complete | 2026-01-21 |
 | 10. Built-in Tools | v3.0 | 6/6 | Complete | 2026-01-22 |
-| 11. Safety and Approval | v3.0 | 0/TBD | Not started | - |
+| 11. Safety and Approval | v3.0 | 0/7 | Planned | - |
 | 12. UI Integration | v3.0 | 0/TBD | Not started | - |
 | 13. Autonomy Levels | v3.0 | 0/TBD | Not started | - |
 | 14. YOLO Mode | v3.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-22 (Phase 10 complete)*
+*Last updated: 2026-01-22 (Phase 11 planned)*
