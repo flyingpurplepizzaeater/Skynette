@@ -43,6 +43,16 @@ pydantic>=2.0.0
 python-dotenv>=1.0.0
 rich>=13.0.0
 aiofiles>=23.0.0
+tenacity>=8.0.0
+
+# Agent Tools (Phase 10)
+duckduckgo-search>=8.0.0       # Web search API (no key required)
+playwright>=1.49.0              # Browser automation
+playwright-stealth>=1.0.0       # Bot detection evasion
+PyGithub>=2.8.0                 # GitHub API client
+psutil>=7.0.0                   # Process/resource monitoring
+beautifulsoup4>=4.12.0          # HTML parsing for search fallback
+# Note: Run `playwright install chromium` after pip install for browser binaries
 
 # Cloud Services
 boto3>=1.28.0
