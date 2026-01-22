@@ -30,6 +30,11 @@ AgentEventType = Literal[
     "model_switched",
     "trace_started",
     "trace_ended",
+    # Safety system event types
+    "action_classified",
+    "approval_requested",
+    "approval_received",
+    "kill_switch_triggered",
 ]
 
 
@@ -139,4 +144,78 @@ class AgentEvent(BaseModel):
             },
             session_id=session_id,
             model_used=to_model,
+        )
+
+    # Safety system event factory methods
+
+    @classmethod
+    def action_classified(
+        cls,
+        tool_name: str,
+        risk_level: str,
+        reason: str,
+        requires_approval: bool,
+        session_id: str,
+    ) -> "AgentEvent":
+        """Create an action_classified event."""
+        return cls(
+            type="action_classified",
+            data={
+                "tool_name": tool_name,
+                "risk_level": risk_level,
+                "reason": reason,
+                "requires_approval": requires_approval,
+            },
+            session_id=session_id,
+        )
+
+    @classmethod
+    def approval_requested(
+        cls,
+        request_id: str,
+        tool_name: str,
+        risk_level: str,
+        reason: str,
+        parameters: dict,
+        session_id: str,
+    ) -> "AgentEvent":
+        """Create an approval_requested event."""
+        return cls(
+            type="approval_requested",
+            data={
+                "request_id": request_id,
+                "tool_name": tool_name,
+                "risk_level": risk_level,
+                "reason": reason,
+                "parameters": parameters,
+            },
+            session_id=session_id,
+        )
+
+    @classmethod
+    def approval_received(
+        cls,
+        request_id: str,
+        decision: str,  # "approved", "rejected", "timeout"
+        approve_similar: bool,
+        session_id: str,
+    ) -> "AgentEvent":
+        """Create an approval_received event."""
+        return cls(
+            type="approval_received",
+            data={
+                "request_id": request_id,
+                "decision": decision,
+                "approve_similar": approve_similar,
+            },
+            session_id=session_id,
+        )
+
+    @classmethod
+    def kill_switch_triggered(cls, reason: str, session_id: str) -> "AgentEvent":
+        """Create a kill_switch_triggered event."""
+        return cls(
+            type="kill_switch_triggered",
+            data={"reason": reason},
+            session_id=session_id,
         )
