@@ -86,6 +86,8 @@ Recent decisions affecting current work:
 - 10-02: Use ddgs package (renamed from duckduckgo-search) for DuckDuckGo API
 - 10-02: Provider abstraction allows swapping search backends
 - 10-02: 5-minute TTL cache for search results
+- 10-03: Binary file detection via extension, base64 encoding for binary content
+- 10-03: Best-effort backup on write (continue on failure), required backup on delete
 - 10-04: Inline execution for short code (<1000 chars), temp file for longer
 - 10-04: Use sys.executable for Python to ensure same interpreter as app
 
