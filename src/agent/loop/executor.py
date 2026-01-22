@@ -31,6 +31,13 @@ from src.agent.budget import TokenBudget
 from src.agent.events import AgentEventEmitter
 from src.agent.registry import get_tool_registry, AgentContext
 from src.agent.loop.planner import AgentPlanner
+from src.agent.safety import (
+    ActionClassifier,
+    get_kill_switch,
+    get_approval_manager,
+    get_audit_store,
+    AuditEntry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +64,12 @@ class AgentExecutor:
         self._cancel_request: Optional[CancellationRequest] = None
         self._current_step: Optional[PlanStep] = None
         self._completed_steps: list[str] = []
+
+        # Safety system components
+        self.classifier = ActionClassifier()
+        self.kill_switch = get_kill_switch()
+        self.approval_manager = get_approval_manager()
+        self.audit_store = get_audit_store()
 
     def cancel(self):
         """
@@ -128,6 +141,10 @@ class AgentExecutor:
             result_mode=self._cancel_request.result_mode if self._cancel_request else ResultMode.KEEP,
         )
 
+    def _check_kill_switch(self) -> bool:
+        """Check if kill switch has been triggered."""
+        return self.kill_switch.is_triggered()
+
     async def run(self, task: str) -> AsyncIterator[AgentEvent]:
         """
         Execute a task, yielding events as execution progresses.
@@ -138,6 +155,20 @@ class AgentExecutor:
         Yields:
             AgentEvent objects for each state change, step, etc.
         """
+        # Initialize safety systems for this execution
+        self.kill_switch.reset()
+        self.approval_manager.start_session(self.session.id)
+
+        try:
+            async for event in self._run_with_safety(task):
+                yield event
+        finally:
+            # Cleanup safety systems
+            self.approval_manager.end_session()
+            self.kill_switch.reset()
+
+    async def _run_with_safety(self, task: str) -> AsyncIterator[AgentEvent]:
+        """Internal run method with safety systems initialized."""
         self.session.task = task
         self.session.state = AgentState.PLANNING
         yield AgentEvent.state_change("planning", self.session.id)
@@ -159,6 +190,15 @@ class AgentExecutor:
         start_time = time.time()
 
         while not plan.is_complete() and not plan.has_failed():
+            # Check kill switch first (highest priority)
+            if self._check_kill_switch():
+                self.session.state = AgentState.CANCELLED
+                yield AgentEvent.kill_switch_triggered(
+                    self.kill_switch.trigger_reason or "Kill switch activated",
+                    self.session.id
+                )
+                return
+
             # Check cancellation with mode-aware logic
             if self._should_cancel():
                 self.session.state = AgentState.CANCELLED
@@ -236,6 +276,15 @@ class AgentExecutor:
                 self._completed_steps.append(step.description)
             self._current_step = None
             self.session.steps_completed += 1
+
+            # Check kill switch after step completes (step boundary)
+            if self._check_kill_switch():
+                self.session.state = AgentState.CANCELLED
+                yield AgentEvent.kill_switch_triggered(
+                    self.kill_switch.trigger_reason or "Kill switch activated",
+                    self.session.id
+                )
+                return
 
             # Check for AFTER_CURRENT cancellation after step completes
             if self._should_cancel():
