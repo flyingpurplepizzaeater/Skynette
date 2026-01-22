@@ -55,7 +55,7 @@ from src.agent.safety import (
     get_audit_store,
     get_kill_switch,
 )
-from src.agent.ui import AgentStatusIndicator, CancelDialog
+from src.agent.ui import AgentStatusIndicator, ApprovalSheet, CancelDialog, RiskBadge
 
 __all__ = [
     # State models
@@ -103,7 +103,9 @@ __all__ = [
     "RoutingRule",
     # UI Components
     "AgentStatusIndicator",
+    "ApprovalSheet",
     "CancelDialog",
+    "RiskBadge",
     # Safety
     "ActionClassification",
     "ActionClassifier",
