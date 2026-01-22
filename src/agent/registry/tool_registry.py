@@ -46,9 +46,20 @@ class ToolRegistry:
         self.register(MockTool)
 
         # Built-in tools
-        from src.agent.tools import WebSearchTool, CodeExecutionTool
+        from src.agent.tools import (
+            WebSearchTool,
+            CodeExecutionTool,
+            FileReadTool,
+            FileWriteTool,
+            FileDeleteTool,
+            FileListTool,
+        )
         self.register(WebSearchTool)
         self.register(CodeExecutionTool)
+        self.register(FileReadTool)
+        self.register(FileWriteTool)
+        self.register(FileDeleteTool)
+        self.register(FileListTool)
 
         logger.info(f"Loaded {len(self._tools)} built-in tools")
 

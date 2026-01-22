@@ -9,8 +9,14 @@ from src.agent.tools.base import (
     backup_before_modify,
     cleanup_old_backups,
 )
-from src.agent.tools.web_search import WebSearchTool
 from src.agent.tools.code_execution import CodeExecutionTool
+from src.agent.tools.filesystem import (
+    FileDeleteTool,
+    FileListTool,
+    FileReadTool,
+    FileWriteTool,
+)
+from src.agent.tools.web_search import WebSearchTool
 
 __all__ = [
     # Base utilities
@@ -20,4 +26,8 @@ __all__ = [
     # Tools
     "WebSearchTool",
     "CodeExecutionTool",
+    "FileReadTool",
+    "FileWriteTool",
+    "FileDeleteTool",
+    "FileListTool",
 ]
