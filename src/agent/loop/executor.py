@@ -323,11 +323,15 @@ class AgentExecutor:
         """Execute a single plan step."""
         try:
             if step.tool_name:
-                # Tool invocation
-                result = await self._execute_tool_with_retry(
+                # Tool invocation with safety (classification, approval, audit)
+                result, events = await self._execute_tool_with_safety(
                     step.tool_name,
-                    step.tool_params
+                    step.tool_params,
+                    step.id
                 )
+                # Emit safety events (classification, approval)
+                for event in events:
+                    yield event
 
                 if result.success:
                     step.status = StepStatus.COMPLETED
@@ -363,6 +367,158 @@ class AgentExecutor:
                 data={"step_id": step.id, "error": str(e)},
                 session_id=self.session.id
             )
+
+    async def _execute_tool_with_safety(
+        self,
+        tool_name: str,
+        params: dict,
+        step_id: str = "",
+    ) -> tuple[ToolResult, list[AgentEvent]]:
+        """
+        Execute a tool with classification, approval (if needed), retry, and audit.
+
+        Returns:
+            Tuple of (ToolResult, list of events to emit)
+        """
+        events: list[AgentEvent] = []
+        start_time = time.time()
+
+        # 1. Classify the action
+        classification = self.classifier.classify(tool_name, params)
+
+        # Emit classification event
+        events.append(AgentEvent.action_classified(
+            tool_name=tool_name,
+            risk_level=classification.risk_level,
+            reason=classification.reason,
+            requires_approval=classification.requires_approval,
+            session_id=self.session.id,
+        ))
+
+        # 2. Request approval if needed
+        approval_decision = "auto"
+        approval_time_ms = None
+
+        if classification.requires_approval:
+            self.session.state = AgentState.AWAITING_APPROVAL
+
+            # Request approval (ApprovalManager checks similarity cache first)
+            approval_start = time.time()
+            approval_result = await self.approval_manager.request_approval(
+                classification=classification,
+                step_id=step_id,
+                timeout=60.0,  # 60s default per CONTEXT.md
+            )
+            approval_time_ms = (time.time() - approval_start) * 1000
+
+            # Emit approval events
+            events.append(AgentEvent.approval_requested(
+                request_id="",  # Request already submitted
+                tool_name=tool_name,
+                risk_level=classification.risk_level,
+                reason=classification.reason,
+                parameters=params,
+                session_id=self.session.id,
+            ))
+            events.append(AgentEvent.approval_received(
+                request_id="",
+                decision=approval_result.decision,
+                approve_similar=approval_result.approve_similar,
+                session_id=self.session.id,
+            ))
+
+            approval_decision = approval_result.decision
+
+            if approval_result.decision == "rejected":
+                # Log rejection to audit
+                self._log_audit(
+                    step_id=step_id,
+                    tool_name=tool_name,
+                    params=params,
+                    result=None,
+                    error="Action rejected by user",
+                    duration_ms=(time.time() - start_time) * 1000,
+                    classification=classification,
+                    approval_decision=approval_decision,
+                    approval_time_ms=approval_time_ms,
+                    success=False,
+                )
+                return ToolResult.failure_result(
+                    tool_call_id="rejected",
+                    error="Action rejected by user",
+                ), events
+
+            elif approval_result.decision == "timeout":
+                # Per CONTEXT.md: pause (skip action) on timeout
+                self._log_audit(
+                    step_id=step_id,
+                    tool_name=tool_name,
+                    params=params,
+                    result=None,
+                    error="Approval timeout - action skipped",
+                    duration_ms=(time.time() - start_time) * 1000,
+                    classification=classification,
+                    approval_decision=approval_decision,
+                    approval_time_ms=approval_time_ms,
+                    success=False,
+                )
+                return ToolResult.failure_result(
+                    tool_call_id="timeout",
+                    error="Approval timeout - action skipped",
+                ), events
+
+            self.session.state = AgentState.EXECUTING
+
+        # 3. Execute the tool
+        result = await self._execute_tool_with_retry(tool_name, params)
+
+        # 4. Audit the action
+        duration_ms = (time.time() - start_time) * 1000
+        self._log_audit(
+            step_id=step_id,
+            tool_name=tool_name,
+            params=params,
+            result={"data": result.data} if result.success else None,
+            error=result.error,
+            duration_ms=duration_ms,
+            classification=classification,
+            approval_decision=approval_decision,
+            approval_time_ms=approval_time_ms,
+            success=result.success,
+        )
+
+        return result, events
+
+    def _log_audit(
+        self,
+        step_id: str,
+        tool_name: str,
+        params: dict,
+        result: Optional[dict],
+        error: Optional[str],
+        duration_ms: float,
+        classification,
+        approval_decision: str,
+        approval_time_ms: Optional[float],
+        success: bool,
+    ):
+        """Log an action to the audit store."""
+        entry = AuditEntry(
+            session_id=self.session.id,
+            step_id=step_id,
+            tool_name=tool_name,
+            parameters=params,
+            result=result,
+            error=error,
+            duration_ms=duration_ms,
+            risk_level=classification.risk_level,
+            approval_required=classification.requires_approval,
+            approval_decision=approval_decision,
+            approved_by="user" if approval_decision == "approved" else None,
+            approval_time_ms=approval_time_ms,
+            success=success,
+        )
+        self.audit_store.log(entry)
 
     async def _execute_tool_with_retry(
         self,
