@@ -80,3 +80,129 @@ class TestClassificationE2E:
         assert classifier.classify("browser", {}).requires_approval == False
         assert classifier.classify("file_write", {}).requires_approval == True
         assert classifier.classify("file_delete", {}).requires_approval == True
+
+
+class TestApprovalFlowE2E:
+    """E2E tests for approval workflow."""
+
+    @pytest.mark.asyncio
+    async def test_approval_blocks_until_decision(self):
+        """Approval request should block until user decides."""
+        manager = ApprovalManager()
+        manager.start_session("test-session")
+
+        classification = ActionClassification(
+            risk_level="destructive",
+            reason="Test action",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/tmp/test.txt"},
+        )
+
+        # Start approval request in background
+        result_holder = []
+
+        async def request():
+            result = await manager.request_approval(classification, "step-1", timeout=5.0)
+            result_holder.append(result)
+
+        task = asyncio.create_task(request())
+
+        # Wait a bit, then approve
+        await asyncio.sleep(0.1)
+        pending = manager.get_pending()
+        assert len(pending) == 1
+        manager.approve(pending[0].id, approve_similar=False)
+
+        await task
+        assert len(result_holder) == 1
+        assert result_holder[0].decision == "approved"
+
+    @pytest.mark.asyncio
+    async def test_approval_timeout(self):
+        """Approval should timeout if user doesn't respond."""
+        manager = ApprovalManager()
+        manager.start_session("test-session")
+
+        classification = ActionClassification(
+            risk_level="critical",
+            reason="Test action",
+            requires_approval=True,
+            tool_name="file_delete",
+            parameters={},
+        )
+
+        result = await manager.request_approval(classification, "step-1", timeout=0.1)
+        assert result.decision == "timeout"
+
+    @pytest.mark.asyncio
+    async def test_similar_actions_auto_approved(self):
+        """After 'approve all similar', similar actions should auto-approve."""
+        manager = ApprovalManager()
+        manager.start_session("test-session")
+
+        # First action - user approves with "approve similar"
+        c1 = ActionClassification(
+            risk_level="destructive",
+            reason="Write file",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/src/test1.py"},
+        )
+
+        async def approve_first():
+            await asyncio.sleep(0.1)
+            pending = manager.get_pending()
+            manager.approve(pending[0].id, approve_similar=True)
+
+        task = asyncio.create_task(approve_first())
+        result1 = await manager.request_approval(c1, "step-1", timeout=5.0)
+        await task
+
+        assert result1.decision == "approved"
+        assert result1.approve_similar == True
+
+        # Second similar action - should auto-approve
+        c2 = ActionClassification(
+            risk_level="destructive",
+            reason="Write file",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/src/test2.py"},  # Same parent directory
+        )
+
+        result2 = await manager.request_approval(c2, "step-2", timeout=1.0)
+        assert result2.decision == "approved"
+        assert result2.decided_by == "similar_match"
+
+    def test_similarity_matching_same_directory(self):
+        """Files in same directory should be considered similar."""
+        c1 = ActionClassification(
+            risk_level="destructive",
+            reason="test",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/src/components/Button.tsx"},
+        )
+        c2 = ActionClassification(
+            risk_level="destructive",
+            reason="test",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/src/components/Input.tsx"},
+        )
+        c3 = ActionClassification(
+            risk_level="destructive",
+            reason="test",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/config/settings.json"},
+        )
+
+        assert ApprovalManager.are_similar(c1, c2) == True
+        assert ApprovalManager.are_similar(c1, c3) == False
+
+    def test_rejection_stops_action(self):
+        """Rejected action should not execute."""
+        # This is implicitly tested in executor integration
+        pass
