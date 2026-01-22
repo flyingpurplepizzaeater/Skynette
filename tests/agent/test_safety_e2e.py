@@ -206,3 +206,184 @@ class TestApprovalFlowE2E:
         """Rejected action should not execute."""
         # This is implicitly tested in executor integration
         pass
+
+
+class TestKillSwitchE2E:
+    """E2E tests for kill switch functionality."""
+
+    def test_kill_switch_trigger_and_check(self):
+        """Kill switch should be triggerable and checkable."""
+        ks = KillSwitch()
+
+        assert ks.is_triggered() == False
+        ks.trigger("Test trigger")
+        assert ks.is_triggered() == True
+        assert "Test trigger" in ks.trigger_reason
+        assert ks.triggered_at is not None
+
+    def test_kill_switch_reset(self):
+        """Kill switch should be resettable."""
+        ks = KillSwitch()
+
+        ks.trigger("Test")
+        assert ks.is_triggered() == True
+
+        ks.reset()
+        assert ks.is_triggered() == False
+        assert ks.trigger_reason is None
+
+    def test_kill_switch_singleton(self):
+        """Global kill switch should be singleton."""
+        ks1 = get_kill_switch()
+        ks2 = get_kill_switch()
+        assert ks1 is ks2
+
+    def test_kill_switch_status_dict(self):
+        """Kill switch status should be serializable."""
+        ks = KillSwitch()
+        ks.trigger("Emergency stop")
+
+        status = ks.get_status()
+        assert status["triggered"] == True
+        assert "Emergency stop" in status["reason"]
+        assert status["triggered_at"] is not None
+
+
+class TestAuditTrailE2E:
+    """E2E tests for audit trail functionality."""
+
+    def setup_method(self):
+        """Create temp directory for test database."""
+        self.temp_dir = tempfile.mkdtemp()
+        self.db_path = os.path.join(self.temp_dir, "test_audit.db")
+
+    def teardown_method(self):
+        """Clean up temp files with Windows-safe handling."""
+        gc.collect()
+        try:
+            if os.path.exists(self.db_path):
+                os.unlink(self.db_path)
+            if os.path.exists(self.db_path + "-wal"):
+                os.unlink(self.db_path + "-wal")
+            if os.path.exists(self.db_path + "-shm"):
+                os.unlink(self.db_path + "-shm")
+            os.rmdir(self.temp_dir)
+        except PermissionError:
+            pass  # Windows may hold locks
+
+    def test_audit_entry_logged_and_queryable(self):
+        """Audit entries should be persisted and queryable."""
+        store = AuditStore(db_path=self.db_path)
+
+        entry = AuditEntry(
+            session_id="test-session",
+            step_id="step-1",
+            tool_name="file_write",
+            parameters={"path": "/tmp/test.txt"},
+            risk_level="destructive",
+            approval_required=True,
+            approval_decision="approved",
+            success=True,
+            duration_ms=150.0,
+        )
+
+        store.log(entry)
+
+        # Query back
+        results = store.query(session_id="test-session")
+        assert len(results) == 1
+        assert results[0].tool_name == "file_write"
+        assert results[0].risk_level == "destructive"
+
+    def test_audit_query_by_risk_level(self):
+        """Audit should be queryable by risk level."""
+        store = AuditStore(db_path=self.db_path)
+
+        # Log entries of different risk levels
+        for level in ["safe", "moderate", "destructive", "critical"]:
+            entry = AuditEntry(
+                session_id="test-session",
+                step_id=f"step-{level}",
+                tool_name=f"tool_{level}",
+                parameters={},
+                risk_level=level,
+            )
+            store.log(entry)
+
+        # Query specific risk level
+        destructive = store.query(risk_level="destructive")
+        assert len(destructive) == 1
+        assert destructive[0].risk_level == "destructive"
+
+        critical = store.query(risk_level="critical")
+        assert len(critical) == 1
+
+    def test_audit_session_summary(self):
+        """Session summary should aggregate correctly."""
+        store = AuditStore(db_path=self.db_path)
+
+        # Log multiple entries
+        for i in range(3):
+            store.log(AuditEntry(
+                session_id="test-session",
+                step_id=f"step-{i}",
+                tool_name="file_write",
+                parameters={},
+                risk_level="destructive",
+                approval_decision="approved",
+                success=True,
+                duration_ms=100.0,
+            ))
+
+        store.log(AuditEntry(
+            session_id="test-session",
+            step_id="step-fail",
+            tool_name="file_delete",
+            parameters={},
+            risk_level="critical",
+            approval_decision="rejected",
+            success=False,
+        ))
+
+        summary = store.get_session_summary("test-session")
+        assert summary["total_actions"] == 4
+        assert summary["by_risk"]["destructive"] == 3
+        assert summary["by_risk"]["critical"] == 1
+        assert summary["approved"] == 3
+        assert summary["rejected"] == 1
+        assert summary["successful"] == 3
+
+    def test_audit_export_json(self):
+        """Audit should export to JSON."""
+        store = AuditStore(db_path=self.db_path)
+
+        store.log(AuditEntry(
+            session_id="test-session",
+            step_id="step-1",
+            tool_name="file_read",
+            parameters={"path": "/tmp/test.txt"},
+            risk_level="safe",
+        ))
+
+        json_export = store.export_json("test-session")
+        assert "file_read" in json_export
+        assert "safe" in json_export
+
+    def test_audit_export_csv(self):
+        """Audit should export to CSV."""
+        store = AuditStore(db_path=self.db_path)
+
+        store.log(AuditEntry(
+            session_id="test-session",
+            step_id="step-1",
+            tool_name="file_write",
+            parameters={},
+            risk_level="destructive",
+        ))
+
+        csv_export = store.export_csv("test-session")
+        assert "file_write" in csv_export
+        assert "destructive" in csv_export
+
+
+# Run with: pytest tests/agent/test_safety_e2e.py -v
