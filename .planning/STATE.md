@@ -137,4 +137,6 @@ Phase 11 (Safety and Approval Systems) COMPLETE:
 - 11-06: Executor Integration - COMPLETE
 - 11-07: E2E Tests (QUAL-04: 18 tests covering all safety components) - COMPLETE
 
-Next: Phase 12 (Conversation Management) or continue to Phase 13 (Autonomy Levels).
+Next: Phase 12 (UI Integration)
+
+Run `/gsd:discuss-phase 12` to gather context before planning.
