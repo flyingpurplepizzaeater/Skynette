@@ -1,7 +1,13 @@
 """
-Agent Tools Package
+Skynette Agent Built-in Tools
 
-Shared utilities and built-in tools for the agent.
+This module provides the built-in tools available to the agent:
+- WebSearchTool: Search the web via DuckDuckGo
+- FileReadTool, FileWriteTool, FileDeleteTool, FileListTool: Filesystem operations
+- CodeExecutionTool: Execute code in Python, Node.js, shell
+- BrowserTool: Web automation with Playwright
+- GitHubTool: GitHub API integration
+- RAGQueryTool: Query Skynette's RAG knowledge base
 """
 
 from src.agent.tools.base import (
@@ -18,6 +24,7 @@ from src.agent.tools.filesystem import (
     FileWriteTool,
 )
 from src.agent.tools.github import GitHubTool
+from src.agent.tools.skynette_tools import RAGQueryTool
 from src.agent.tools.web_search import WebSearchTool
 
 __all__ = [
@@ -25,13 +32,17 @@ __all__ = [
     "FileSystemValidator",
     "backup_before_modify",
     "cleanup_old_backups",
-    # Tools
+    # Web tools
     "WebSearchTool",
-    "CodeExecutionTool",
+    "BrowserTool",
+    # Filesystem tools
     "FileReadTool",
     "FileWriteTool",
     "FileDeleteTool",
     "FileListTool",
-    "BrowserTool",
+    # Code tools
+    "CodeExecutionTool",
+    # Integration tools
     "GitHubTool",
+    "RAGQueryTool",
 ]

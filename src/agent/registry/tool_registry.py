@@ -54,16 +54,18 @@ class ToolRegistry:
             FileReadTool,
             FileWriteTool,
             GitHubTool,
+            RAGQueryTool,
             WebSearchTool,
         )
         self.register(WebSearchTool)
-        self.register(CodeExecutionTool)
         self.register(FileReadTool)
         self.register(FileWriteTool)
         self.register(FileDeleteTool)
         self.register(FileListTool)
+        self.register(CodeExecutionTool)
         self.register(BrowserTool)
         self.register(GitHubTool)
+        self.register(RAGQueryTool)
 
         logger.info(f"Loaded {len(self._tools)} built-in tools")
 
