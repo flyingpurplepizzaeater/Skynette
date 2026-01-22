@@ -19,7 +19,7 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 - [x] **Phase 7: Agent Core Infrastructure** - Data models, event system, state management, tool registry
 - [x] **Phase 8: Planning and Execution** - Planner, executor, orchestrator, model routing
 - [x] **Phase 9: MCP Integration** - MCP host, transports, tool discovery, server management
-- [ ] **Phase 10: Built-in Tools** - Web search, browser, filesystem, GitHub, code execution
+- [x] **Phase 10: Built-in Tools** - Web search, browser, filesystem, GitHub, code execution
 - [ ] **Phase 11: Safety and Approval Systems** - Classification, HITL approval, audit, kill switch
 - [ ] **Phase 12: UI Integration** - Agent panel, progress display, approvals, plan visualization
 - [ ] **Phase 13: Autonomy Levels** - L1-L4 implementation with graduated trust
@@ -94,12 +94,12 @@ Plans:
 **Plans**: 6 plans in 4 waves
 
 Plans:
-- [ ] 10-01-PLAN.md — Foundation utilities (path validation, backup) and dependencies
-- [ ] 10-02-PLAN.md — Web search tool with DuckDuckGo and scraper fallback
-- [ ] 10-03-PLAN.md — Filesystem tools (read, write, delete, list) with security
-- [ ] 10-04-PLAN.md — Code execution tool with multi-language support
-- [ ] 10-05-PLAN.md — Browser automation (Playwright) and GitHub integration
-- [ ] 10-06-PLAN.md — Skynette system tools (RAG) and security tests (QUAL-03)
+- [x] 10-01-PLAN.md — Foundation utilities (path validation, backup) and dependencies
+- [x] 10-02-PLAN.md — Web search tool with DuckDuckGo and scraper fallback
+- [x] 10-03-PLAN.md — Filesystem tools (read, write, delete, list) with security
+- [x] 10-04-PLAN.md — Code execution tool with multi-language support
+- [x] 10-05-PLAN.md — Browser automation (Playwright) and GitHub integration
+- [x] 10-06-PLAN.md — Skynette system tools (RAG) and security tests (QUAL-03)
 
 ### Phase 11: Safety and Approval Systems
 **Goal**: User has control over what agent can do with appropriate oversight
@@ -173,7 +173,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 7. Agent Core Infrastructure | v3.0 | 3/3 | Complete | 2026-01-20 |
 | 8. Planning and Execution | v3.0 | 3/3 | Complete | 2026-01-21 |
 | 9. MCP Integration | v3.0 | 6/6 | Complete | 2026-01-21 |
-| 10. Built-in Tools | v3.0 | 0/6 | Planned | - |
+| 10. Built-in Tools | v3.0 | 6/6 | Complete | 2026-01-22 |
 | 11. Safety and Approval | v3.0 | 0/TBD | Not started | - |
 | 12. UI Integration | v3.0 | 0/TBD | Not started | - |
 | 13. Autonomy Levels | v3.0 | 0/TBD | Not started | - |
@@ -181,4 +181,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-21 (Phase 10 planned)*
+*Last updated: 2026-01-22 (Phase 10 complete)*
