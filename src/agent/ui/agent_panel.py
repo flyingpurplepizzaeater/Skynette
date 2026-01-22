@@ -4,17 +4,20 @@ Agent Panel Component
 Resizable right sidebar that subscribes to agent events.
 """
 
-from typing import Optional
+from typing import Literal, Optional
 
 import flet as ft
 
 from src.agent.events.emitter import AgentEventEmitter, EventSubscription
 from src.agent.models.event import AgentEvent
+from src.agent.models.plan import PlanStep, StepStatus
 from src.agent.ui.panel_preferences import (
     PanelPreferences,
     get_panel_preferences,
     save_panel_preferences,
 )
+from src.agent.ui.status_indicator import AgentStatusIndicator
+from src.agent.ui.step_views import StepViewSwitcher
 from src.ui.theme import Theme
 
 
@@ -55,6 +58,9 @@ class AgentPanel(ft.Row):
         self._collapse_button: Optional[ft.IconButton] = None
         self._badge_indicator: Optional[ft.Container] = None
         self._divider_container: Optional[ft.Container] = None
+        self._view_mode_dropdown: Optional[ft.Dropdown] = None
+        self._status_indicator: Optional[AgentStatusIndicator] = None
+        self._step_view_switcher: Optional[StepViewSwitcher] = None
 
         # Row settings
         self.expand = False
@@ -116,6 +122,24 @@ class AgentPanel(ft.Row):
             height=36,
         )
 
+        # View mode dropdown
+        self._view_mode_dropdown = ft.Dropdown(
+            value=self._prefs.step_view_mode,
+            options=[
+                ft.dropdown.Option("checklist", "Checklist"),
+                ft.dropdown.Option("timeline", "Timeline"),
+                ft.dropdown.Option("cards", "Cards"),
+            ],
+            width=100,
+            height=32,
+            text_size=Theme.FONT_XS,
+            border_color=Theme.BORDER,
+            bgcolor=Theme.BG_TERTIARY,
+            focused_border_color=Theme.PRIMARY,
+            on_change=self._on_view_mode_change,
+            content_padding=ft.padding.symmetric(horizontal=8, vertical=4),
+        )
+
         # Header row
         self._header = ft.Row(
             controls=[
@@ -127,27 +151,40 @@ class AgentPanel(ft.Row):
                     color=Theme.TEXT_PRIMARY,
                 ),
                 ft.Container(expand=True),  # Spacer
+                self._view_mode_dropdown,
                 collapse_with_badge,
             ],
             spacing=Theme.SPACING_SM,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-        # Content area (placeholder for step/plan views)
+        # Status indicator
+        self._status_indicator = AgentStatusIndicator(initial_status="idle")
+
+        # Step view switcher (initialized with empty steps)
+        self._step_view_switcher = StepViewSwitcher(
+            mode=self._prefs.step_view_mode,
+            steps=[],
+        )
+
+        # Content area with status indicator and step views
         self._content_area = ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text(
-                        "Agent panel ready",
-                        color=Theme.TEXT_SECONDARY,
-                        size=Theme.FONT_SM,
+                    ft.Container(
+                        content=self._status_indicator,
+                        padding=ft.padding.only(
+                            left=Theme.SPACING_SM,
+                            bottom=Theme.SPACING_SM,
+                        ),
                     ),
+                    self._step_view_switcher,
+                    # Placeholder for audit trail (later)
                 ],
-                spacing=Theme.SPACING_SM,
+                spacing=Theme.SPACING_XS,
                 expand=True,
             ),
             expand=True,
-            padding=Theme.SPACING_SM,
         )
 
         # Main content container
@@ -197,6 +234,23 @@ class AgentPanel(ft.Row):
 
             # Save preference
             self._prefs.width = self._width
+            save_panel_preferences(self._prefs)
+
+    def _on_view_mode_change(self, e: ft.ControlEvent) -> None:
+        """
+        Handle view mode dropdown change.
+
+        Args:
+            e: Control event with new value
+        """
+        mode = e.control.value
+        if mode in ("checklist", "timeline", "cards"):
+            # Update switcher
+            if self._step_view_switcher:
+                self._step_view_switcher.set_view_mode(mode)
+
+            # Save preference
+            self._prefs.step_view_mode = mode  # type: ignore
             save_panel_preferences(self._prefs)
 
     def toggle_visibility(self) -> None:
@@ -271,11 +325,83 @@ class AgentPanel(ft.Row):
             ):
                 self._increment_badge()
 
-        # Placeholder handlers - will be implemented by child views
-        # For now, just process terminal events
-        if event.type in ("completed", "cancelled", "error"):
-            # Terminal events handled by subscription auto-close
-            pass
+        # Route to specific handlers
+        if event.type == "plan_created":
+            self._handle_plan_created(event)
+        elif event.type == "step_started":
+            self._handle_step_started(event)
+        elif event.type == "step_completed":
+            self._handle_step_completed(event)
+        elif event.type == "tool_result":
+            self._handle_tool_result(event)
+
+        # Update status indicator
+        if self._status_indicator:
+            self._status_indicator.update_from_event(event)
+
+    def _handle_plan_created(self, event: AgentEvent) -> None:
+        """
+        Handle plan_created event.
+
+        Args:
+            event: AgentEvent with plan data
+        """
+        plan_data = event.data.get("plan", {})
+        steps_data = plan_data.get("steps", [])
+
+        # Convert step dicts to PlanStep objects
+        steps = []
+        for step_data in steps_data:
+            step = PlanStep(
+                id=step_data.get("id", ""),
+                description=step_data.get("description", ""),
+                tool_name=step_data.get("tool_name"),
+                tool_params=step_data.get("tool_params", {}),
+                dependencies=step_data.get("dependencies", []),
+                status=StepStatus(step_data.get("status", "pending")),
+                result=step_data.get("result"),
+                error=step_data.get("error"),
+            )
+            steps.append(step)
+
+        # Update step view
+        if self._step_view_switcher:
+            self._step_view_switcher.set_steps(steps)
+
+    def _handle_step_started(self, event: AgentEvent) -> None:
+        """
+        Handle step_started event.
+
+        Args:
+            event: AgentEvent with step_id
+        """
+        step_id = event.data.get("step_id", "")
+        if self._step_view_switcher and step_id:
+            self._step_view_switcher.update_step(step_id, StepStatus.RUNNING)
+
+    def _handle_step_completed(self, event: AgentEvent) -> None:
+        """
+        Handle step_completed event.
+
+        Args:
+            event: AgentEvent with step_id and result
+        """
+        step_id = event.data.get("step_id", "")
+        if self._step_view_switcher and step_id:
+            self._step_view_switcher.update_step(step_id, StepStatus.COMPLETED)
+
+    def _handle_tool_result(self, event: AgentEvent) -> None:
+        """
+        Handle tool_result event.
+
+        Optionally stores result in the step for display.
+
+        Args:
+            event: AgentEvent with step_id and result
+        """
+        # Tool results are stored on the step by the agent loop
+        # The step view will show them when expanded
+        pass
 
     def _increment_badge(self) -> None:
         """Increment badge count and update visibility."""
