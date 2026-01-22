@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 11 of 14 (Safety and Approval Systems) - COMPLETE
-Plan: 6 of 6 in current phase
+Plan: 7 of 7 in current phase
 Status: Phase complete
-Last activity: 2026-01-22 - Completed 11-06-PLAN.md (Executor Integration)
+Last activity: 2026-01-22 - Completed 11-07-PLAN.md (Safety E2E Tests)
 
-Progress: [####################] 100% (20/20 v3.0 plans for Phase 11)
+Progress: [####################] 100% (21/21 v3.0 plans for Phase 11)
 
 ## Milestone History
 
@@ -25,9 +25,9 @@ Progress: [####################] 100% (20/20 v3.0 plans for Phase 11)
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20 (v3.0)
+- Total plans completed: 21 (v3.0)
 - Average duration: ~7 minutes
-- Total execution time: ~2.4 hours
+- Total execution time: ~2.5 hours
 
 **By Phase:**
 
@@ -37,10 +37,10 @@ Progress: [####################] 100% (20/20 v3.0 plans for Phase 11)
 | 8 | 3 | ~29min | ~10min |
 | 9 | 6 | ~34min | ~6min |
 | 10 | 6 | ~30min | ~5min |
-| 11 | 6 | ~29min | ~5min |
+| 11 | 7 | ~32min | ~5min |
 
 **Recent Trend:**
-- Last 5 plans: 11-02, 11-03, 11-04, 11-05, 11-06
+- Last 5 plans: 11-03, 11-04, 11-05, 11-06, 11-07
 - Trend: Consistent fast velocity (~5min)
 
 *Updated after each plan completion*
@@ -108,6 +108,9 @@ Recent decisions affecting current work:
 - 11-06: Kill switch checked at start of loop and after each step (step boundaries)
 - 11-06: Approval timeout results in skipped action, not auto-reject
 - 11-06: Run method wrapped with try/finally for safety cleanup
+- 11-07: Structure E2E tests into 4 test classes by component (Classification, Approval, KillSwitch, Audit)
+- 11-07: Use asyncio.create_task for approval blocking tests
+- 11-07: Windows-compatible cleanup with gc.collect() and PermissionError handling (per 09-06)
 
 ### Pending Todos
 
@@ -120,7 +123,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Completed 11-06-PLAN.md (Executor Integration)
+Stopped at: Completed 11-07-PLAN.md (Safety E2E Tests)
 Resume file: None
 
 ## Next Steps
@@ -132,5 +135,6 @@ Phase 11 (Safety and Approval Systems) COMPLETE:
 - 11-04: Audit Trail (AuditEntry, AuditStore with SQLite) - COMPLETE
 - 11-05: UI Components (RiskBadge, ApprovalSheet) - COMPLETE
 - 11-06: Executor Integration - COMPLETE
+- 11-07: E2E Tests (QUAL-04: 18 tests covering all safety components) - COMPLETE
 
 Next: Phase 12 (Conversation Management) or continue to Phase 13 (Autonomy Levels).
