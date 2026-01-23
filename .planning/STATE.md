@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 12 of 14 (UI Integration)
-Plan: 4 of 7 in current phase
+Plan: 6 of 7 in current phase
 Status: In progress
-Last activity: 2026-01-23 - Completed 12-04-PLAN.md (ApprovalSheet Enhancement)
+Last activity: 2026-01-23 - Completed 12-06-PLAN.md (Task History View)
 
-Progress: [###########---------] 57% (4/7 plans for Phase 12)
+Progress: [################----] 86% (6/7 plans for Phase 12)
 
 ## Milestone History
 
@@ -38,11 +38,11 @@ Progress: [###########---------] 57% (4/7 plans for Phase 12)
 | 9 | 6 | ~34min | ~6min |
 | 10 | 6 | ~30min | ~5min |
 | 11 | 7 | ~32min | ~5min |
-| 12 | 4 | ~15min | ~4min |
+| 12 | 6 | ~19min | ~3min |
 
 **Recent Trend:**
-- Last 5 plans: 12-01, 12-02, 12-03, 12-04
-- Trend: Accelerating velocity (~3-5min)
+- Last 5 plans: 12-02, 12-03, 12-04, 12-05, 12-06
+- Trend: Accelerating velocity (~3-4min)
 
 *Updated after each plan completion*
 
@@ -123,6 +123,9 @@ Recent decisions affecting current work:
 - 12-04: Remember choice with session/type scope options
 - 12-03: _safe_update helper with try/except for RuntimeError (Flet page attachment)
 - 12-03: ft.Alignment(0, 0) instead of deprecated ft.alignment.center
+- 12-06: 50 character truncation for task descriptions in history view
+- 12-06: PAGE_SIZE of 20 sessions per load for pagination
+- 12-06: Expandable rows for session details (tokens, cost, duration)
 
 ### Pending Todos
 
@@ -135,7 +138,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-23
-Stopped at: Completed 12-04-PLAN.md (ApprovalSheet Enhancement)
+Stopped at: Completed 12-06-PLAN.md (Task History View)
 Resume file: None
 
 ## Next Steps
@@ -145,8 +148,8 @@ Phase 12 (UI Integration) IN PROGRESS:
 - 12-02: Step Views (checklist, timeline, cards) - COMPLETE
 - 12-03: Plan Views (list, tree) - COMPLETE
 - 12-04: ApprovalSheet Enhancement (editing, detail levels) - COMPLETE
-- 12-05: Audit Trail View
-- 12-06: Task History View
+- 12-05: Audit Trail View - COMPLETE
+- 12-06: Task History View - COMPLETE
 - 12-07: E2E Tests
 
-Next: 12-05-PLAN.md (Audit Trail View)
+Next: 12-07-PLAN.md (E2E Tests)
