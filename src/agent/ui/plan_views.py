@@ -57,6 +57,15 @@ def _get_status_color(status: StepStatus) -> str:
     return status_colors.get(status, Theme.TEXT_MUTED)
 
 
+def _safe_update(control: ft.Control) -> None:
+    """Safely call update on a control, handling unattached controls."""
+    try:
+        control.update()
+    except RuntimeError:
+        # Control not attached to a page yet
+        pass
+
+
 class PlanHeader(ft.Container):
     """
     Header component showing plan overview.
@@ -134,7 +143,7 @@ class PlanHeader(ft.Container):
         """Update the displayed plan."""
         self._plan = plan
         self.content = self._build_content()
-        self.update()
+        _safe_update(self)
 
 
 class PlanListView(ft.Column):
@@ -188,7 +197,7 @@ class PlanListView(ft.Column):
         list_view = ft.ListView(
             spacing=Theme.SPACING_XS,
             expand=True,
-            padding=ft.padding.only(top=Theme.SPACING_SM),
+            padding=ft.Padding.only(top=Theme.SPACING_SM),
         )
 
         for i, step in enumerate(self._plan.steps, 1):
@@ -216,7 +225,7 @@ class PlanListView(ft.Column):
             height=20,
             border_radius=10,
             bgcolor=status_color,
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),
         )
 
         # Description
@@ -262,7 +271,7 @@ class PlanListView(ft.Column):
 
         return ft.Container(
             content=row_content,
-            padding=ft.padding.symmetric(
+            padding=ft.Padding.symmetric(
                 horizontal=Theme.SPACING_SM,
                 vertical=Theme.SPACING_XS,
             ),
@@ -275,7 +284,7 @@ class PlanListView(ft.Column):
         """Replace the displayed plan."""
         self._plan = plan
         self._build()
-        self.update()
+        _safe_update(self)
 
     def update_step_status(self, step_id: str, status: StepStatus) -> None:
         """
@@ -296,7 +305,7 @@ class PlanListView(ft.Column):
             badge = row.content.controls[0]
             if isinstance(badge, ft.Container):
                 badge.bgcolor = status_color
-                badge.update()
+                _safe_update(badge)
 
 
 class PlanTreeView(ft.Column):
@@ -356,7 +365,7 @@ class PlanTreeView(ft.Column):
             controls=tree_controls,
             spacing=Theme.SPACING_XS,
             expand=True,
-            padding=ft.padding.only(top=Theme.SPACING_SM),
+            padding=ft.Padding.only(top=Theme.SPACING_SM),
         )
 
         self.controls.append(list_view)
@@ -490,7 +499,7 @@ class PlanTreeView(ft.Column):
 
         return ft.Container(
             content=row_content,
-            padding=ft.padding.symmetric(
+            padding=ft.Padding.symmetric(
                 horizontal=Theme.SPACING_SM,
                 vertical=Theme.SPACING_XS,
             ),
@@ -503,7 +512,7 @@ class PlanTreeView(ft.Column):
         """Replace the displayed plan."""
         self._plan = plan
         self._build()
-        self.update()
+        _safe_update(self)
 
     def update_step_status(self, step_id: str, status: StepStatus) -> None:
         """
@@ -525,7 +534,7 @@ class PlanTreeView(ft.Column):
                 if (isinstance(control, ft.Container) and
                     control.width == 8 and control.height == 8):
                     control.bgcolor = status_color
-                    control.update()
+                    _safe_update(control)
                     break
 
 
@@ -578,7 +587,7 @@ class PlanViewSwitcher(ft.AnimatedSwitcher):
         else:
             self.content = self._tree_view
 
-        self.update()
+        _safe_update(self)
 
     def set_plan(self, plan: AgentPlan) -> None:
         """
@@ -590,7 +599,7 @@ class PlanViewSwitcher(ft.AnimatedSwitcher):
         self._plan = plan
         self._list_view.set_plan(plan)
         self._tree_view.set_plan(plan)
-        self.update()
+        _safe_update(self)
 
     def update_step_status(self, step_id: str, status: StepStatus) -> None:
         """
