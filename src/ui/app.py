@@ -6,6 +6,8 @@ The main Flet application shell with navigation and layout.
 
 import flet as ft
 import asyncio
+from typing import TYPE_CHECKING, Optional
+
 from src.ui.theme import SkynetteTheme
 from src.updater import Updater, UpdateInfo
 from src.data.storage import WorkflowStorage
@@ -18,7 +20,9 @@ from src.ui.views.simple_mode import SimpleModeView
 from src.ui.views.agents import AgentsView
 from src.ui.views.devtools import DevToolsView
 from src.ui.views.code_editor import CodeEditorView
-from src.agent.ui import AgentPanel
+
+if TYPE_CHECKING:
+    from src.agent.ui import AgentPanel
 
 
 class WorkflowExecutionError(Exception):
@@ -41,7 +45,7 @@ class SkynetteApp:
         self.view_title_text = None  # Reference to title text for updates
 
         # Agent panel (lazy initialized)
-        self.agent_panel: AgentPanel = None
+        self.agent_panel: Optional["AgentPanel"] = None
         self.agent_panel_visible = False
 
         # Core services
@@ -1310,6 +1314,9 @@ class SkynetteApp:
 
     def _toggle_agent_panel(self, e=None):
         """Toggle the agent panel visibility."""
+        # Lazy import to avoid circular dependency
+        from src.agent.ui import AgentPanel
+
         self.agent_panel_visible = not self.agent_panel_visible
 
         # Lazy initialize the agent panel
@@ -1337,13 +1344,16 @@ class SkynetteApp:
 
         self.page.update()
 
-    def get_agent_panel(self) -> AgentPanel:
+    def get_agent_panel(self) -> "AgentPanel":
         """
         Get the agent panel instance, creating if needed.
 
         Returns:
             AgentPanel instance
         """
+        # Lazy import to avoid circular dependency
+        from src.agent.ui import AgentPanel
+
         if self.agent_panel is None:
             self.agent_panel = AgentPanel(self.page)
         return self.agent_panel

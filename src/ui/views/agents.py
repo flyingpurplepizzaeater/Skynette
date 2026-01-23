@@ -6,15 +6,14 @@ Visualizes and manages autonomous agent tasks.
 import flet as ft
 import asyncio
 import json
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from src.ui.theme import Theme
 from src.core.agents.supervisor import Supervisor, SupervisorPlan
-from src.agent.loop.executor import AgentExecutor
-from src.agent.models.state import AgentSession
-from src.agent.models.event import AgentEvent
-from src.agent.ui import AgentPanel, ApprovalSheet, AgentStatusIndicator
-from src.agent.safety import get_approval_manager
+
+# Lazy imports to avoid circular dependency
+if TYPE_CHECKING:
+    from src.agent.ui import AgentPanel
 
 
 class AgentsView(ft.Column):
@@ -66,6 +65,9 @@ class AgentsView(ft.Column):
         self._status_indicator: Optional[AgentStatusIndicator] = None
 
     def build(self):
+        # Lazy import to avoid circular dependency
+        from src.agent.ui import AgentStatusIndicator
+
         # Create status indicator
         self._status_indicator = AgentStatusIndicator(initial_status="idle")
 
@@ -243,6 +245,10 @@ class AgentsView(ft.Column):
 
     async def _run_agent_task(self, prompt: str):
         """Run task using the new AgentExecutor with panel integration."""
+        # Lazy imports to avoid circular dependency
+        from src.agent.loop.executor import AgentExecutor
+        from src.agent.models.state import AgentSession
+
         try:
             # Create session and executor
             self._current_session = AgentSession(task=prompt)
@@ -316,7 +322,7 @@ class AgentsView(ft.Column):
             if self._page:
                 self._page.update()
 
-    async def _handle_agent_event(self, event: AgentEvent):
+    async def _handle_agent_event(self, event):
         """Handle events from the agent executor."""
         if event.type == "plan_created":
             plan_data = event.data.get("plan", {})
@@ -356,8 +362,12 @@ class AgentsView(ft.Column):
                 )
             )
 
-    async def _handle_approval_request(self, event: AgentEvent):
+    async def _handle_approval_request(self, event):
         """Handle approval request by showing ApprovalSheet."""
+        # Lazy imports to avoid circular dependency
+        from src.agent.ui import ApprovalSheet
+        from src.agent.safety import get_approval_manager
+
         approval_manager = get_approval_manager()
 
         # Get pending request
@@ -479,7 +489,7 @@ class AgentsView(ft.Column):
             border=ft.border.all(1, Theme.BORDER),
         )
 
-    def _get_agent_panel(self) -> Optional[AgentPanel]:
+    def _get_agent_panel(self) -> Optional["AgentPanel"]:
         """Get agent panel from app if available."""
         if self._app and hasattr(self._app, 'get_agent_panel'):
             return self._app.get_agent_panel()
