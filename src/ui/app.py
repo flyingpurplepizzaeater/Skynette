@@ -18,6 +18,7 @@ from src.ui.views.simple_mode import SimpleModeView
 from src.ui.views.agents import AgentsView
 from src.ui.views.devtools import DevToolsView
 from src.ui.views.code_editor import CodeEditorView
+from src.agent.ui import AgentPanel
 
 
 class WorkflowExecutionError(Exception):
@@ -38,6 +39,10 @@ class SkynetteApp:
         self.assistant_panel = None
         self.assistant_visible = True
         self.view_title_text = None  # Reference to title text for updates
+
+        # Agent panel (lazy initialized)
+        self.agent_panel: AgentPanel = None
+        self.agent_panel_visible = False
 
         # Core services
         self.storage = WorkflowStorage()
@@ -115,6 +120,9 @@ class SkynetteApp:
 
     def _build_layout(self) -> ft.Control:
         """Build the main application layout."""
+        # Build agent panel container (lazy populated when toggled on)
+        self._agent_panel_container = ft.Container(visible=False)
+
         return ft.Stack(
             controls=[
                 ft.Row(
@@ -128,13 +136,15 @@ class SkynetteApp:
                                 # Top Bar
                                 self._build_top_bar(),
                                 ft.Divider(height=1, color=SkynetteTheme.BORDER),
-                                # Content + Assistant
+                                # Content + Assistant + Agent Panel
                                 ft.Row(
                                     controls=[
                                         # Main content
                                         self.content_area,
                                         # Assistant Panel
                                         self._build_assistant_panel(),
+                                        # Agent Panel (right sidebar)
+                                        self._agent_panel_container,
                                     ],
                                     expand=True,
                                     spacing=0,
@@ -318,6 +328,19 @@ class SkynetteApp:
             weight=ft.FontWeight.W_600,
             color=SkynetteTheme.TEXT_PRIMARY,
         )
+
+        # Agent panel toggle button
+        self._agent_panel_btn = ft.IconButton(
+            icon=ft.Icons.SMART_TOY_OUTLINED,
+            icon_color=(
+                SkynetteTheme.PRIMARY
+                if self.agent_panel_visible
+                else SkynetteTheme.TEXT_SECONDARY
+            ),
+            tooltip="Toggle Agent Panel",
+            on_click=self._toggle_agent_panel,
+        )
+
         return ft.Container(
             content=ft.Row(
                 controls=[
@@ -326,6 +349,7 @@ class SkynetteApp:
                     ft.Container(expand=True),
                     self._build_provider_status_bar(),
                     # Action Buttons
+                    self._agent_panel_btn,
                     ft.IconButton(
                         icon=ft.Icons.CHAT_ROUNDED,
                         icon_color=(
@@ -1283,6 +1307,46 @@ class SkynetteApp:
         if self.assistant_panel:
             self.assistant_panel.visible = self.assistant_visible
         self.page.update()
+
+    def _toggle_agent_panel(self, e=None):
+        """Toggle the agent panel visibility."""
+        self.agent_panel_visible = not self.agent_panel_visible
+
+        # Lazy initialize the agent panel
+        if self.agent_panel is None:
+            self.agent_panel = AgentPanel(self.page)
+
+        # Update visibility
+        self.agent_panel.set_visible(self.agent_panel_visible)
+
+        # Update container content
+        if self._agent_panel_container:
+            if self.agent_panel_visible:
+                self._agent_panel_container.content = self.agent_panel
+                self._agent_panel_container.visible = True
+            else:
+                self._agent_panel_container.visible = False
+
+        # Update button icon color
+        if hasattr(self, '_agent_panel_btn') and self._agent_panel_btn:
+            self._agent_panel_btn.icon_color = (
+                SkynetteTheme.PRIMARY
+                if self.agent_panel_visible
+                else SkynetteTheme.TEXT_SECONDARY
+            )
+
+        self.page.update()
+
+    def get_agent_panel(self) -> AgentPanel:
+        """
+        Get the agent panel instance, creating if needed.
+
+        Returns:
+            AgentPanel instance
+        """
+        if self.agent_panel is None:
+            self.agent_panel = AgentPanel(self.page)
+        return self.agent_panel
 
     def _toggle_theme(self, e):
         """Toggle between light and dark theme."""
