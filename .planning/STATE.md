@@ -115,6 +115,9 @@ Recent decisions affecting current work:
 - 12-01: Panel width bounds MIN=280, MAX=600, DEFAULT=350
 - 12-01: Invert delta_x for right sidebar resize (moving left = wider)
 - 12-01: Badge count capped at 99 for pending event indicator
+- 12-02: STATUS_ICONS and STATUS_COLORS maps for consistent step styling
+- 12-02: AnimatedSwitcher with FADE transition for smooth view mode changes
+- 12-02: Expandable detail sections in checklist and cards views
 - 12-04: Three detail levels (minimal, detailed, progressive) for approval content
 - 12-04: Parameter editing with JSON validation before approval
 - 12-04: Remember choice with session/type scope options
