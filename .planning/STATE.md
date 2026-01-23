@@ -123,6 +123,8 @@ Recent decisions affecting current work:
 - 12-04: Remember choice with session/type scope options
 - 12-03: _safe_update helper with try/except for RuntimeError (Flet page attachment)
 - 12-03: ft.Alignment(0, 0) instead of deprecated ft.alignment.center
+- 12-05: on_select instead of on_change for Dropdown in Flet 0.80
+- 12-05: Fixed 300px height for audit trail in ExpansionPanel
 - 12-06: 50 character truncation for task descriptions in history view
 - 12-06: PAGE_SIZE of 20 sessions per load for pagination
 - 12-06: Expandable rows for session details (tokens, cost, duration)
