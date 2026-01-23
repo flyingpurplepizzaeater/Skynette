@@ -318,7 +318,7 @@ class AuditTrailView(ft.Column):
             border_color=Theme.BORDER,
             bgcolor=Theme.BG_TERTIARY,
             focused_border_color=Theme.PRIMARY,
-            on_change=self._on_filter_change,
+            on_select=self._on_filter_change,
             content_padding=ft.padding.symmetric(horizontal=8, vertical=4),
         )
 
