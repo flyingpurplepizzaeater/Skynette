@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** One app to replace separate AI chat clients, model managers, workflow tools, code editors, and AI assistants - accessible to everyone
-**Current focus:** Phase 12 (UI Integration) - COMPLETE
+**Current focus:** Phase 13 (Autonomy Levels) - Ready to plan
 
 ## Current Position
 
@@ -157,4 +157,4 @@ Phase 12 (UI Integration) COMPLETE:
 - 12-06: Task History View - COMPLETE
 - 12-07: E2E Integration - COMPLETE
 
-Next: Phase 13 (MCP Extensions) or Phase 14 (Polish & Refinement)
+Next: /gsd:discuss-phase 13 (Autonomy Levels L1-L4)
