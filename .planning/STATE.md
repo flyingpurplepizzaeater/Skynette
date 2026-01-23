@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** One app to replace separate AI chat clients, model managers, workflow tools, code editors, and AI assistants - accessible to everyone
-**Current focus:** Phase 12 (UI Integration) - In Progress
+**Current focus:** Phase 12 (UI Integration) - COMPLETE
 
 ## Current Position
 
 Phase: 12 of 14 (UI Integration)
-Plan: 6 of 7 in current phase
-Status: In progress
-Last activity: 2026-01-23 - Completed 12-06-PLAN.md (Task History View)
+Plan: 7 of 7 in current phase
+Status: Phase complete
+Last activity: 2026-01-23 - Completed 12-07-PLAN.md (E2E Integration)
 
-Progress: [################----] 86% (6/7 plans for Phase 12)
+Progress: [####################] 100% (7/7 plans for Phase 12)
 
 ## Milestone History
 
@@ -25,9 +25,9 @@ Progress: [################----] 86% (6/7 plans for Phase 12)
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26 (v3.0)
+- Total plans completed: 27 (v3.0)
 - Average duration: ~6 minutes
-- Total execution time: ~2.8 hours
+- Total execution time: ~2.9 hours
 
 **By Phase:**
 
@@ -38,11 +38,11 @@ Progress: [################----] 86% (6/7 plans for Phase 12)
 | 9 | 6 | ~34min | ~6min |
 | 10 | 6 | ~30min | ~5min |
 | 11 | 7 | ~32min | ~5min |
-| 12 | 6 | ~19min | ~3min |
+| 12 | 7 | ~24min | ~3min |
 
 **Recent Trend:**
-- Last 5 plans: 12-02, 12-03, 12-04, 12-05, 12-06
-- Trend: Accelerating velocity (~3-4min)
+- Last 5 plans: 12-03, 12-04, 12-05, 12-06, 12-07
+- Trend: Accelerating velocity (~3-5min)
 
 *Updated after each plan completion*
 
@@ -128,6 +128,9 @@ Recent decisions affecting current work:
 - 12-06: 50 character truncation for task descriptions in history view
 - 12-06: PAGE_SIZE of 20 sessions per load for pagination
 - 12-06: Expandable rows for session details (tokens, cost, duration)
+- 12-07: Lazy panel initialization (created on first toggle, not app start)
+- 12-07: E2E tests use mock executor with real AgentEventEmitter
+- 12-07: Performance benchmarks: <100ms panel, <200ms 100-steps, <500ms 50-events
 
 ### Pending Todos
 
@@ -140,18 +143,18 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-23
-Stopped at: Completed 12-06-PLAN.md (Task History View)
+Stopped at: Completed 12-07-PLAN.md (E2E Integration)
 Resume file: None
 
 ## Next Steps
 
-Phase 12 (UI Integration) IN PROGRESS:
+Phase 12 (UI Integration) COMPLETE:
 - 12-01: Agent Panel Core (AgentPanel, PanelPreferences) - COMPLETE
 - 12-02: Step Views (checklist, timeline, cards) - COMPLETE
 - 12-03: Plan Views (list, tree) - COMPLETE
 - 12-04: ApprovalSheet Enhancement (editing, detail levels) - COMPLETE
 - 12-05: Audit Trail View - COMPLETE
 - 12-06: Task History View - COMPLETE
-- 12-07: E2E Tests
+- 12-07: E2E Integration - COMPLETE
 
-Next: 12-07-PLAN.md (E2E Tests)
+Next: Phase 13 (MCP Extensions) or Phase 14 (Polish & Refinement)
