@@ -121,6 +121,8 @@ Recent decisions affecting current work:
 - 12-04: Three detail levels (minimal, detailed, progressive) for approval content
 - 12-04: Parameter editing with JSON validation before approval
 - 12-04: Remember choice with session/type scope options
+- 12-03: _safe_update helper with try/except for RuntimeError (Flet page attachment)
+- 12-03: ft.Alignment(0, 0) instead of deprecated ft.alignment.center
 
 ### Pending Todos
 
