@@ -11,11 +11,14 @@ import flet as ft
 from src.agent.events.emitter import AgentEventEmitter, EventSubscription
 from src.agent.models.event import AgentEvent
 from src.agent.models.plan import PlanStep, StepStatus
+from src.agent.safety.audit import AuditEntry
+from src.agent.ui.audit_view import AuditTrailView
 from src.agent.ui.panel_preferences import (
     PanelPreferences,
     get_panel_preferences,
     save_panel_preferences,
 )
+from src.agent.ui.plan_views import PlanViewSwitcher
 from src.agent.ui.status_indicator import AgentStatusIndicator
 from src.agent.ui.step_views import StepViewSwitcher
 from src.ui.theme import Theme
@@ -61,6 +64,9 @@ class AgentPanel(ft.Row):
         self._view_mode_dropdown: Optional[ft.Dropdown] = None
         self._status_indicator: Optional[AgentStatusIndicator] = None
         self._step_view_switcher: Optional[StepViewSwitcher] = None
+        self._plan_view_switcher: Optional[PlanViewSwitcher] = None
+        self._audit_view: Optional[AuditTrailView] = None
+        self._session_id: Optional[str] = None
 
         # Row settings
         self.expand = False
@@ -167,7 +173,73 @@ class AgentPanel(ft.Row):
             steps=[],
         )
 
-        # Content area with status indicator and step views
+        # Plan view switcher
+        self._plan_view_switcher = PlanViewSwitcher(
+            mode="list",
+            plans=[],
+        )
+
+        # Audit trail view
+        self._audit_view = AuditTrailView(session_id=None)
+
+        # Collapsible sections
+        sections = ft.ExpansionPanelList(
+            elevation=0,
+            divider_color=Theme.BORDER,
+            controls=[
+                ft.ExpansionPanel(
+                    header=ft.ListTile(
+                        leading=ft.Icon(ft.Icons.CHECKLIST, size=16, color=Theme.TEXT_SECONDARY),
+                        title=ft.Text(
+                            "Steps",
+                            size=Theme.FONT_SM,
+                            color=Theme.TEXT_PRIMARY,
+                        ),
+                    ),
+                    content=ft.Container(
+                        content=self._step_view_switcher,
+                        padding=Theme.SPACING_SM,
+                    ),
+                    bgcolor=Theme.BG_SECONDARY,
+                    expanded=True,
+                ),
+                ft.ExpansionPanel(
+                    header=ft.ListTile(
+                        leading=ft.Icon(ft.Icons.ACCOUNT_TREE, size=16, color=Theme.TEXT_SECONDARY),
+                        title=ft.Text(
+                            "Plan",
+                            size=Theme.FONT_SM,
+                            color=Theme.TEXT_PRIMARY,
+                        ),
+                    ),
+                    content=ft.Container(
+                        content=self._plan_view_switcher,
+                        padding=Theme.SPACING_SM,
+                    ),
+                    bgcolor=Theme.BG_SECONDARY,
+                    expanded=False,
+                ),
+                ft.ExpansionPanel(
+                    header=ft.ListTile(
+                        leading=ft.Icon(ft.Icons.HISTORY, size=16, color=Theme.TEXT_SECONDARY),
+                        title=ft.Text(
+                            "Audit Trail",
+                            size=Theme.FONT_SM,
+                            color=Theme.TEXT_PRIMARY,
+                        ),
+                    ),
+                    content=ft.Container(
+                        content=self._audit_view,
+                        padding=Theme.SPACING_SM,
+                        height=300,  # Fixed height for audit trail
+                    ),
+                    bgcolor=Theme.BG_SECONDARY,
+                    expanded=False,
+                ),
+            ],
+        )
+
+        # Content area with status indicator and collapsible sections
         self._content_area = ft.Container(
             content=ft.Column(
                 controls=[
@@ -178,11 +250,11 @@ class AgentPanel(ft.Row):
                             bottom=Theme.SPACING_SM,
                         ),
                     ),
-                    self._step_view_switcher,
-                    # Placeholder for audit trail (later)
+                    sections,
                 ],
                 spacing=Theme.SPACING_XS,
                 expand=True,
+                scroll=ft.ScrollMode.AUTO,
             ),
             expand=True,
         )
@@ -334,6 +406,8 @@ class AgentPanel(ft.Row):
             self._handle_step_completed(event)
         elif event.type == "tool_result":
             self._handle_tool_result(event)
+        elif event.type == "audit_logged":
+            self._handle_audit_logged(event)
 
         # Update status indicator
         if self._status_indicator:
@@ -346,6 +420,13 @@ class AgentPanel(ft.Row):
         Args:
             event: AgentEvent with plan data
         """
+        # Extract session_id for audit view
+        session_id = event.data.get("session_id")
+        if session_id:
+            self._session_id = session_id
+            if self._audit_view:
+                self._audit_view.set_session(session_id)
+
         plan_data = event.data.get("plan", {})
         steps_data = plan_data.get("steps", [])
 
@@ -402,6 +483,22 @@ class AgentPanel(ft.Row):
         # Tool results are stored on the step by the agent loop
         # The step view will show them when expanded
         pass
+
+    def _handle_audit_logged(self, event: AgentEvent) -> None:
+        """
+        Handle audit_logged event for real-time audit updates.
+
+        Args:
+            event: AgentEvent with audit entry data
+        """
+        if not self._audit_view:
+            return
+
+        entry_data = event.data.get("entry")
+        if entry_data:
+            # Create AuditEntry from event data
+            entry = AuditEntry(**entry_data)
+            self._audit_view.add_entry(entry)
 
     def _increment_badge(self) -> None:
         """Increment badge count and update visibility."""
