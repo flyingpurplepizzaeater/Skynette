@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 12 of 14 (UI Integration)
-Plan: 1 of 7 in current phase
+Plan: 4 of 7 in current phase
 Status: In progress
-Last activity: 2026-01-22 - Completed 12-01-PLAN.md (Agent Panel Core)
+Last activity: 2026-01-23 - Completed 12-04-PLAN.md (ApprovalSheet Enhancement)
 
-Progress: [###-----------------] 14% (1/7 plans for Phase 12)
+Progress: [###########---------] 57% (4/7 plans for Phase 12)
 
 ## Milestone History
 
@@ -25,9 +25,9 @@ Progress: [###-----------------] 14% (1/7 plans for Phase 12)
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22 (v3.0)
+- Total plans completed: 26 (v3.0)
 - Average duration: ~6 minutes
-- Total execution time: ~2.6 hours
+- Total execution time: ~2.8 hours
 
 **By Phase:**
 
@@ -38,10 +38,10 @@ Progress: [###-----------------] 14% (1/7 plans for Phase 12)
 | 9 | 6 | ~34min | ~6min |
 | 10 | 6 | ~30min | ~5min |
 | 11 | 7 | ~32min | ~5min |
-| 12 | 1 | ~3min | ~3min |
+| 12 | 4 | ~15min | ~4min |
 
 **Recent Trend:**
-- Last 5 plans: 11-05, 11-06, 11-07, 12-01
+- Last 5 plans: 12-01, 12-02, 12-03, 12-04
 - Trend: Accelerating velocity (~3-5min)
 
 *Updated after each plan completion*
@@ -115,6 +115,9 @@ Recent decisions affecting current work:
 - 12-01: Panel width bounds MIN=280, MAX=600, DEFAULT=350
 - 12-01: Invert delta_x for right sidebar resize (moving left = wider)
 - 12-01: Badge count capped at 99 for pending event indicator
+- 12-04: Three detail levels (minimal, detailed, progressive) for approval content
+- 12-04: Parameter editing with JSON validation before approval
+- 12-04: Remember choice with session/type scope options
 
 ### Pending Todos
 
@@ -126,19 +129,19 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-01-22
-Stopped at: Completed 12-01-PLAN.md (Agent Panel Core)
+Last session: 2026-01-23
+Stopped at: Completed 12-04-PLAN.md (ApprovalSheet Enhancement)
 Resume file: None
 
 ## Next Steps
 
 Phase 12 (UI Integration) IN PROGRESS:
 - 12-01: Agent Panel Core (AgentPanel, PanelPreferences) - COMPLETE
-- 12-02: Step Views (checklist, timeline, cards)
-- 12-03: Plan Views (list, tree)
-- 12-04: Audit Trail View
-- 12-05: Task History View
-- 12-06: App Integration
+- 12-02: Step Views (checklist, timeline, cards) - COMPLETE
+- 12-03: Plan Views (list, tree) - COMPLETE
+- 12-04: ApprovalSheet Enhancement (editing, detail levels) - COMPLETE
+- 12-05: Audit Trail View
+- 12-06: Task History View
 - 12-07: E2E Tests
 
-Next: 12-02-PLAN.md (Step Views)
+Next: 12-05-PLAN.md (Audit Trail View)
