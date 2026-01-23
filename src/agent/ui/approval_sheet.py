@@ -139,7 +139,7 @@ class ApprovalSheet(ft.BottomSheet):
         # Edit button
         self._edit_btn = ft.TextButton(
             "Edit parameters",
-            icon=ft.icons.EDIT,
+            icon=ft.Icons.EDIT,
             on_click=self._toggle_edit_mode,
         )
 
@@ -158,7 +158,7 @@ class ApprovalSheet(ft.BottomSheet):
                 ft.dropdown.Option("session", "For this session"),
                 ft.dropdown.Option("type", "For this tool type"),
             ],
-            on_change=self._handle_scope_change,
+            on_select=self._handle_scope_change,
         )
 
         # Batch approval card (only if similar actions exist)
@@ -286,12 +286,12 @@ class ApprovalSheet(ft.BottomSheet):
         # Expand button
         def toggle_list(e):
             action_list.visible = not action_list.visible
-            e.control.icon = ft.icons.EXPAND_LESS if action_list.visible else ft.icons.EXPAND_MORE
+            e.control.icon = ft.Icons.EXPAND_LESS if action_list.visible else ft.Icons.EXPAND_MORE
             e.control.update()
             action_list.update()
 
         expand_btn = ft.IconButton(
-            icon=ft.icons.EXPAND_MORE,
+            icon=ft.Icons.EXPAND_MORE,
             on_click=toggle_list,
             icon_size=16,
         )
@@ -304,7 +304,7 @@ class ApprovalSheet(ft.BottomSheet):
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.Icon(ft.icons.LAYERS, size=16, color=Theme.INFO),
+                            ft.Icon(ft.Icons.LAYERS, size=16, color=Theme.INFO),
                             ft.Text(
                                 f"{count} similar action{'s' if count != 1 else ''} pending",
                                 size=Theme.FONT_SM,
@@ -328,12 +328,12 @@ class ApprovalSheet(ft.BottomSheet):
         if self._edit_mode:
             # Switch to edit mode
             self._edit_btn.text = "Cancel edit"
-            self._edit_btn.icon = ft.icons.CLOSE
+            self._edit_btn.icon = ft.Icons.CLOSE
             self._params_editor.visible = True
         else:
             # Switch back to view mode, reset any edits
             self._edit_btn.text = "Edit parameters"
-            self._edit_btn.icon = ft.icons.EDIT
+            self._edit_btn.icon = ft.Icons.EDIT
             self._params_editor.visible = False
             # Reset editor to original
             self._params_editor.value = json.dumps(self.classification.parameters, indent=2)

@@ -199,7 +199,7 @@ def render_progressive(
             self._details = details
             self._expand_btn = ft.TextButton(
                 "Hide details" if is_expanded else "Show details",
-                icon=ft.icons.EXPAND_LESS if is_expanded else ft.icons.EXPAND_MORE,
+                icon=ft.Icons.EXPAND_LESS if is_expanded else ft.Icons.EXPAND_MORE,
                 on_click=self._toggle_expand,
             )
 
@@ -222,7 +222,7 @@ def render_progressive(
             self._details.visible = self._is_expanded
             self._expand_btn.text = "Hide details" if self._is_expanded else "Show details"
             self._expand_btn.icon = (
-                ft.icons.EXPAND_LESS if self._is_expanded else ft.icons.EXPAND_MORE
+                ft.Icons.EXPAND_LESS if self._is_expanded else ft.Icons.EXPAND_MORE
             )
             if on_expand:
                 on_expand(self._is_expanded)
