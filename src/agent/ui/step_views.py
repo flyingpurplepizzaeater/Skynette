@@ -123,7 +123,7 @@ class StepChecklistView(ft.ListView):
                 controls=column_controls,
                 spacing=0,
             ),
-            padding=ft.padding.symmetric(
+            padding=ft.Padding.symmetric(
                 horizontal=Theme.SPACING_XS,
                 vertical=Theme.SPACING_XS,
             ),
@@ -231,15 +231,15 @@ class StepTimelineView(ft.Column):
             height=24,
             border_radius=12,
             bgcolor=color if (is_running or is_completed) else None,
-            border=ft.border.all(2, color),
-            alignment=ft.alignment.center,
+            border=ft.Border.all(2, color),
+            alignment=ft.Alignment(0, 0),
         )
 
         # Pulsing animation container for running step
         if is_running:
             badge = ft.Container(
                 content=badge,
-                animate=ft.animation.Animation(500, ft.AnimationCurve.EASE_IN_OUT),
+                animate=ft.Animation(500, ft.AnimationCurve.EASE_IN_OUT),
             )
 
         # Connecting line (not for last step)
@@ -247,7 +247,7 @@ class StepTimelineView(ft.Column):
             width=2,
             height=24,
             bgcolor=color if is_completed else Theme.BORDER,
-            margin=ft.margin.only(left=11),  # Center under badge
+            margin=ft.Margin.only(left=11),  # Center under badge
         ) if not is_last else ft.Container(height=4)
 
         # Step description
@@ -266,7 +266,7 @@ class StepTimelineView(ft.Column):
                 ft.Container(
                     content=description,
                     expand=True,
-                    padding=ft.padding.only(left=Theme.SPACING_SM),
+                    padding=ft.Padding.only(left=Theme.SPACING_SM),
                 ),
             ],
             vertical_alignment=ft.CrossAxisAlignment.START,
@@ -355,7 +355,7 @@ class StepCardsView(ft.ListView):
             ),
             bgcolor=color,
             border_radius=Theme.RADIUS_SM,
-            padding=ft.padding.symmetric(horizontal=6, vertical=2),
+            padding=ft.Padding.symmetric(horizontal=6, vertical=2),
         )
 
         # Header row
