@@ -360,7 +360,7 @@ class TaskHistoryView(ft.Column):
             # Load more button
             if self._has_more:
                 load_more_btn = ft.TextButton(
-                    text="Load more",
+                    "Load more",
                     icon=ft.Icons.EXPAND_MORE,
                     on_click=lambda e: self.load_more(),
                 )

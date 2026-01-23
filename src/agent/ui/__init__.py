@@ -12,6 +12,7 @@ from src.agent.ui.approval_detail_levels import (
     render_by_level,
 )
 from src.agent.ui.approval_sheet import ApprovalSheet
+from src.agent.ui.audit_view import AuditEntryRow, AuditTrailView
 from src.agent.ui.cancel_dialog import CancelDialog
 from src.agent.ui.panel_preferences import (
     PanelPreferences,
@@ -27,11 +28,14 @@ from src.agent.ui.step_views import (
     StepCardsView,
     StepViewSwitcher,
 )
+from src.agent.ui.task_history import TaskHistoryView, TaskSessionRow
 
 __all__ = [
     "AgentPanel",
     "AgentStatusIndicator",
     "ApprovalSheet",
+    "AuditEntryRow",
+    "AuditTrailView",
     "CancelDialog",
     "PanelPreferences",
     "PlanListView",
@@ -42,6 +46,8 @@ __all__ = [
     "StepChecklistView",
     "StepTimelineView",
     "StepViewSwitcher",
+    "TaskHistoryView",
+    "TaskSessionRow",
     "get_panel_preferences",
     "render_by_level",
     "render_detailed",
