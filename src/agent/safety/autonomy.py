@@ -115,8 +115,17 @@ class AutonomyLevelService:
             # Return global defaults
             return AutonomySettings(level=self.get_default_level())
 
-        # Check in-memory cache first
         normalized = str(Path(project_path).resolve())
+
+        # Check if L5 is active in session (takes precedence over storage)
+        if normalized in self._session_yolo_projects:
+            return AutonomySettings(
+                level="L5",
+                allowlist_rules=[],  # L5 ignores rules anyway
+                blocklist_rules=[],
+            )
+
+        # Check in-memory cache
         if normalized in self._current_levels:
             cached_level = self._current_levels[normalized]
             # Load full settings from storage but use cached level
@@ -142,14 +151,33 @@ class AutonomyLevelService:
         """
         Set autonomy level for a project.
 
-        Persists to storage and notifies callbacks on downgrade.
+        L5 is session-only by default (stored in memory, not persisted).
+        L1-L4 are persisted to storage and notify callbacks on downgrade.
 
         Args:
             project_path: Project directory path
             level: New autonomy level
         """
         normalized = str(Path(project_path).resolve())
-        old_level = self._current_levels.get(normalized, self.get_default_level())
+
+        # Get old level (check session YOLO first, then cache, then default)
+        if normalized in self._session_yolo_projects:
+            old_level: AutonomyLevel = "L5"
+        else:
+            old_level = self._current_levels.get(normalized, self.get_default_level())
+
+        if level == "L5":
+            # Session-only by default: store in memory, DON'T persist
+            self._session_yolo_projects.add(normalized)
+            self._current_levels[normalized] = level
+            # Notify callbacks if this is a change (L5 is never a downgrade)
+            if old_level != "L5":
+                for callback in self._level_changed_callbacks:
+                    callback(project_path, old_level, level, False)
+            return  # Don't persist to storage
+
+        # For L1-L4: remove from session YOLO if present
+        self._session_yolo_projects.discard(normalized)
         self._current_levels[normalized] = level
 
         # Persist to storage
@@ -159,7 +187,7 @@ class AutonomyLevelService:
         # Notify callbacks on downgrade
         if self._is_downgrade(old_level, level):
             for callback in self._level_changed_callbacks:
-                callback(project_path, old_level, level, downgrade=True)
+                callback(project_path, old_level, level, True)
 
     def get_default_level(self) -> AutonomyLevel:
         """Get the global default autonomy level."""
@@ -181,6 +209,21 @@ class AutonomyLevelService:
                      downgrade is True if the new level is more restrictive
         """
         self._level_changed_callbacks.append(callback)
+
+    def is_yolo_active(self, project_path: str | None = None) -> bool:
+        """
+        Check if YOLO mode (L5) is active for a project.
+
+        Args:
+            project_path: Project directory path, or None
+
+        Returns:
+            True if L5 is active in session for this project
+        """
+        if project_path is None:
+            return False
+        normalized = str(Path(project_path).resolve())
+        return normalized in self._session_yolo_projects
 
     def _is_downgrade(self, old: AutonomyLevel, new: AutonomyLevel) -> bool:
         """
