@@ -193,6 +193,28 @@ class ApprovalManager:
             request.set_result(ApprovalResult(decision="rejected"))
             logger.info(f"Rejected request {request_id}")
 
+    def resolve(self, request_id: str, decision: str, approve_similar: bool = False) -> None:
+        """
+        Resolve an approval request with a decision.
+
+        This is the primary method called by UI callbacks to complete the approval flow.
+        Routes to approve() or reject() based on decision string.
+
+        Args:
+            request_id: ID of the request to resolve
+            decision: One of "approved", "rejected", or "timeout"
+            approve_similar: If True and approved, auto-approve similar future actions
+        """
+        if decision == "approved":
+            self.approve(request_id, approve_similar)
+        elif decision == "rejected":
+            self.reject(request_id)
+        elif decision == "timeout":
+            # Timeout is treated as rejection - user didn't approve
+            self.reject(request_id)
+        else:
+            logger.warning(f"Unknown approval decision '{decision}' for request {request_id}")
+
     def get_pending(self) -> list[ApprovalRequest]:
         """Get list of pending approval requests."""
         return list(self._pending.values())
