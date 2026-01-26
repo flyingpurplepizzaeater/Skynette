@@ -55,7 +55,7 @@ class AgentExecutor:
     MAX_ITERATIONS = 20
     TIMEOUT_SECONDS = 300  # 5 minutes
 
-    def __init__(self, session: AgentSession):
+    def __init__(self, session: AgentSession, project_path: str | None = None):
         self.session = session
         self.planner = AgentPlanner()
         self.registry = get_tool_registry()
@@ -64,6 +64,9 @@ class AgentExecutor:
         self._cancel_request: Optional[CancellationRequest] = None
         self._current_step: Optional[PlanStep] = None
         self._completed_steps: list[str] = []
+
+        # Project path for autonomy level lookup
+        self._project_path = project_path
 
         # Safety system components
         self.classifier = ActionClassifier()
@@ -324,7 +327,7 @@ class AgentExecutor:
         try:
             if step.tool_name:
                 # Tool invocation with safety (classification, approval, audit)
-                result, events = await self._execute_tool_with_safety(
+                result, events, auto_executed = await self._execute_tool_with_safety(
                     step.tool_name,
                     step.tool_params,
                     step.id
@@ -338,7 +341,11 @@ class AgentExecutor:
                     step.result = result.data
                     yield AgentEvent(
                         type="step_completed",
-                        data={"step_id": step.id, "result": result.data},
+                        data={
+                            "step_id": step.id,
+                            "result": result.data,
+                            "auto_executed": auto_executed,
+                        },
                         session_id=self.session.id
                     )
                 else:
@@ -355,7 +362,11 @@ class AgentExecutor:
                 step.result = {"note": "Reasoning step completed"}
                 yield AgentEvent(
                     type="step_completed",
-                    data={"step_id": step.id, "result": step.result},
+                    data={
+                        "step_id": step.id,
+                        "result": step.result,
+                        "auto_executed": False,
+                    },
                     session_id=self.session.id
                 )
 
@@ -373,18 +384,24 @@ class AgentExecutor:
         tool_name: str,
         params: dict,
         step_id: str = "",
-    ) -> tuple[ToolResult, list[AgentEvent]]:
+    ) -> tuple[ToolResult, list[AgentEvent], bool]:
         """
         Execute a tool with classification, approval (if needed), retry, and audit.
 
         Returns:
-            Tuple of (ToolResult, list of events to emit)
+            Tuple of (ToolResult, list of events to emit, auto_executed flag)
         """
         events: list[AgentEvent] = []
         start_time = time.time()
 
-        # 1. Classify the action
-        classification = self.classifier.classify(tool_name, params)
+        # 1. Classify the action with project-specific autonomy level
+        classification = self.classifier.classify(tool_name, params, self._project_path)
+
+        # Determine if this action is "auto-executing" (would need approval at lower level)
+        # An action auto-executes at current level if:
+        # - It doesn't require approval at current level
+        # - But would require approval at a lower level (L1 requires all, so any non-approval is auto)
+        auto_executed = not classification.requires_approval and classification.risk_level != "safe"
 
         # Emit classification event
         events.append(AgentEvent.action_classified(
@@ -393,6 +410,7 @@ class AgentExecutor:
             reason=classification.reason,
             requires_approval=classification.requires_approval,
             session_id=self.session.id,
+            auto_executed=auto_executed,
         ))
 
         # 2. Request approval if needed
@@ -446,7 +464,7 @@ class AgentExecutor:
                 return ToolResult.failure_result(
                     tool_call_id="rejected",
                     error="Action rejected by user",
-                ), events
+                ), events, False
 
             elif approval_result.decision == "timeout":
                 # Per CONTEXT.md: pause (skip action) on timeout
@@ -465,7 +483,7 @@ class AgentExecutor:
                 return ToolResult.failure_result(
                     tool_call_id="timeout",
                     error="Approval timeout - action skipped",
-                ), events
+                ), events, False
 
             self.session.state = AgentState.EXECUTING
 
@@ -487,7 +505,7 @@ class AgentExecutor:
             success=result.success,
         )
 
-        return result, events
+        return result, events, auto_executed
 
     def _log_audit(
         self,
