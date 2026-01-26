@@ -115,7 +115,18 @@ class ActionClassifier:
         # Get autonomy settings
         settings = self.autonomy_service.get_settings(project_path)
 
-        # Check allowlist/blocklist rules first (override autonomy level)
+        # L5/YOLO: bypass ALL approval requirements - true autonomous mode
+        # This check happens BEFORE rules - L5 bypasses everything
+        if settings.level == "L5":
+            return ActionClassification(
+                risk_level=risk,
+                reason=self._get_reason(tool_name, risk, parameters),
+                requires_approval=False,  # NEVER requires approval in YOLO
+                tool_name=tool_name,
+                parameters=parameters,
+            )
+
+        # Check allowlist/blocklist rules (L1-L4 only)
         rule_result = settings.check_rules(tool_name, parameters)
         if rule_result is not None:
             # Rule explicitly allows or blocks
@@ -128,7 +139,7 @@ class ActionClassifier:
                 parameters=parameters,
             )
 
-        # Apply autonomy threshold
+        # Apply autonomy threshold (L1-L4)
         auto_execute_levels = AUTONOMY_THRESHOLDS[settings.level]
         requires_approval = risk not in auto_execute_levels
 
