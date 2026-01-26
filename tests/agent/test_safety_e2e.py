@@ -207,6 +207,116 @@ class TestApprovalFlowE2E:
         # This is implicitly tested in executor integration
         pass
 
+    @pytest.mark.asyncio
+    async def test_resolve_method_routes_decisions(self):
+        """Test that resolve() correctly routes to approve/reject."""
+        manager = ApprovalManager()
+        manager.start_session("test-session")
+
+        # Test 1: resolve with "approved" decision
+        c1 = ActionClassification(
+            risk_level="destructive",
+            reason="Test approval",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/tmp/test1.txt"},
+        )
+
+        async def resolve_approved():
+            await asyncio.sleep(0.1)
+            pending = manager.get_pending()
+            assert len(pending) == 1
+            # Use resolve() instead of approve() directly
+            manager.resolve(pending[0].id, decision="approved", approve_similar=False)
+
+        task = asyncio.create_task(resolve_approved())
+        result1 = await manager.request_approval(c1, "step-1", timeout=5.0)
+        await task
+
+        assert result1.decision == "approved"
+
+        # Test 2: resolve with "rejected" decision
+        manager.start_session("test-session-2")  # Fresh session
+        c2 = ActionClassification(
+            risk_level="critical",
+            reason="Test rejection",
+            requires_approval=True,
+            tool_name="file_delete",
+            parameters={"path": "/tmp/test2.txt"},
+        )
+
+        async def resolve_rejected():
+            await asyncio.sleep(0.1)
+            pending = manager.get_pending()
+            manager.resolve(pending[0].id, decision="rejected")
+
+        task = asyncio.create_task(resolve_rejected())
+        result2 = await manager.request_approval(c2, "step-2", timeout=5.0)
+        await task
+
+        assert result2.decision == "rejected"
+
+        # Test 3: resolve with "timeout" decision (should be treated as rejection)
+        manager.start_session("test-session-3")
+        c3 = ActionClassification(
+            risk_level="destructive",
+            reason="Test timeout",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/tmp/test3.txt"},
+        )
+
+        async def resolve_timeout():
+            await asyncio.sleep(0.1)
+            pending = manager.get_pending()
+            manager.resolve(pending[0].id, decision="timeout")
+
+        task = asyncio.create_task(resolve_timeout())
+        result3 = await manager.request_approval(c3, "step-3", timeout=5.0)
+        await task
+
+        assert result3.decision == "rejected"  # timeout routes to reject
+
+    @pytest.mark.asyncio
+    async def test_resolve_with_approve_similar(self):
+        """Test that resolve() with approve_similar enables similarity caching."""
+        manager = ApprovalManager()
+        manager.start_session("test-session")
+
+        # First action - resolve with approve_similar=True
+        c1 = ActionClassification(
+            risk_level="destructive",
+            reason="Write file",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/src/test1.py"},
+        )
+
+        async def resolve_with_similar():
+            await asyncio.sleep(0.1)
+            pending = manager.get_pending()
+            manager.resolve(pending[0].id, decision="approved", approve_similar=True)
+
+        task = asyncio.create_task(resolve_with_similar())
+        result1 = await manager.request_approval(c1, "step-1", timeout=5.0)
+        await task
+
+        assert result1.decision == "approved"
+        assert result1.approve_similar == True
+
+        # Second similar action - should auto-approve via similarity cache
+        c2 = ActionClassification(
+            risk_level="destructive",
+            reason="Write file",
+            requires_approval=True,
+            tool_name="file_write",
+            parameters={"path": "/src/test2.py"},  # Same parent directory
+        )
+
+        result2 = await manager.request_approval(c2, "step-2", timeout=1.0)
+        assert result2.decision == "approved"
+        assert result2.decided_by == "similar_match"
+
 
 class TestKillSwitchE2E:
     """E2E tests for kill switch functionality."""
