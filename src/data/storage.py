@@ -171,6 +171,18 @@ class WorkflowStorage:
             )
         """)
 
+        # Project autonomy settings table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS project_autonomy (
+                project_path TEXT PRIMARY KEY,
+                autonomy_level TEXT NOT NULL DEFAULT 'L2',
+                allowlist_rules TEXT,
+                blocklist_rules TEXT,
+                created_at TEXT,
+                updated_at TEXT
+            )
+        """)
+
         conn.commit()
         conn.close()
         logger.info(f"Database initialized at {self.db_path}")
