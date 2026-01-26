@@ -131,6 +131,9 @@ Recent decisions affecting current work:
 - 12-07: Lazy panel initialization (created on first toggle, not app start)
 - 12-07: E2E tests use mock executor with real AgentEventEmitter
 - 12-07: Performance benchmarks: <100ms panel, <200ms 100-steps, <500ms 50-events
+- 13-01: L2 (Collaborator) as default autonomy level
+- 13-01: Autonomy colors harmonize with existing RISK_COLORS (blue/emerald/amber/red)
+- 13-01: _is_downgrade() helper for detecting restrictive level changes
 - 13-02: L2 (Collaborator) as default autonomy level for new projects
 - 13-02: Path normalization via Path.resolve() for consistent DB keys
 - 13-02: Nullable allowlist/blocklist columns (rules added in Plan 04)
