@@ -9,7 +9,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Literal, Optional
 
+from src.agent.safety.allowlist import AutonomyRule, matches_rules
 from src.agent.safety.classification import RiskLevel
+from src.data.storage import get_storage
 
 
 # Autonomy level type using Literal (per 07-01 decision pattern)
@@ -63,14 +65,26 @@ class AutonomySettings:
         """
         Check allowlist/blocklist rules for a specific tool call.
 
-        Returns:
-            True if explicitly allowed by allowlist
-            False if explicitly blocked by blocklist
-            None if no rule matches (use default level behavior)
+        Args:
+            tool_name: Name of the tool being called
+            params: Tool parameters
 
-        Note: Implemented in Plan 04 - returns None for now.
+        Returns:
+            True if explicitly allowed (skip approval)
+            False if explicitly blocked (require approval)
+            None if no rule matches (use autonomy level)
         """
-        return None
+        # Convert dict rules to AutonomyRule objects if needed
+        allowlist = [
+            AutonomyRule.from_dict(r) if isinstance(r, dict) else r
+            for r in self.allowlist_rules
+        ]
+        blocklist = [
+            AutonomyRule.from_dict(r) if isinstance(r, dict) else r
+            for r in self.blocklist_rules
+        ]
+
+        return matches_rules(tool_name, params, allowlist, blocklist)
 
 
 class AutonomyLevelService:
@@ -81,51 +95,73 @@ class AutonomyLevelService:
         self._current_levels: dict[str, AutonomyLevel] = {}  # project path -> level
         self._level_changed_callbacks: list[Callable[[str, AutonomyLevel, AutonomyLevel], None]] = []
 
-    def get_settings(self, project_path: str | None) -> AutonomySettings:
+    def get_settings(self, project_path: str | None = None) -> AutonomySettings:
         """
         Get autonomy settings for a project.
 
         Args:
-            project_path: Project path, or None for global default
+            project_path: Project directory path, or None for global default
 
         Returns:
-            AutonomySettings with the appropriate level
+            AutonomySettings for the project
         """
         if project_path is None:
+            # Return global defaults
             return AutonomySettings(level=self.get_default_level())
 
-        # Normalize path
+        # Check in-memory cache first
         normalized = str(Path(project_path).resolve())
+        if normalized in self._current_levels:
+            cached_level = self._current_levels[normalized]
+            # Load full settings from storage but use cached level
+            storage = get_storage()
+            data = storage.get_project_autonomy(normalized)
+            return AutonomySettings(
+                level=cached_level,
+                allowlist_rules=data.get("allowlist", []),
+                blocklist_rules=data.get("blocklist", []),
+            )
 
-        # Get level from cache or use default
-        level = self._current_levels.get(normalized, self.get_default_level())
-        return AutonomySettings(level=level)
+        # Load from storage
+        storage = get_storage()
+        data = storage.get_project_autonomy(project_path)
+
+        return AutonomySettings(
+            level=data.get("level", self.get_default_level()),
+            allowlist_rules=data.get("allowlist", []),
+            blocklist_rules=data.get("blocklist", []),
+        )
 
     def set_level(self, project_path: str, level: AutonomyLevel) -> None:
         """
         Set autonomy level for a project.
 
+        Persists to storage and notifies callbacks on downgrade.
+
         Args:
-            project_path: Project path to set level for
+            project_path: Project directory path
             level: New autonomy level
         """
-        # Normalize path
         normalized = str(Path(project_path).resolve())
-
-        # Get old level for callbacks
         old_level = self._current_levels.get(normalized, self.get_default_level())
-
-        # Update cache
         self._current_levels[normalized] = level
 
-        # Notify callbacks if level changed
-        if old_level != level:
+        # Persist to storage
+        storage = get_storage()
+        storage.set_project_autonomy(normalized, level)
+
+        # Notify callbacks on downgrade
+        if self._is_downgrade(old_level, level):
             for callback in self._level_changed_callbacks:
-                callback(normalized, old_level, level)
+                callback(project_path, old_level, level, downgrade=True)
 
     def get_default_level(self) -> AutonomyLevel:
         """Get the global default autonomy level."""
-        return "L2"  # Collaborator - safe actions auto-execute
+        storage = get_storage()
+        level = storage.get_setting("default_autonomy_level", "L2")
+        if level in ("L1", "L2", "L3", "L4"):
+            return level  # type: ignore
+        return "L2"
 
     def on_level_changed(
         self, callback: Callable[[str, AutonomyLevel, AutonomyLevel], None]
