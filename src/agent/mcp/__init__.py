@@ -25,6 +25,11 @@ from src.agent.mcp.client import (
     MCPClientManager,
     get_mcp_client_manager,
 )
+from src.agent.mcp.bridge import (
+    MCPToolBridge,
+    get_mcp_tool_bridge,
+    initialize_mcp_tools,
+)
 
 __all__ = [
     # Models
@@ -46,4 +51,8 @@ __all__ = [
     "MCPConnection",
     "MCPClientManager",
     "get_mcp_client_manager",
+    # Bridge
+    "MCPToolBridge",
+    "get_mcp_tool_bridge",
+    "initialize_mcp_tools",
 ]

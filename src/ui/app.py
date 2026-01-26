@@ -4,9 +4,13 @@ Skynette Main Application
 The main Flet application shell with navigation and layout.
 """
 
-import flet as ft
 import asyncio
+import logging
 from typing import TYPE_CHECKING, Optional
+
+import flet as ft
+
+logger = logging.getLogger(__name__)
 
 from src.ui.theme import SkynetteTheme
 from src.updater import Updater, UpdateInfo
@@ -104,6 +108,17 @@ class SkynetteApp:
         """Initialize the application."""
         # Initialize AI providers
         initialize_default_providers()
+
+        # Initialize MCP tools (non-blocking background task)
+        async def _init_mcp():
+            try:
+                from src.agent.mcp.bridge import initialize_mcp_tools
+                results = await initialize_mcp_tools()
+                logger.info(f"MCP initialization complete: {len(results)} servers")
+            except Exception as e:
+                logger.error(f"MCP initialization failed: {e}")
+
+        asyncio.create_task(_init_mcp())
 
         # Configure page
         self.page.title = "Skynette"
