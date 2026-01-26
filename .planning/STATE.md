@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** One app to replace separate AI chat clients, model managers, workflow tools, code editors, and AI assistants - accessible to everyone
-**Current focus:** Phase 13 (Autonomy Levels) - Ready to plan
+**Current focus:** Phase 13 (Autonomy Levels) - In progress
 
 ## Current Position
 
-Phase: 12 of 14 (UI Integration)
-Plan: 7 of 7 in current phase
-Status: Phase complete
-Last activity: 2026-01-23 - Completed 12-07-PLAN.md (E2E Integration)
+Phase: 13 of 14 (Autonomy Levels)
+Plan: 2 of 7 in current phase
+Status: In progress
+Last activity: 2026-01-26 - Completed 13-02-PLAN.md (Autonomy Settings Storage)
 
-Progress: [####################] 100% (7/7 plans for Phase 12)
+Progress: [######--------------] 29% (2/7 plans for Phase 13)
 
 ## Milestone History
 
@@ -131,6 +131,9 @@ Recent decisions affecting current work:
 - 12-07: Lazy panel initialization (created on first toggle, not app start)
 - 12-07: E2E tests use mock executor with real AgentEventEmitter
 - 12-07: Performance benchmarks: <100ms panel, <200ms 100-steps, <500ms 50-events
+- 13-02: L2 (Collaborator) as default autonomy level for new projects
+- 13-02: Path normalization via Path.resolve() for consistent DB keys
+- 13-02: Nullable allowlist/blocklist columns (rules added in Plan 04)
 
 ### Pending Todos
 
@@ -142,19 +145,19 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-01-23
-Stopped at: Completed 12-07-PLAN.md (E2E Integration)
+Last session: 2026-01-26
+Stopped at: Completed 13-02-PLAN.md (Autonomy Settings Storage)
 Resume file: None
 
 ## Next Steps
 
-Phase 12 (UI Integration) COMPLETE:
-- 12-01: Agent Panel Core (AgentPanel, PanelPreferences) - COMPLETE
-- 12-02: Step Views (checklist, timeline, cards) - COMPLETE
-- 12-03: Plan Views (list, tree) - COMPLETE
-- 12-04: ApprovalSheet Enhancement (editing, detail levels) - COMPLETE
-- 12-05: Audit Trail View - COMPLETE
-- 12-06: Task History View - COMPLETE
-- 12-07: E2E Integration - COMPLETE
+Phase 13 (Autonomy Levels) IN PROGRESS:
+- 13-01: Autonomy Types & Level Service - COMPLETE
+- 13-02: Autonomy Settings Storage - COMPLETE
+- 13-03: Level Selector UI - PENDING
+- 13-04: Allowlist/Blocklist Rules - PENDING
+- 13-05: Agent Integration - PENDING
+- 13-06: Auto Badge UI - PENDING
+- 13-07: E2E Integration Tests - PENDING
 
-Next: /gsd:discuss-phase 13 (Autonomy Levels L1-L4)
+Next: /gsd:execute-plan 13-03
