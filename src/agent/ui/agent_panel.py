@@ -25,6 +25,9 @@ from src.agent.ui.status_indicator import AgentStatusIndicator
 from src.agent.ui.step_views import StepViewSwitcher
 from src.ui.theme import Theme
 
+# YOLO mode purple color
+YOLO_COLOR = "#8B5CF6"
+
 
 class AgentPanel(ft.Row):
     """
@@ -542,7 +545,9 @@ class AgentPanel(ft.Row):
         if self._project_path:
             svc = get_autonomy_service()
             svc.set_level(self._project_path, level)
-        # Level is already updated in UI by toggle
+
+        # Update YOLO styling
+        self._update_yolo_styling(level == "L5")
 
     def set_project_path(self, project_path: str | None) -> None:
         """
@@ -555,6 +560,27 @@ class AgentPanel(ft.Row):
         if self._autonomy_toggle:
             level = self._get_current_autonomy_level()
             self._autonomy_toggle.set_level(level)
+            self._update_yolo_styling(level == "L5")
+
+    def _update_yolo_styling(self, is_yolo: bool) -> None:
+        """Update panel border styling for YOLO mode."""
+        if not self._content_container:
+            return
+
+        if is_yolo:
+            # Purple border and subtle background tint
+            self._content_container.border = ft.border.only(
+                left=ft.BorderSide(2, YOLO_COLOR)
+            )
+            self._content_container.bgcolor = f"{YOLO_COLOR}08"  # Very subtle tint
+        else:
+            # Normal styling
+            self._content_container.border = ft.border.only(
+                left=ft.BorderSide(1, Theme.BORDER)
+            )
+            self._content_container.bgcolor = Theme.BG_SECONDARY
+
+        self._content_container.update()
 
     @property
     def width(self) -> int:
