@@ -88,11 +88,28 @@ class AgentEvent(BaseModel):
         )
 
     @classmethod
-    def step_completed(cls, step_id: str, result: Any, session_id: str) -> "AgentEvent":
-        """Create a step completed event."""
+    def step_completed(
+        cls,
+        step_id: str,
+        result: Any,
+        session_id: str,
+        auto_executed: bool = False,
+    ) -> "AgentEvent":
+        """
+        Create a step completed event.
+
+        Args:
+            step_id: ID of the completed step
+            result: Step result data
+            session_id: Session ID
+            auto_executed: Whether this step auto-executed (would have needed approval at lower level)
+
+        Returns:
+            AgentEvent for step completion
+        """
         return cls(
             type="step_completed",
-            data={"step_id": step_id, "result": result},
+            data={"step_id": step_id, "result": result, "auto_executed": auto_executed},
             session_id=session_id,
         )
 
@@ -156,8 +173,22 @@ class AgentEvent(BaseModel):
         reason: str,
         requires_approval: bool,
         session_id: str,
+        auto_executed: bool = False,
     ) -> "AgentEvent":
-        """Create an action_classified event."""
+        """
+        Create an action_classified event.
+
+        Args:
+            tool_name: Name of the tool
+            risk_level: Risk classification (safe, moderate, destructive, critical)
+            reason: Human-readable reason for classification
+            requires_approval: Whether approval is required
+            session_id: Session ID
+            auto_executed: Whether this action will auto-execute (would have needed approval at lower level)
+
+        Returns:
+            AgentEvent for action classification
+        """
         return cls(
             type="action_classified",
             data={
@@ -165,6 +196,7 @@ class AgentEvent(BaseModel):
                 "risk_level": risk_level,
                 "reason": reason,
                 "requires_approval": requires_approval,
+                "auto_executed": auto_executed,
             },
             session_id=session_id,
         )
