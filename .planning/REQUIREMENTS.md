@@ -46,10 +46,10 @@
 
 ### Autonomy Levels
 
-- [ ] **AUTO-01**: L1 Assistant mode (agent suggests, user executes)
-- [ ] **AUTO-02**: L2 Collaborator mode (auto-execute safe, ask for risky)
-- [ ] **AUTO-03**: L3 Trusted mode (auto-execute moderate, ask for destructive)
-- [ ] **AUTO-04**: L4 Expert mode (auto-execute most, ask for critical only)
+- [x] **AUTO-01**: L1 Assistant mode (agent suggests, user executes)
+- [x] **AUTO-02**: L2 Collaborator mode (auto-execute safe, ask for risky)
+- [x] **AUTO-03**: L3 Trusted mode (auto-execute moderate, ask for destructive)
+- [x] **AUTO-04**: L4 Expert mode (auto-execute most, ask for critical only)
 - [ ] **AUTO-05**: L5 Observer/YOLO mode (fully autonomous with monitoring)
 
 ### UI Integration

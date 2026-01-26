@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** One app to replace separate AI chat clients, model managers, workflow tools, code editors, and AI assistants - accessible to everyone
-**Current focus:** Phase 13 (Autonomy Levels) - Complete
+**Current focus:** Phase 14 (YOLO Mode) - Ready to plan
 
 ## Current Position
 
@@ -179,4 +179,4 @@ Phase 13 (Autonomy Levels) COMPLETE:
 - 13-06: Agent Integration - COMPLETE
 - 13-07: E2E Integration Tests - COMPLETE
 
-Next: Phase 14 or v3.0 release
+Next: /gsd:discuss-phase 14 (YOLO Mode L5)
