@@ -7,42 +7,42 @@
 
 ### Agent Core
 
-- [ ] **AGNT-01**: Agent can decompose complex tasks into executable steps (planning phase)
-- [ ] **AGNT-02**: Agent can invoke tools through unified interface (tool calling)
-- [ ] **AGNT-03**: Agent provides observability/tracing of execution (what's happening)
-- [ ] **AGNT-04**: Agent maintains session memory within task context
-- [ ] **AGNT-05**: Agent handles errors gracefully with retry logic
-- [ ] **AGNT-06**: Agent shows status indication (thinking spinner, step progress)
-- [ ] **AGNT-07**: User can cancel agent execution at any point
+- [x] **AGNT-01**: Agent can decompose complex tasks into executable steps (planning phase)
+- [x] **AGNT-02**: Agent can invoke tools through unified interface (tool calling)
+- [x] **AGNT-03**: Agent provides observability/tracing of execution (what's happening)
+- [x] **AGNT-04**: Agent maintains session memory within task context
+- [x] **AGNT-05**: Agent handles errors gracefully with retry logic
+- [x] **AGNT-06**: Agent shows status indication (thinking spinner, step progress)
+- [x] **AGNT-07**: User can cancel agent execution at any point
 
 ### MCP Integration
 
-- [ ] **MCP-01**: Skynette acts as MCP host (connects to MCP servers)
-- [ ] **MCP-02**: Support stdio transport for local MCP servers
-- [ ] **MCP-03**: Support HTTP/SSE transport for remote MCP servers
-- [ ] **MCP-04**: Automatic tool discovery from connected MCP servers
-- [ ] **MCP-05**: Server configuration UI for adding/removing MCP servers
-- [ ] **MCP-06**: Pre-bundled vetted MCP servers (filesystem, search)
-- [ ] **MCP-07**: Security sandboxing for untrusted MCP servers
+- [x] **MCP-01**: Skynette acts as MCP host (connects to MCP servers)
+- [x] **MCP-02**: Support stdio transport for local MCP servers
+- [x] **MCP-03**: Support HTTP/SSE transport for remote MCP servers
+- [x] **MCP-04**: Automatic tool discovery from connected MCP servers
+- [x] **MCP-05**: Server configuration UI for adding/removing MCP servers
+- [x] **MCP-06**: Pre-bundled vetted MCP servers (filesystem, search)
+- [x] **MCP-07**: Security sandboxing for untrusted MCP servers
 
 ### Built-in Tools
 
-- [ ] **TOOL-01**: Web search via DuckDuckGo API (no key required)
-- [ ] **TOOL-02**: Headless browser for complex web interactions (Playwright + stealth)
-- [ ] **TOOL-03**: Filesystem operations (read, write, create, delete)
-- [ ] **TOOL-04**: Code execution (extend existing workflow node)
-- [ ] **TOOL-05**: GitHub integration (create repos, commit, push)
-- [ ] **TOOL-06**: Existing Skynette systems exposed as tools (RAG, workflows, code editor)
+- [x] **TOOL-01**: Web search via DuckDuckGo API (no key required)
+- [x] **TOOL-02**: Headless browser for complex web interactions (Playwright + stealth)
+- [x] **TOOL-03**: Filesystem operations (read, write, create, delete)
+- [x] **TOOL-04**: Code execution (extend existing workflow node)
+- [x] **TOOL-05**: GitHub integration (create repos, commit, push)
+- [x] **TOOL-06**: Existing Skynette systems exposed as tools (RAG, workflows, code editor)
 
 ### Safety & Control
 
-- [ ] **SAFE-01**: Action classification system (safe, moderate, destructive, critical)
-- [ ] **SAFE-02**: Human-in-the-loop approval for flagged actions
-- [ ] **SAFE-03**: Comprehensive audit log of all agent actions
-- [ ] **SAFE-04**: Kill switch that operates outside agent process
-- [ ] **SAFE-05**: Risk-tiered approval batching (reduce approval fatigue)
-- [ ] **SAFE-06**: Configurable approval levels per tool type
-- [ ] **SAFE-07**: YOLO bypass mode for power users (skip approvals)
+- [x] **SAFE-01**: Action classification system (safe, moderate, destructive, critical)
+- [x] **SAFE-02**: Human-in-the-loop approval for flagged actions
+- [x] **SAFE-03**: Comprehensive audit log of all agent actions
+- [x] **SAFE-04**: Kill switch that operates outside agent process
+- [x] **SAFE-05**: Risk-tiered approval batching (reduce approval fatigue)
+- [x] **SAFE-06**: Configurable approval levels per tool type
+- [x] **SAFE-07**: YOLO bypass mode for power users (skip approvals)
 
 ### Autonomy Levels
 
@@ -50,30 +50,30 @@
 - [x] **AUTO-02**: L2 Collaborator mode (auto-execute safe, ask for risky)
 - [x] **AUTO-03**: L3 Trusted mode (auto-execute moderate, ask for destructive)
 - [x] **AUTO-04**: L4 Expert mode (auto-execute most, ask for critical only)
-- [ ] **AUTO-05**: L5 Observer/YOLO mode (fully autonomous with monitoring)
+- [x] **AUTO-05**: L5 Observer/YOLO mode (fully autonomous with monitoring)
 
 ### UI Integration
 
-- [ ] **UI-01**: Agent panel for starting tasks and viewing status
-- [ ] **UI-02**: Progress display with thinking indicator and step completion
-- [ ] **UI-03**: Approval dialogs with accept/reject/modify options
-- [ ] **UI-04**: Plan visualization before execution begins
-- [ ] **UI-05**: Step-by-step audit trail visible in UI
-- [ ] **UI-06**: Task history with replay capability
+- [x] **UI-01**: Agent panel for starting tasks and viewing status
+- [x] **UI-02**: Progress display with thinking indicator and step completion
+- [x] **UI-03**: Approval dialogs with accept/reject/modify options
+- [x] **UI-04**: Plan visualization before execution begins
+- [x] **UI-05**: Step-by-step audit trail visible in UI
+- [x] **UI-06**: Task history with replay capability
 
 ### AI Backend
 
-- [ ] **AI-01**: Smart model routing (agent suggests best model per task)
-- [ ] **AI-02**: User-configurable model defaults per task type
-- [ ] **AI-03**: Agent leverages existing multi-provider gateway
+- [x] **AI-01**: Smart model routing (agent suggests best model per task)
+- [x] **AI-02**: User-configurable model defaults per task type
+- [x] **AI-03**: Agent leverages existing multi-provider gateway
 
 ### Quality
 
-- [ ] **QUAL-01**: Unit tests for agent core components
-- [ ] **QUAL-02**: Integration tests for MCP server connections
-- [ ] **QUAL-03**: Security tests for tool sandboxing
-- [ ] **QUAL-04**: E2E tests for critical agent workflows
-- [ ] **QUAL-05**: Performance benchmarks for agent execution
+- [x] **QUAL-01**: Unit tests for agent core components
+- [x] **QUAL-02**: Integration tests for MCP server connections
+- [x] **QUAL-03**: Security tests for tool sandboxing
+- [x] **QUAL-04**: E2E tests for critical agent workflows
+- [x] **QUAL-05**: Performance benchmarks for agent execution
 
 ## v3+ Requirements (Deferred)
 
