@@ -12,7 +12,9 @@ from src.agent.events.emitter import AgentEventEmitter, EventSubscription
 from src.agent.models.event import AgentEvent
 from src.agent.models.plan import PlanStep, StepStatus
 from src.agent.safety.audit import AuditEntry
+from src.agent.safety.autonomy import AutonomyLevel, get_autonomy_service
 from src.agent.ui.audit_view import AuditTrailView
+from src.agent.ui.autonomy_toggle import AutonomyToggle
 from src.agent.ui.panel_preferences import (
     PanelPreferences,
     get_panel_preferences,
@@ -67,6 +69,8 @@ class AgentPanel(ft.Row):
         self._plan_view_switcher: Optional[PlanViewSwitcher] = None
         self._audit_view: Optional[AuditTrailView] = None
         self._session_id: Optional[str] = None
+        self._autonomy_toggle: Optional[AutonomyToggle] = None
+        self._project_path: Optional[str] = None
 
         # Row settings
         self.expand = False
@@ -146,6 +150,12 @@ class AgentPanel(ft.Row):
             content_padding=ft.padding.symmetric(horizontal=8, vertical=4),
         )
 
+        # Autonomy level toggle
+        self._autonomy_toggle = AutonomyToggle(
+            level=self._get_current_autonomy_level(),
+            on_level_change=self._on_autonomy_level_change,
+        )
+
         # Header row
         self._header = ft.Row(
             controls=[
@@ -157,6 +167,7 @@ class AgentPanel(ft.Row):
                     color=Theme.TEXT_PRIMARY,
                 ),
                 ft.Container(expand=True),  # Spacer
+                self._autonomy_toggle,
                 self._view_mode_dropdown,
                 collapse_with_badge,
             ],
@@ -519,6 +530,31 @@ class AgentPanel(ft.Row):
             if isinstance(text, ft.Text):
                 text.value = "0"
             self._badge_indicator.update()
+
+    def _get_current_autonomy_level(self) -> AutonomyLevel:
+        """Get current autonomy level for project."""
+        svc = get_autonomy_service()
+        settings = svc.get_settings(self._project_path)
+        return settings.level
+
+    def _on_autonomy_level_change(self, level: AutonomyLevel) -> None:
+        """Handle autonomy level change from toggle."""
+        if self._project_path:
+            svc = get_autonomy_service()
+            svc.set_level(self._project_path, level)
+        # Level is already updated in UI by toggle
+
+    def set_project_path(self, project_path: str | None) -> None:
+        """
+        Set the current project path for autonomy settings.
+
+        Args:
+            project_path: Project directory path
+        """
+        self._project_path = project_path
+        if self._autonomy_toggle:
+            level = self._get_current_autonomy_level()
+            self._autonomy_toggle.set_level(level)
 
     @property
     def width(self) -> int:
