@@ -173,10 +173,15 @@ Plans:
   2. YOLO mode skips approval prompts but maintains full audit logging
   3. Clear UI indicator shows when YOLO mode is active
   4. YOLO mode only available in isolated/sandboxed environments
-**Plans**: TBD
+**Plans**: 6 plans in 4 waves
 
 Plans:
-- [ ] 14-01: TBD
+- [ ] 14-01-PLAN.md — L5 types, constants, and SandboxDetector utility
+- [ ] 14-02-PLAN.md — YoloConfirmationDialog component
+- [ ] 14-03-PLAN.md — Classification L5 bypass and session-only behavior
+- [ ] 14-04-PLAN.md — Enhanced audit logging for YOLO mode
+- [ ] 14-05-PLAN.md — UI components (badge, toggle, panel) L5 styling
+- [ ] 14-06-PLAN.md — E2E integration tests
 
 ## Progress
 
@@ -193,8 +198,8 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 11. Safety and Approval | v3.0 | 7/7 | Complete | 2026-01-22 |
 | 12. UI Integration | v3.0 | 7/7 | Complete | 2026-01-23 |
 | 13. Autonomy Levels | v3.0 | 7/7 | Complete | 2026-01-26 |
-| 14. YOLO Mode | v3.0 | 0/TBD | Not started | - |
+| 14. YOLO Mode | v3.0 | 0/6 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-26 (Phase 13 complete)*
+*Last updated: 2026-01-26 (Phase 14 planned)*
