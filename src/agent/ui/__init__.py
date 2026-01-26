@@ -14,6 +14,7 @@ from src.agent.ui.approval_detail_levels import (
 from src.agent.ui.approval_sheet import ApprovalSheet
 from src.agent.ui.audit_view import AuditEntryRow, AuditTrailView
 from src.agent.ui.cancel_dialog import CancelDialog
+from src.agent.ui.yolo_dialog import YoloConfirmationDialog
 from src.agent.ui.panel_preferences import (
     PanelPreferences,
     get_panel_preferences,
@@ -37,6 +38,7 @@ __all__ = [
     "AuditEntryRow",
     "AuditTrailView",
     "CancelDialog",
+    "YoloConfirmationDialog",
     "PanelPreferences",
     "PlanListView",
     "PlanTreeView",
