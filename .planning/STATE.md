@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** One app to replace separate AI chat clients, model managers, workflow tools, code editors, and AI assistants - accessible to everyone
-**Current focus:** v3.0 Milestone COMPLETE
+**Current focus:** v3.0 Gap closure (Phases 15-16)
 
 ## Current Position
 
-Phase: 14 of 14 (YOLO Mode)
-Plan: 6 of 6 in current phase
-Status: Milestone complete
-Last activity: 2026-01-26 - Completed Phase 14 (YOLO Mode) - v3.0 Milestone Complete
+Phase: 15 of 16 (Approval Flow Wiring)
+Plan: 0 of 1 in current phase
+Status: Gap closure phases added from audit
+Last activity: 2026-01-26 - Added Phases 15-16 to close audit gaps
 
-Progress: [####################] 100% (8/8 phases for v3.0)
+Progress: [##################--] 80% (8/10 phases for v3.0)
 
 ## Milestone History
 
@@ -188,14 +188,8 @@ Resume file: None
 
 ## Next Steps
 
-Phase 14 (YOLO Mode) COMPLETE:
-- 14-01: L5 Level & Sandbox Detection - COMPLETE
-- 14-02: YOLO Confirmation Dialog - COMPLETE
-- 14-03: Session-Only Persistence - COMPLETE
-- 14-04: YOLO Audit Logging - COMPLETE
-- 14-05: Visual YOLO Indicators - COMPLETE
-- 14-06: E2E Integration Tests - COMPLETE
+Gap Closure Phases (from audit):
+- Phase 15: Approval Flow Wiring - PENDING (closes SAFE-02)
+- Phase 16: MCP Tool Registration - PENDING (closes MCP-04)
 
-v3.0 Milestone COMPLETE (8 phases, 34 plans)
-
-Next: /gsd:audit-milestone (verify requirements, cross-phase integration, E2E flows)
+Next: /gsd:plan-phase 15 (plan approval flow fix)

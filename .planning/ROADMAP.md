@@ -24,6 +24,8 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 - [x] **Phase 12: UI Integration** - Agent panel, progress display, approvals, plan visualization
 - [x] **Phase 13: Autonomy Levels** - L1-L4 implementation with graduated trust
 - [x] **Phase 14: YOLO Mode** - L5 full autonomy with enhanced monitoring
+- [ ] **Phase 15: Approval Flow Wiring** - Fix ApprovalManager.resolve() integration gap
+- [ ] **Phase 16: MCP Tool Registration** - Wire MCP tools into ToolRegistry
 
 ## Phase Details
 
@@ -183,6 +185,34 @@ Plans:
 - [x] 14-05-PLAN.md — UI components (badge, toggle, panel) L5 styling
 - [x] 14-06-PLAN.md — E2E integration tests
 
+### Phase 15: Approval Flow Wiring
+**Goal**: Fix ApprovalManager integration so approval decisions complete the flow
+**Depends on**: Phase 11, Phase 12
+**Requirements**: SAFE-02
+**Gap Closure**: Closes ApprovalManager.resolve() missing method gap from audit
+**Success Criteria** (what must be TRUE):
+  1. ApprovalManager has resolve() method that routes to approve()/reject()
+  2. agents.py approval callbacks successfully complete without AttributeError
+  3. E2E test confirms user can approve/reject actions and agent continues
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [ ] 15-01-PLAN.md — Add resolve() method and verify approval flow
+
+### Phase 16: MCP Tool Registration
+**Goal**: Wire MCP server tools into ToolRegistry on connect/disconnect
+**Depends on**: Phase 9
+**Requirements**: MCP-04
+**Gap Closure**: Closes MCP tool registration gap from audit
+**Success Criteria** (what must be TRUE):
+  1. MCP tools registered with ToolRegistry after server connects
+  2. MCP tools unregistered from ToolRegistry on server disconnect
+  3. Agent can invoke MCP-provided tools successfully
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [ ] 16-01-PLAN.md — Register/unregister MCP tools and verify execution
+
 ## Progress
 
 **Execution Order:**
@@ -199,6 +229,8 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 12. UI Integration | v3.0 | 7/7 | Complete | 2026-01-23 |
 | 13. Autonomy Levels | v3.0 | 7/7 | Complete | 2026-01-26 |
 | 14. YOLO Mode | v3.0 | 6/6 | Complete | 2026-01-26 |
+| 15. Approval Flow Wiring | v3.0 | 0/1 | Pending | - |
+| 16. MCP Tool Registration | v3.0 | 0/1 | Pending | - |
 
 ---
 *Roadmap created: 2026-01-20*
