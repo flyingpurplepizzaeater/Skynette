@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 13 of 14 (Autonomy Levels)
-Plan: 4 of 7 in current phase
+Plan: 5 of 7 in current phase
 Status: In progress
-Last activity: 2026-01-26 - Completed 13-04-PLAN.md (Allowlist/Blocklist Rules)
+Last activity: 2026-01-26 - Completed 13-05-PLAN.md (Auto Badge UI)
 
-Progress: [###########---------] 57% (4/7 plans for Phase 13)
+Progress: [##############------] 71% (5/7 plans for Phase 13)
 
 ## Milestone History
 
@@ -144,6 +144,9 @@ Recent decisions affecting current work:
 - 13-04: fnmatch for glob patterns (stdlib, familiar syntax)
 - 13-04: Path rules can optionally restrict to specific tools
 - 13-04: Dict input supported for JSON serialization compatibility
+- 13-05: PopupMenuButton for autonomy level dropdown selection
+- 13-05: Badge placement before view mode dropdown in panel header
+- 13-05: Immediate callback (no confirmation) per "no friction on escalation"
 
 ### Pending Todos
 
@@ -156,7 +159,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 13-04-PLAN.md (Allowlist/Blocklist Rules)
+Stopped at: Completed 13-05-PLAN.md (Auto Badge UI)
 Resume file: None
 
 ## Next Steps
@@ -166,8 +169,8 @@ Phase 13 (Autonomy Levels) IN PROGRESS:
 - 13-02: Autonomy Settings Storage - COMPLETE
 - 13-03: Autonomy-Aware Classification - COMPLETE
 - 13-04: Allowlist/Blocklist Rules - COMPLETE
-- 13-05: Agent Integration - PENDING
-- 13-06: Auto Badge UI - PENDING
+- 13-05: Auto Badge UI - COMPLETE
+- 13-06: Autonomy Settings Panel - PENDING
 - 13-07: E2E Integration Tests - PENDING
 
-Next: /gsd:execute-plan 13-05
+Next: /gsd:execute-plan 13-06
