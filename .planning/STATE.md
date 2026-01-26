@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** One app to replace separate AI chat clients, model managers, workflow tools, code editors, and AI assistants - accessible to everyone
-**Current focus:** Phase 13 (Autonomy Levels) - In progress
+**Current focus:** Phase 13 (Autonomy Levels) - Complete
 
 ## Current Position
 
 Phase: 13 of 14 (Autonomy Levels)
-Plan: 6 of 7 in current phase
-Status: In progress
-Last activity: 2026-01-26 - Completed 13-06-PLAN.md (Agent Integration)
+Plan: 7 of 7 in current phase
+Status: Phase complete
+Last activity: 2026-01-26 - Completed 13-07-PLAN.md (E2E Integration Tests)
 
-Progress: [################----] 86% (6/7 plans for Phase 13)
+Progress: [####################] 100% (7/7 plans for Phase 13)
 
 ## Milestone History
 
@@ -25,9 +25,9 @@ Progress: [################----] 86% (6/7 plans for Phase 13)
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 27 (v3.0)
+- Total plans completed: 28 (v3.0)
 - Average duration: ~6 minutes
-- Total execution time: ~2.9 hours
+- Total execution time: ~3.0 hours
 
 **By Phase:**
 
@@ -39,10 +39,11 @@ Progress: [################----] 86% (6/7 plans for Phase 13)
 | 10 | 6 | ~30min | ~5min |
 | 11 | 7 | ~32min | ~5min |
 | 12 | 7 | ~24min | ~3min |
+| 13 | 7 | ~28min | ~4min |
 
 **Recent Trend:**
-- Last 5 plans: 12-03, 12-04, 12-05, 12-06, 12-07
-- Trend: Accelerating velocity (~3-5min)
+- Last 5 plans: 13-03, 13-04, 13-05, 13-06, 13-07
+- Trend: Stable velocity (~4min)
 
 *Updated after each plan completion*
 
@@ -150,6 +151,8 @@ Recent decisions affecting current work:
 - 13-06: auto_executed = non-safe risk that doesn't require approval at current level
 - 13-06: Downgrade callback sets flag; classify() called fresh each step for re-evaluation
 - 13-06: Fixed callback type annotation to include downgrade boolean parameter
+- 13-07: Test structure mirrors source structure (tests/agent/safety/ for src/agent/safety/)
+- 13-07: Fresh service instances per test to avoid global state pollution
 
 ### Pending Todos
 
@@ -162,18 +165,18 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 13-06-PLAN.md (Agent Integration)
+Stopped at: Completed 13-07-PLAN.md (E2E Integration Tests)
 Resume file: None
 
 ## Next Steps
 
-Phase 13 (Autonomy Levels) IN PROGRESS:
+Phase 13 (Autonomy Levels) COMPLETE:
 - 13-01: Autonomy Types & Level Service - COMPLETE
 - 13-02: Autonomy Settings Storage - COMPLETE
 - 13-03: Autonomy-Aware Classification - COMPLETE
 - 13-04: Allowlist/Blocklist Rules - COMPLETE
 - 13-05: Auto Badge UI - COMPLETE
 - 13-06: Agent Integration - COMPLETE
-- 13-07: E2E Integration Tests - PENDING
+- 13-07: E2E Integration Tests - COMPLETE
 
-Next: /gsd:execute-plan 13-07
+Next: Phase 14 or v3.0 release
