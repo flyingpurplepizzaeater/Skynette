@@ -5,9 +5,12 @@ Risk-based classification for agent tool actions.
 """
 
 from datetime import datetime, UTC
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from src.agent.safety.autonomy import AutonomyLevelService
 
 
 # Risk level type using Literal (per 07-01 decision)
@@ -65,16 +68,43 @@ class ActionClassifier:
         "file_delete": "critical",
     }
 
-    # Approval requirements by risk level
-    APPROVAL_REQUIRED: dict[RiskLevel, bool] = {
-        "safe": False,
-        "moderate": False,  # May require approval based on autonomy level (Phase 13)
-        "destructive": True,
-        "critical": True,
-    }
+    def __init__(self, autonomy_service: "AutonomyLevelService | None" = None):
+        """
+        Initialize classifier.
 
-    def classify(self, tool_name: str, parameters: dict) -> ActionClassification:
-        """Classify an action by tool name and parameters."""
+        Args:
+            autonomy_service: Optional AutonomyLevelService (uses global if not provided)
+        """
+        self._autonomy_service = autonomy_service
+
+    @property
+    def autonomy_service(self) -> "AutonomyLevelService":
+        """Get autonomy service, using global singleton if not provided."""
+        if self._autonomy_service is None:
+            from src.agent.safety.autonomy import get_autonomy_service
+            self._autonomy_service = get_autonomy_service()
+        return self._autonomy_service
+
+    def classify(
+        self,
+        tool_name: str,
+        parameters: dict,
+        project_path: str | None = None,
+    ) -> ActionClassification:
+        """
+        Classify an action by tool name and parameters.
+
+        Args:
+            tool_name: Name of the tool being called
+            parameters: Tool parameters
+            project_path: Optional project path for autonomy level lookup
+
+        Returns:
+            ActionClassification with risk level and approval requirement
+        """
+        # Import here to avoid circular dependency
+        from src.agent.safety.autonomy import AUTONOMY_THRESHOLDS
+
         # Built-in tool classification
         if tool_name in self.TOOL_CLASSIFICATIONS:
             risk = self.TOOL_CLASSIFICATIONS[tool_name]
@@ -82,10 +112,30 @@ class ActionClassifier:
             # Unknown/MCP tools default to moderate
             risk = "moderate"
 
+        # Get autonomy settings
+        settings = self.autonomy_service.get_settings(project_path)
+
+        # Check allowlist/blocklist rules first (override autonomy level)
+        rule_result = settings.check_rules(tool_name, parameters)
+        if rule_result is not None:
+            # Rule explicitly allows or blocks
+            requires_approval = not rule_result  # allow=True means no approval needed
+            return ActionClassification(
+                risk_level=risk,
+                reason=self._get_reason(tool_name, risk, parameters),
+                requires_approval=requires_approval,
+                tool_name=tool_name,
+                parameters=parameters,
+            )
+
+        # Apply autonomy threshold
+        auto_execute_levels = AUTONOMY_THRESHOLDS[settings.level]
+        requires_approval = risk not in auto_execute_levels
+
         return ActionClassification(
             risk_level=risk,
             reason=self._get_reason(tool_name, risk, parameters),
-            requires_approval=self.APPROVAL_REQUIRED[risk],
+            requires_approval=requires_approval,
             tool_name=tool_name,
             parameters=parameters,
         )
