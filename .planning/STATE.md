@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 14 of 14 (YOLO Mode)
-Plan: 4 of 6 in current phase
+Plan: 5 of 6 in current phase
 Status: In progress
-Last activity: 2026-01-26 - Completed 14-04-PLAN.md (YOLO Audit Logging)
+Last activity: 2026-01-26 - Completed 14-05-PLAN.md (Visual YOLO Indicators)
 
-Progress: [#############-------] 67% (4/6 plans for Phase 14)
+Progress: [################----] 83% (5/6 plans for Phase 14)
 
 ## Milestone History
 
@@ -25,7 +25,7 @@ Progress: [#############-------] 67% (4/6 plans for Phase 14)
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29 (v3.0)
+- Total plans completed: 30 (v3.0)
 - Average duration: ~6 minutes
 - Total execution time: ~3.0 hours
 
@@ -40,10 +40,10 @@ Progress: [#############-------] 67% (4/6 plans for Phase 14)
 | 11 | 7 | ~32min | ~5min |
 | 12 | 7 | ~24min | ~3min |
 | 13 | 7 | ~28min | ~4min |
-| 14 | 4 | ~12min | ~3min |
+| 14 | 5 | ~16min | ~3min |
 
 **Recent Trend:**
-- Last 5 plans: 14-01, 14-02, 14-03, 14-04
+- Last 5 plans: 14-01, 14-02, 14-03, 14-04, 14-05
 - Trend: Stable velocity (~3-4min)
 
 *Updated after each plan completion*
@@ -166,6 +166,9 @@ Recent decisions affecting current work:
 - 14-04: YOLO_RETENTION_DAYS = 90 (3x standard retention for post-incident analysis)
 - 14-04: full_parameters stored only for YOLO entries (non-YOLO still truncate at 4KB)
 - 14-04: _safe_json_loads returns {'_truncated': value} for broken JSON from truncation
+- 14-05: Skip dialog if sandboxed or user opted out (instant L5 activation)
+- 14-05: yolo_dont_warn_sandbox setting for "don't warn again" preference
+- 14-05: YOLO_COLOR constant defined in agent_panel.py for purple border styling
 
 ### Pending Todos
 
@@ -178,7 +181,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 14-04-PLAN.md (YOLO Audit Logging)
+Stopped at: Completed 14-05-PLAN.md (Visual YOLO Indicators)
 Resume file: None
 
 ## Next Steps
@@ -188,7 +191,7 @@ Phase 14 (YOLO Mode) IN PROGRESS:
 - 14-02: YOLO Confirmation Dialog - COMPLETE
 - 14-03: Session-Only Persistence - COMPLETE
 - 14-04: YOLO Audit Logging - COMPLETE
-- 14-05: Visual YOLO Indicators - pending
+- 14-05: Visual YOLO Indicators - COMPLETE
 - 14-06: E2E Integration Tests - pending
 
-Next: /gsd:execute-phase 14 plan 05
+Next: /gsd:execute-phase 14 plan 06
