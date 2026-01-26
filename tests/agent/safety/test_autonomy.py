@@ -172,3 +172,145 @@ class TestGlobalService:
         svc1 = get_autonomy_service()
         svc2 = get_autonomy_service()
         assert svc1 is svc2
+
+
+class TestClassifierWithAutonomy:
+    """Test ActionClassifier with autonomy levels."""
+
+    @pytest.fixture
+    def service(self):
+        """Create fresh service instance."""
+        return AutonomyLevelService()
+
+    def test_l1_all_require_approval(self, service):
+        """L1 should require approval for all actions."""
+        from src.agent.safety.classification import ActionClassifier
+
+        project = str(Path(tempfile.mkdtemp()).resolve())
+        service._current_levels[project] = "L1"
+
+        classifier = ActionClassifier(autonomy_service=service)
+
+        # Even safe actions require approval at L1
+        result = classifier.classify("web_search", {}, project)
+        assert result.requires_approval is True
+
+        result = classifier.classify("file_read", {}, project)
+        assert result.requires_approval is True
+
+    def test_l2_safe_auto_executes(self, service):
+        """L2 should auto-execute only safe actions."""
+        from src.agent.safety.classification import ActionClassifier
+
+        project = str(Path(tempfile.mkdtemp()).resolve())
+        service._current_levels[project] = "L2"
+
+        classifier = ActionClassifier(autonomy_service=service)
+
+        # Safe auto-executes
+        result = classifier.classify("web_search", {}, project)
+        assert result.requires_approval is False
+
+        # Moderate requires approval
+        result = classifier.classify("browser", {"url": "http://test.com"}, project)
+        assert result.requires_approval is True
+
+        # Destructive requires approval
+        result = classifier.classify("file_write", {"path": "/tmp/x"}, project)
+        assert result.requires_approval is True
+
+    def test_l3_moderate_auto_executes(self, service):
+        """L3 should auto-execute safe and moderate actions."""
+        from src.agent.safety.classification import ActionClassifier
+
+        project = str(Path(tempfile.mkdtemp()).resolve())
+        service._current_levels[project] = "L3"
+
+        classifier = ActionClassifier(autonomy_service=service)
+
+        # Safe auto-executes
+        result = classifier.classify("web_search", {}, project)
+        assert result.requires_approval is False
+
+        # Moderate auto-executes
+        result = classifier.classify("browser", {"url": "http://test.com"}, project)
+        assert result.requires_approval is False
+
+        # Destructive requires approval
+        result = classifier.classify("file_write", {"path": "/tmp/x"}, project)
+        assert result.requires_approval is True
+
+    def test_l4_destructive_auto_executes(self, service):
+        """L4 should auto-execute all except critical."""
+        from src.agent.safety.classification import ActionClassifier
+
+        project = str(Path(tempfile.mkdtemp()).resolve())
+        service._current_levels[project] = "L4"
+
+        classifier = ActionClassifier(autonomy_service=service)
+
+        # Safe auto-executes
+        result = classifier.classify("web_search", {}, project)
+        assert result.requires_approval is False
+
+        # Moderate auto-executes
+        result = classifier.classify("browser", {"url": "http://test.com"}, project)
+        assert result.requires_approval is False
+
+        # Destructive auto-executes
+        result = classifier.classify("file_write", {"path": "/tmp/x"}, project)
+        assert result.requires_approval is False
+
+        # Critical still requires approval
+        result = classifier.classify("file_delete", {"path": "/tmp/x"}, project)
+        assert result.requires_approval is True
+
+    def test_allowlist_overrides_level(self, service):
+        """Allowlist rule should override autonomy level."""
+        from src.agent.safety.classification import ActionClassifier
+        from src.agent.safety.allowlist import AutonomyRule
+
+        project = str(Path(tempfile.mkdtemp()).resolve())
+        service._current_levels[project] = "L1"  # All require approval
+
+        classifier = ActionClassifier(autonomy_service=service)
+
+        # Without rule: requires approval
+        result = classifier.classify("file_write", {"path": "/src/main.py"}, project)
+        assert result.requires_approval is True
+
+        # Add allowlist rule
+        settings = service.get_settings(project)
+        settings.allowlist_rules = [AutonomyRule("allow", "path", "/src/*")]
+
+        # Mock get_settings to return our modified settings
+        original_get = service.get_settings
+        service.get_settings = lambda p: settings if p == project else original_get(p)
+
+        result = classifier.classify("file_write", {"path": "/src/main.py"}, project)
+        assert result.requires_approval is False
+
+    def test_blocklist_overrides_level(self, service):
+        """Blocklist rule should override autonomy level."""
+        from src.agent.safety.classification import ActionClassifier
+        from src.agent.safety.allowlist import AutonomyRule
+
+        project = str(Path(tempfile.mkdtemp()).resolve())
+        service._current_levels[project] = "L4"  # Most auto-execute
+
+        classifier = ActionClassifier(autonomy_service=service)
+
+        # Without rule: destructive auto-executes at L4
+        result = classifier.classify("file_write", {"path": "/tmp/x"}, project)
+        assert result.requires_approval is False
+
+        # Add blocklist rule
+        settings = service.get_settings(project)
+        settings.blocklist_rules = [AutonomyRule("block", "path", "/tmp/*")]
+
+        # Mock get_settings to return our modified settings
+        original_get = service.get_settings
+        service.get_settings = lambda p: settings if p == project else original_get(p)
+
+        result = classifier.classify("file_write", {"path": "/tmp/data.txt"}, project)
+        assert result.requires_approval is True
