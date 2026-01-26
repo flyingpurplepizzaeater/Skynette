@@ -24,7 +24,7 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 - [x] **Phase 12: UI Integration** - Agent panel, progress display, approvals, plan visualization
 - [x] **Phase 13: Autonomy Levels** - L1-L4 implementation with graduated trust
 - [x] **Phase 14: YOLO Mode** - L5 full autonomy with enhanced monitoring
-- [ ] **Phase 15: Approval Flow Wiring** - Fix ApprovalManager.resolve() integration gap
+- [x] **Phase 15: Approval Flow Wiring** - Fix ApprovalManager.resolve() integration gap
 - [ ] **Phase 16: MCP Tool Registration** - Wire MCP tools into ToolRegistry
 
 ## Phase Details
@@ -197,7 +197,7 @@ Plans:
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 15-01-PLAN.md — Add resolve() method and verify approval flow
+- [x] 15-01-PLAN.md — Add resolve() method and verify approval flow
 
 ### Phase 16: MCP Tool Registration
 **Goal**: Wire MCP server tools into ToolRegistry on connect/disconnect
@@ -229,9 +229,9 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 12. UI Integration | v3.0 | 7/7 | Complete | 2026-01-23 |
 | 13. Autonomy Levels | v3.0 | 7/7 | Complete | 2026-01-26 |
 | 14. YOLO Mode | v3.0 | 6/6 | Complete | 2026-01-26 |
-| 15. Approval Flow Wiring | v3.0 | 0/1 | Pending | - |
+| 15. Approval Flow Wiring | v3.0 | 1/1 | Complete | 2026-01-26 |
 | 16. MCP Tool Registration | v3.0 | 0/1 | Pending | - |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-26 (Phase 14 complete - v3.0 milestone complete)*
+*Last updated: 2026-01-26 (Phase 15 complete - Approval Flow Wiring)*
