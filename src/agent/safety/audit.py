@@ -83,6 +83,17 @@ class AuditEntry(BaseModel):
             "full_parameters": self.full_parameters,
         }
 
+    @staticmethod
+    def _safe_json_loads(value: Optional[str]) -> Optional[dict]:
+        """Safely parse JSON, handling truncated data gracefully."""
+        if not value:
+            return {} if value == "" else None
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            # Truncated JSON - return as raw string in wrapper dict
+            return {"_truncated": value}
+
     @classmethod
     def from_row(cls, row: dict) -> "AuditEntry":
         """Create from database row."""
@@ -92,8 +103,8 @@ class AuditEntry(BaseModel):
             step_id=row["step_id"],
             timestamp=datetime.fromisoformat(row["timestamp"]),
             tool_name=row["tool_name"],
-            parameters=json.loads(row["parameters"]) if row["parameters"] else {},
-            result=json.loads(row["result"]) if row["result"] else None,
+            parameters=cls._safe_json_loads(row["parameters"]),
+            result=cls._safe_json_loads(row["result"]),
             error=row["error"],
             duration_ms=row["duration_ms"] or 0,
             risk_level=row["risk_level"],
@@ -117,6 +128,7 @@ class AuditStore:
     """
 
     DEFAULT_RETENTION_DAYS = 30
+    YOLO_RETENTION_DAYS = 90  # Longer retention for YOLO actions
 
     def __init__(self, db_path: Optional[str] = None):
         """
@@ -185,6 +197,18 @@ class AuditStore:
             ON agent_audit(tool_name)
         """)
 
+        # Add yolo_mode column if not exists (migration for existing DBs)
+        try:
+            cursor.execute("ALTER TABLE agent_audit ADD COLUMN yolo_mode INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+        # Add full_parameters column if not exists (migration for existing DBs)
+        try:
+            cursor.execute("ALTER TABLE agent_audit ADD COLUMN full_parameters TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
         conn.commit()
         conn.close()
         logger.debug(f"Audit database initialized at {self.db_path}")
@@ -199,14 +223,19 @@ class AuditStore:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
+        # For YOLO mode, store full parameters without truncation
+        if entry.yolo_mode:
+            entry.full_parameters = json.dumps(entry.parameters)  # No truncation for YOLO
+
         data = entry.to_dict()
         cursor.execute("""
             INSERT INTO agent_audit (
                 id, session_id, step_id, timestamp, tool_name,
                 parameters, result, error, duration_ms,
                 risk_level, approval_required, approval_decision,
-                approved_by, approval_time_ms, success, parent_plan_id, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                approved_by, approval_time_ms, success, parent_plan_id,
+                yolo_mode, full_parameters, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             data["id"],
             data["session_id"],
@@ -224,6 +253,8 @@ class AuditStore:
             data["approval_time_ms"],
             1 if data["success"] else 0,
             data["parent_plan_id"],
+            1 if data["yolo_mode"] else 0,
+            data["full_parameters"],
             datetime.now(timezone.utc).isoformat(),
         ))
 
@@ -338,12 +369,17 @@ class AuditStore:
             "total_duration_ms": row[8] or 0,
         }
 
-    def cleanup_old_entries(self, retention_days: int = DEFAULT_RETENTION_DAYS) -> int:
+    def cleanup_old_entries(
+        self,
+        retention_days: int = DEFAULT_RETENTION_DAYS,
+        yolo_retention_days: int = YOLO_RETENTION_DAYS,
+    ) -> int:
         """
-        Delete audit entries older than retention period.
+        Delete old entries, keeping YOLO entries longer.
 
         Args:
-            retention_days: Days to retain (default 30)
+            retention_days: Days to retain regular entries (default 30)
+            yolo_retention_days: Days to retain YOLO entries (default 90)
 
         Returns:
             Number of entries deleted
@@ -351,18 +387,27 @@ class AuditStore:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        # Regular entries: standard retention
+        regular_cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
         cursor.execute(
-            "DELETE FROM agent_audit WHERE timestamp < ?",
-            (cutoff.isoformat(),)
+            "DELETE FROM agent_audit WHERE timestamp < ? AND (yolo_mode = 0 OR yolo_mode IS NULL)",
+            (regular_cutoff.isoformat(),)
         )
-        deleted = cursor.rowcount
+        regular_deleted = cursor.rowcount
+
+        # YOLO entries: longer retention
+        yolo_cutoff = datetime.now(timezone.utc) - timedelta(days=yolo_retention_days)
+        cursor.execute(
+            "DELETE FROM agent_audit WHERE timestamp < ? AND yolo_mode = 1",
+            (yolo_cutoff.isoformat(),)
+        )
+        yolo_deleted = cursor.rowcount
 
         conn.commit()
         conn.close()
 
-        logger.info(f"Cleaned up {deleted} audit entries older than {retention_days} days")
-        return deleted
+        logger.info(f"Cleaned up {regular_deleted} regular + {yolo_deleted} YOLO entries")
+        return regular_deleted + yolo_deleted
 
     def export_json(self, session_id: str) -> str:
         """Export session audit as JSON string."""
