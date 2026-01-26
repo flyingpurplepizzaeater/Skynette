@@ -27,6 +27,10 @@ from src.agent.safety.kill_switch import (
     KillSwitch,
     get_kill_switch,
 )
+from src.agent.safety.allowlist import (
+    AutonomyRule,
+    matches_rules,
+)
 from src.agent.safety.autonomy import (
     AutonomyLevel,
     AutonomySettings,
@@ -48,6 +52,7 @@ __all__ = [
     "AuditStore",
     "AutonomyLevel",
     "AutonomyLevelService",
+    "AutonomyRule",
     "AutonomySettings",
     "AUTONOMY_COLORS",
     "AUTONOMY_LABELS",
@@ -60,4 +65,5 @@ __all__ = [
     "get_audit_store",
     "get_autonomy_service",
     "get_kill_switch",
+    "matches_rules",
 ]
