@@ -3,7 +3,7 @@
 ## Milestones
 
 - v2.0 Code Editor - Phases 1-6 (shipped 2026-01-19)
-- **v3.0 Agent** - Phases 7-14 (in progress)
+- **v3.0 Agent** - Phases 7-16 (complete - pending audit)
 
 ## Overview
 
@@ -13,7 +13,7 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 
 **Phase Numbering:**
 - Phases 1-6: v2.0 (shipped)
-- Phases 7-14: v3.0 Agent (current milestone)
+- Phases 7-16: v3.0 Agent (complete - pending audit)
 - Decimal phases (e.g., 7.1): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 7: Agent Core Infrastructure** - Data models, event system, state management, tool registry
@@ -25,7 +25,7 @@ Skynette v3.0 transforms the AI workspace into a general-purpose autonomous assi
 - [x] **Phase 13: Autonomy Levels** - L1-L4 implementation with graduated trust
 - [x] **Phase 14: YOLO Mode** - L5 full autonomy with enhanced monitoring
 - [x] **Phase 15: Approval Flow Wiring** - Fix ApprovalManager.resolve() integration gap
-- [ ] **Phase 16: MCP Tool Registration** - Wire MCP tools into ToolRegistry
+- [x] **Phase 16: MCP Tool Registration** - Wire MCP tools into ToolRegistry
 
 ## Phase Details
 
@@ -211,7 +211,7 @@ Plans:
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 16-01-PLAN.md — Register/unregister MCP tools and verify execution
+- [x] 16-01-PLAN.md — Register/unregister MCP tools and verify execution
 
 ## Progress
 
@@ -230,8 +230,8 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 | 13. Autonomy Levels | v3.0 | 7/7 | Complete | 2026-01-26 |
 | 14. YOLO Mode | v3.0 | 6/6 | Complete | 2026-01-26 |
 | 15. Approval Flow Wiring | v3.0 | 1/1 | Complete | 2026-01-26 |
-| 16. MCP Tool Registration | v3.0 | 0/1 | Pending | - |
+| 16. MCP Tool Registration | v3.0 | 1/1 | Complete | 2026-01-26 |
 
 ---
 *Roadmap created: 2026-01-20*
-*Last updated: 2026-01-26 (Phase 15 complete - Approval Flow Wiring)*
+*Last updated: 2026-01-26 (Phase 16 complete - MCP Tool Registration)*
