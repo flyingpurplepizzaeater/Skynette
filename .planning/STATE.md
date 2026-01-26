@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Phase: 13 of 14 (Autonomy Levels)
-Plan: 2 of 7 in current phase
+Plan: 3 of 7 in current phase
 Status: In progress
-Last activity: 2026-01-26 - Completed 13-02-PLAN.md (Autonomy Settings Storage)
+Last activity: 2026-01-26 - Completed 13-03-PLAN.md (Autonomy-Aware Classification)
 
-Progress: [######--------------] 29% (2/7 plans for Phase 13)
+Progress: [#########-----------] 43% (3/7 plans for Phase 13)
 
 ## Milestone History
 
@@ -137,6 +137,9 @@ Recent decisions affecting current work:
 - 13-02: L2 (Collaborator) as default autonomy level for new projects
 - 13-02: Path normalization via Path.resolve() for consistent DB keys
 - 13-02: Nullable allowlist/blocklist columns (rules added in Plan 04)
+- 13-03: Lazy import of get_autonomy_service in classify() to avoid circular import
+- 13-03: Remove static APPROVAL_REQUIRED dict - approval is entirely level-based
+- 13-03: Callbacks notified only on downgrade (more restrictive level change)
 
 ### Pending Todos
 
@@ -149,7 +152,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 13-02-PLAN.md (Autonomy Settings Storage)
+Stopped at: Completed 13-03-PLAN.md (Autonomy-Aware Classification)
 Resume file: None
 
 ## Next Steps
@@ -157,10 +160,10 @@ Resume file: None
 Phase 13 (Autonomy Levels) IN PROGRESS:
 - 13-01: Autonomy Types & Level Service - COMPLETE
 - 13-02: Autonomy Settings Storage - COMPLETE
-- 13-03: Level Selector UI - PENDING
+- 13-03: Autonomy-Aware Classification - COMPLETE
 - 13-04: Allowlist/Blocklist Rules - PENDING
 - 13-05: Agent Integration - PENDING
 - 13-06: Auto Badge UI - PENDING
 - 13-07: E2E Integration Tests - PENDING
 
-Next: /gsd:execute-plan 13-03
+Next: /gsd:execute-plan 13-04
