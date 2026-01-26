@@ -93,7 +93,7 @@ class AutonomyLevelService:
     def __init__(self) -> None:
         """Initialize the autonomy level service."""
         self._current_levels: dict[str, AutonomyLevel] = {}  # project path -> level
-        self._level_changed_callbacks: list[Callable[[str, AutonomyLevel, AutonomyLevel], None]] = []
+        self._level_changed_callbacks: list[Callable[[str, AutonomyLevel, AutonomyLevel, bool], None]] = []
 
     def get_settings(self, project_path: str | None = None) -> AutonomySettings:
         """
@@ -164,13 +164,14 @@ class AutonomyLevelService:
         return "L2"
 
     def on_level_changed(
-        self, callback: Callable[[str, AutonomyLevel, AutonomyLevel], None]
+        self, callback: Callable[[str, AutonomyLevel, AutonomyLevel, bool], None]
     ) -> None:
         """
         Register a callback for level changes.
 
         Args:
-            callback: Function called with (project_path, old_level, new_level)
+            callback: Function called with (project_path, old_level, new_level, downgrade)
+                     downgrade is True if the new level is more restrictive
         """
         self._level_changed_callbacks.append(callback)
 

@@ -38,6 +38,7 @@ from src.agent.safety import (
     get_audit_store,
     AuditEntry,
 )
+from src.agent.safety.autonomy import get_autonomy_service
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ class AgentExecutor:
 
         # Project path for autonomy level lookup
         self._project_path = project_path
+        self._level_downgraded: bool = False
 
         # Safety system components
         self.classifier = ActionClassifier()
@@ -148,6 +150,31 @@ class AgentExecutor:
         """Check if kill switch has been triggered."""
         return self.kill_switch.is_triggered()
 
+    def _on_autonomy_downgrade(
+        self,
+        project_path: str,
+        old_level: str,
+        new_level: str,
+        downgrade: bool,
+    ) -> None:
+        """
+        Handle autonomy level downgrade during execution.
+
+        On downgrade, set flag to re-evaluate pending actions.
+
+        Args:
+            project_path: Project that changed
+            old_level: Previous level
+            new_level: New level
+            downgrade: Whether this is a downgrade (more restrictive)
+        """
+        if downgrade and project_path == self._project_path:
+            self._level_downgraded = True
+            logger.info(
+                f"Autonomy downgrade: {old_level} -> {new_level}, "
+                "remaining actions will be re-evaluated"
+            )
+
     async def run(self, task: str) -> AsyncIterator[AgentEvent]:
         """
         Execute a task, yielding events as execution progresses.
@@ -162,6 +189,10 @@ class AgentExecutor:
         self.kill_switch.reset()
         self.approval_manager.start_session(self.session.id)
 
+        # Register for autonomy level changes
+        autonomy_service = get_autonomy_service()
+        autonomy_service.on_level_changed(self._on_autonomy_downgrade)
+
         try:
             async for event in self._run_with_safety(task):
                 yield event
@@ -169,6 +200,7 @@ class AgentExecutor:
             # Cleanup safety systems
             self.approval_manager.end_session()
             self.kill_switch.reset()
+            # Note: Don't remove callback - service manages its own lifecycle
 
     async def _run_with_safety(self, task: str) -> AsyncIterator[AgentEvent]:
         """Internal run method with safety systems initialized."""
@@ -261,6 +293,13 @@ class AgentExecutor:
                 # No step ready (dependencies not met or all done)
                 await asyncio.sleep(0.1)
                 continue
+
+            # Check if autonomy was downgraded mid-task
+            if self._level_downgraded:
+                self._level_downgraded = False
+                # Re-evaluation happens automatically because classify() is called
+                # fresh for each step with current autonomy settings
+                logger.debug("Re-evaluating step under new autonomy level")
 
             # Execute step
             self._current_step = step
