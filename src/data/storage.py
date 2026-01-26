@@ -423,6 +423,140 @@ class WorkflowStorage:
         conn.commit()
         conn.close()
 
+    # ==================== Project Autonomy ====================
+
+    def get_project_autonomy(self, project_path: str) -> dict:
+        """
+        Get autonomy settings for a project.
+
+        Args:
+            project_path: Project directory path
+
+        Returns:
+            Dict with keys: level, allowlist, blocklist
+            Falls back to global defaults if project not found
+        """
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Normalize path
+        normalized_path = str(Path(project_path).resolve())
+
+        cursor.execute("""
+            SELECT autonomy_level, allowlist_rules, blocklist_rules
+            FROM project_autonomy
+            WHERE project_path = ?
+        """, (normalized_path,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return {
+                "level": row["autonomy_level"],
+                "allowlist": json.loads(row["allowlist_rules"] or "[]"),
+                "blocklist": json.loads(row["blocklist_rules"] or "[]"),
+            }
+
+        # Return defaults
+        return {
+            "level": self.get_setting("default_autonomy_level", "L2"),
+            "allowlist": json.loads(self.get_setting("global_allowlist", "[]")),
+            "blocklist": json.loads(self.get_setting("global_blocklist", "[]")),
+        }
+
+    def set_project_autonomy(
+        self,
+        project_path: str,
+        level: str,
+        allowlist: list | None = None,
+        blocklist: list | None = None,
+    ) -> None:
+        """
+        Set autonomy settings for a project.
+
+        Args:
+            project_path: Project directory path
+            level: Autonomy level (L1, L2, L3, L4)
+            allowlist: Optional list of allowlist rules
+            blocklist: Optional list of blocklist rules
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        # Normalize path
+        normalized_path = str(Path(project_path).resolve())
+        now = datetime.now(UTC).isoformat()
+
+        # Check if exists
+        cursor.execute(
+            "SELECT created_at FROM project_autonomy WHERE project_path = ?",
+            (normalized_path,)
+        )
+        existing = cursor.fetchone()
+
+        if existing:
+            # Update
+            cursor.execute("""
+                UPDATE project_autonomy
+                SET autonomy_level = ?,
+                    allowlist_rules = ?,
+                    blocklist_rules = ?,
+                    updated_at = ?
+                WHERE project_path = ?
+            """, (
+                level,
+                json.dumps(allowlist) if allowlist is not None else None,
+                json.dumps(blocklist) if blocklist is not None else None,
+                now,
+                normalized_path,
+            ))
+        else:
+            # Insert
+            cursor.execute("""
+                INSERT INTO project_autonomy
+                (project_path, autonomy_level, allowlist_rules, blocklist_rules, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                normalized_path,
+                level,
+                json.dumps(allowlist) if allowlist is not None else None,
+                json.dumps(blocklist) if blocklist is not None else None,
+                now,
+                now,
+            ))
+
+        conn.commit()
+        conn.close()
+        logger.info(f"Set autonomy level {level} for {normalized_path}")
+
+    def delete_project_autonomy(self, project_path: str) -> bool:
+        """
+        Delete autonomy settings for a project.
+
+        Args:
+            project_path: Project directory path
+
+        Returns:
+            True if deleted, False if not found
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        normalized_path = str(Path(project_path).resolve())
+
+        cursor.execute(
+            "DELETE FROM project_autonomy WHERE project_path = ?",
+            (normalized_path,)
+        )
+
+        deleted = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+
+        return deleted
+
 
 # Global storage instance
 _storage: Optional[WorkflowStorage] = None
