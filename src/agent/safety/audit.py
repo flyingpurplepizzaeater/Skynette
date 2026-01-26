@@ -56,6 +56,10 @@ class AuditEntry(BaseModel):
     success: bool = True
     parent_plan_id: Optional[str] = None
 
+    # YOLO mode fields
+    yolo_mode: bool = False  # True if executed in L5 mode
+    full_parameters: Optional[str] = None  # Untruncated params for YOLO
+
     def to_dict(self) -> dict:
         """Convert to dictionary for storage."""
         return {
@@ -75,6 +79,8 @@ class AuditEntry(BaseModel):
             "approval_time_ms": self.approval_time_ms,
             "success": self.success,
             "parent_plan_id": self.parent_plan_id,
+            "yolo_mode": self.yolo_mode,
+            "full_parameters": self.full_parameters,
         }
 
     @classmethod
@@ -97,6 +103,8 @@ class AuditEntry(BaseModel):
             approval_time_ms=row["approval_time_ms"],
             success=bool(row["success"]),
             parent_plan_id=row["parent_plan_id"],
+            yolo_mode=bool(row.get("yolo_mode", 0)),
+            full_parameters=row.get("full_parameters"),
         )
 
 
