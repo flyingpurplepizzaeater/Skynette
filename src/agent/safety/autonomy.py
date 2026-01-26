@@ -1,8 +1,10 @@
 """
 Autonomy Level System
 
-Defines autonomy levels (L1-L4) with threshold mappings for auto-execution
+Defines autonomy levels (L1-L5) with threshold mappings for auto-execution
 and provides a service to manage the current level per project.
+
+L5 (YOLO) is the highest autonomy level - all risk levels auto-execute.
 """
 
 from dataclasses import dataclass, field
@@ -15,7 +17,7 @@ from src.data.storage import get_storage
 
 
 # Autonomy level type using Literal (per 07-01 decision pattern)
-AutonomyLevel = Literal["L1", "L2", "L3", "L4"]
+AutonomyLevel = Literal["L1", "L2", "L3", "L4", "L5"]
 
 
 # Threshold mappings: which risk levels auto-execute at each autonomy level
@@ -24,6 +26,7 @@ AUTONOMY_THRESHOLDS: dict[AutonomyLevel, set[RiskLevel]] = {
     "L2": {"safe"},                           # Only safe auto-executes
     "L3": {"safe", "moderate"},               # Safe + moderate auto-execute
     "L4": {"safe", "moderate", "destructive"},  # Only critical requires approval
+    "L5": {"safe", "moderate", "destructive", "critical"},  # YOLO - everything auto-executes
 }
 
 
@@ -33,6 +36,7 @@ AUTONOMY_LABELS: dict[AutonomyLevel, str] = {
     "L2": "Collaborator", # Default - safe actions auto-execute
     "L3": "Trusted",      # More autonomy for trusted projects
     "L4": "Expert",       # High autonomy - only critical needs approval
+    "L5": "YOLO",         # Power mode - everything auto-executes
 }
 
 
@@ -42,11 +46,12 @@ AUTONOMY_COLORS: dict[AutonomyLevel, str] = {
     "L2": "#10B981",  # Emerald - collaborative (default)
     "L3": "#F59E0B",  # Amber - trusted
     "L4": "#EF4444",  # Red - expert/high autonomy
+    "L5": "#8B5CF6",  # Purple - power mode (YOLO)
 }
 
 
 # Level order for comparison (higher index = more autonomous)
-_LEVEL_ORDER: list[AutonomyLevel] = ["L1", "L2", "L3", "L4"]
+_LEVEL_ORDER: list[AutonomyLevel] = ["L1", "L2", "L3", "L4", "L5"]
 
 
 @dataclass
@@ -94,6 +99,7 @@ class AutonomyLevelService:
         """Initialize the autonomy level service."""
         self._current_levels: dict[str, AutonomyLevel] = {}  # project path -> level
         self._level_changed_callbacks: list[Callable[[str, AutonomyLevel, AutonomyLevel, bool], None]] = []
+        self._session_yolo_projects: set[str] = set()  # Session-only L5 tracking (not persisted)
 
     def get_settings(self, project_path: str | None = None) -> AutonomySettings:
         """
@@ -159,7 +165,8 @@ class AutonomyLevelService:
         """Get the global default autonomy level."""
         storage = get_storage()
         level = storage.get_setting("default_autonomy_level", "L2")
-        if level in ("L1", "L2", "L3", "L4"):
+        # L5 should never be a default level (it's always explicit choice)
+        if level in ("L1", "L2", "L3", "L4", "L5"):
             return level  # type: ignore
         return "L2"
 
