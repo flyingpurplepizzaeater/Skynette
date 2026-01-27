@@ -8,17 +8,15 @@ An all-in-one, open-source AI workspace that combines chat, model management, wo
 
 One app to replace the need for separate AI chat clients, local model managers, workflow automation tools, code editors, and AI assistants - accessible to everyone, not just developers.
 
-## Current Milestone: v3.0 Agent
+## Current State
 
-**Goal:** Transform Skynette from an AI workspace into a general-purpose AI assistant that can autonomously execute tasks, interact with external services, and build software.
+**Shipped Version:** v3.0 Agent (2026-01-27)
 
-**Target features:**
-- Agent framework with planning, execution, and progress feedback
-- MCP integration for extensible tool use
-- Built-in tools: web search, browser automation, code execution
-- Configurable approval levels with YOLO bypass mode
-- Smart model routing (agent suggests best model per task)
-- GitHub integration for project creation
+Skynette is now a general-purpose AI assistant capable of autonomous task execution with configurable human oversight. The agent can decompose complex tasks into steps, execute tools (web search, browser, filesystem, code, GitHub), and respects user-defined autonomy levels from L1 (suggestion only) to L5 (full YOLO mode).
+
+**Next Milestone Goals:**
+- v3.1: Multi-agent coordination, cross-session memory
+- v4.0: Mobile optimization, team features
 
 ## Requirements
 
@@ -51,40 +49,32 @@ One app to replace the need for separate AI chat clients, local model managers, 
 - ✓ Code execution node for workflows (Python/JS/Bash/PowerShell) - v2.0
 - ✓ Comprehensive test coverage (477+ tests) - v2.0
 - ✓ Security audit confirming API key protection - v2.0
+- ✓ Agent planning phase (decompose tasks into executable steps) - v3.0
+- ✓ Agent execution loop with tool use and retry logic - v3.0
+- ✓ Visual progress feedback (thinking indicator, status updates) - v3.0
+- ✓ Both autonomous (background) and interactive modes - v3.0
+- ✓ Configurable per-action approval levels (L1-L4) - v3.0
+- ✓ YOLO bypass mode (L5) for power users - v3.0
+- ✓ MCP host implementation (connect to MCP servers) - v3.0
+- ✓ Support for stdio, SSE, and HTTP transports - v3.0
+- ✓ Tool discovery and registration from MCP servers - v3.0
+- ✓ Built-in MCP server management UI - v3.0
+- ✓ Web search via DuckDuckGo API (no key required) - v3.0
+- ✓ Headless browser for complex web interactions (Playwright) - v3.0
+- ✓ Filesystem operations (read, write, create, delete) - v3.0
+- ✓ Code execution tool (Python/JS/Bash/PowerShell) - v3.0
+- ✓ GitHub integration (create repos, commit, push) - v3.0
+- ✓ Smart model routing (suggest best model per task) - v3.0
+- ✓ User-configurable model defaults per task type - v3.0
+- ✓ Action classification (safe, moderate, destructive, critical) - v3.0
+- ✓ Human-in-the-loop approval workflow with batch support - v3.0
+- ✓ Comprehensive audit log with JSON/CSV export - v3.0
+- ✓ Kill switch (Ctrl+Shift+K) to stop running agent tasks - v3.0
+- ✓ 370+ tests covering all agent subsystems - v3.0
 
 ### Active
 
-**Agent Framework:**
-- [ ] Agent planning phase (asks clarifying questions before execution)
-- [ ] Agent execution loop with tool use
-- [ ] Visual progress feedback (thinking indicator, status updates)
-- [ ] Both autonomous (background) and interactive modes
-- [ ] Configurable per-action approval levels
-- [ ] YOLO bypass mode for power users
-
-**MCP Integration:**
-- [ ] MCP host implementation (connect to MCP servers)
-- [ ] Support for stdio, SSE, and HTTP transports
-- [ ] Tool discovery and registration from MCP servers
-- [ ] Built-in MCP server management UI
-
-**Built-in Tools:**
-- [ ] Web search via search APIs (Google, Bing, etc.)
-- [ ] Headless browser for complex web interactions
-- [ ] Filesystem operations (read, write, create, delete)
-- [ ] Code execution (extend existing node)
-- [ ] GitHub integration (create repos, push code)
-
-**AI Backend:**
-- [ ] Smart model routing (suggest best model per task)
-- [ ] User-configurable model defaults per task type
-- [ ] Agent uses existing multi-provider gateway
-
-**Safety & Control:**
-- [ ] Action classification (safe, moderate, destructive)
-- [ ] Approval workflow for flagged actions
-- [ ] Audit log of agent actions
-- [ ] Kill switch to stop running agent tasks
+(No active requirements - new milestone not yet defined)
 
 ### Out of Scope
 
@@ -94,26 +84,26 @@ One app to replace the need for separate AI chat clients, local model managers, 
 - Custom model training - use pre-trained models only
 - Email integration - defer to MCP servers (users can add their own)
 - Stock market integration - defer to MCP servers
+- Multi-agent coordination - complexity, defer to v3.1+
 
 ## Context
 
-**Current state:** Shipped v2.0 with 144,774 LOC Python across 143 files.
+**Current state:** Shipped v3.0 with ~195,000 LOC Python across 250+ files.
 
-**Tech stack:** Python/Flet for GUI, FastAPI for webhooks, ChromaDB for RAG, Pygments for syntax highlighting, tiktoken for token counting.
+**Tech stack:** Python/Flet for GUI, FastAPI for webhooks, ChromaDB for RAG, Pygments for syntax highlighting, tiktoken for token counting, MCP SDK for tool extensibility, Playwright for browser automation.
 
 **Provider support:** OpenAI, Anthropic, Gemini, Grok, Ollama, local llama.cpp
 
-**Test coverage:** 477+ tests covering all major subsystems
-
-**v3.0 direction:** Agent mode transforms Skynette from a tool into an assistant. Users can give it tasks ("build me an app", "research this topic", "check the news") and it executes autonomously with appropriate oversight.
+**Test coverage:** 847+ tests covering all major subsystems (477 v2.0 + 370 v3.0)
 
 **Known issues:**
-- Manual CodeEditorView verification pending
+- Manual CodeEditorView verification pending (deferred from v2.0)
 - mypy not installed in dev environment
+- Flet deprecation warnings (symmetric(), ElevatedButton) for 0.73/1.0
 
 ## Constraints
 
-- **Tech stack**: Python/Flet - validated through v2.0 development
+- **Tech stack**: Python/Flet - validated through v3.0 development
 - **Deployment**: Must work as both desktop app (PyInstaller) and web app (self-hosted)
 - **AI providers**: Must support OpenAI, Anthropic, Ollama, Gemini, Grok
 - **Local-first**: Core features must work offline with local models
@@ -124,18 +114,22 @@ One app to replace the need for separate AI chat clients, local model managers, 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Python/Flet for GUI | Cross-platform from single codebase | ✓ Good (shipped v2.0) |
+| Python/Flet for GUI | Cross-platform from single codebase | ✓ Good (shipped v3.0) |
 | SQLite for storage | No external database dependency | ✓ Good |
 | Multi-provider gateway pattern | Easy to add new AI providers | ✓ Good (5 providers) |
 | Node-based workflows | Visual, accessible to non-developers | ✓ Good |
-| State container pattern | Reactive updates without external library | ✓ Good (used in AIHub, Editor) |
+| State container pattern | Reactive updates without external library | ✓ Good (used in AIHub, Editor, Agent) |
 | Pygments for syntax highlighting | 598 languages, no Flutter wrapper complexity | ✓ Good |
 | google-genai SDK for Gemini | Official SDK, async support, actively maintained | ✓ Good |
 | DimensionValidator for embeddings | Prevents ChromaDB corruption from model changes | ✓ Good |
 | RAG context in system prompt | Maintains conversation history integrity | ✓ Good |
 | Lazy project indexing | Avoid slow startup, index on first query | ✓ Good |
-| MCP for extensibility | Standard protocol, community ecosystem, future-proof | — Pending |
-| Configurable approval levels | Balance autonomy with safety | — Pending |
+| MCP for extensibility | Standard protocol, community ecosystem, future-proof | ✓ Good (shipped v3.0) |
+| Configurable approval levels | Balance autonomy with safety | ✓ Good (L1-L5 shipped) |
+| Custom agent loop (not LangChain) | Simplicity, control, no heavy dependencies | ✓ Good |
+| Plan-and-execute pattern | Proven architecture for agent systems | ✓ Good |
+| Session-only YOLO mode | Safety - L5 never persists to storage | ✓ Good |
+| SQLite WAL for all storage | Consistent pattern across traces, audit, autonomy | ✓ Good |
 
 ---
-*Last updated: 2026-01-20 after v3.0 milestone initialization*
+*Last updated: 2026-01-27 after v3.0 milestone shipped*

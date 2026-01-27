@@ -1,5 +1,33 @@
 # Project Milestones: Skynette
 
+## v3.0 Agent (Shipped: 2026-01-27)
+
+**Delivered:** General-purpose autonomous AI assistant with MCP-based tool extensibility, configurable approval levels, and YOLO mode for power users.
+
+**Phases completed:** 7-16 (47 plans total)
+
+**Key accomplishments:**
+
+- Agent framework with plan-and-execute architecture, token budget tracking, and retry logic
+- MCP integration supporting stdio and HTTP transports with automatic tool discovery
+- Built-in tools: web search (DuckDuckGo), browser automation (Playwright), filesystem, code execution, GitHub
+- Safety systems: action classification (safe/moderate/destructive/critical), HITL approval, audit trail, kill switch
+- Autonomy levels L1-L5 from Assistant to YOLO mode with session-only persistence
+- Comprehensive test coverage (370+ tests) with E2E tests for all critical workflows
+
+**Stats:**
+
+- 224+ files created/modified
+- ~49,745 lines of Python added
+- 10 phases, 47 plans, 200+ commits
+- 7 days from start to ship (2026-01-20 to 2026-01-27)
+
+**Git range:** `feat(07)` to `feat(16)`
+
+**What's next:** v3.1 or v4.0 - Multi-agent coordination, cross-session memory, or mobile optimization
+
+---
+
 ## v2.0 Code Editor & Multi-Provider (Shipped: 2026-01-19)
 
 **Delivered:** Complete AI-assisted code editor with multi-provider support, RAG-powered codebase awareness, and workflow integration.
