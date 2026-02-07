@@ -152,9 +152,7 @@ class ProjectIndexer:
                 continue
 
             if file_size > MAX_FILE_SIZE_WARN:
-                logger.warning(
-                    f"Skipping large file ({file_size / 1024:.1f}KB): {file_path}"
-                )
+                logger.warning(f"Skipping large file ({file_size / 1024:.1f}KB): {file_path}")
                 stats["skipped"] += 1
                 continue
 
@@ -319,12 +317,14 @@ class ProjectIndexer:
         output = []
         for result in results:
             chunk = result["chunk"]
-            output.append({
-                "content": chunk.content,
-                "source_path": chunk.metadata.get("source_path", "unknown"),
-                "language": chunk.metadata.get("language", "text"),
-                "similarity": result["similarity"],
-            })
+            output.append(
+                {
+                    "content": chunk.content,
+                    "source_path": chunk.metadata.get("source_path", "unknown"),
+                    "language": chunk.metadata.get("language", "text"),
+                    "similarity": result["similarity"],
+                }
+            )
 
         return output
 

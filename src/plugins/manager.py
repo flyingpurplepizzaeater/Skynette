@@ -5,24 +5,26 @@ Handles plugin discovery, loading, enabling/disabling, and lifecycle management.
 Supports multiple plugin sources: GitHub, npm, and custom registries.
 """
 
-import json
+import asyncio
 import importlib
 import importlib.util
+import json
+import shutil
 import sys
-import asyncio
-import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Optional, Any, Callable, List
 from datetime import datetime
 from enum import Enum
-import shutil
+from pathlib import Path
+from typing import Any
+
 import httpx
 
 
 @dataclass
 class PluginManifest:
     """Plugin manifest information."""
+
     id: str
     name: str
     version: str
@@ -78,12 +80,13 @@ class PluginManifest:
 @dataclass
 class InstalledPlugin:
     """Information about an installed plugin."""
+
     manifest: PluginManifest
     path: Path
     enabled: bool = True
     installed_at: str = ""
     updated_at: str = ""
-    module: Optional[Any] = None  # Loaded Python module
+    module: Any | None = None  # Loaded Python module
 
     @property
     def id(self) -> str:
@@ -108,6 +111,7 @@ class InstalledPlugin:
 
 class PluginSource(Enum):
     """Supported plugin sources."""
+
     GITHUB = "github"
     NPM = "npm"
     OFFICIAL = "official"
@@ -117,6 +121,7 @@ class PluginSource(Enum):
 @dataclass
 class MarketplacePlugin:
     """Information about a plugin in the marketplace."""
+
     id: str
     name: str
     version: str
@@ -141,6 +146,7 @@ class MarketplacePlugin:
 @dataclass
 class GitHubRepo:
     """Information about a GitHub repository."""
+
     full_name: str  # owner/repo
     name: str
     owner: str
@@ -161,11 +167,11 @@ NPM_REGISTRY = "https://registry.npmjs.org"
 class MarketplaceSource:
     """Base class for marketplace sources."""
 
-    async def search(self, query: str, limit: int = 20) -> List[MarketplacePlugin]:
+    async def search(self, query: str, limit: int = 20) -> list[MarketplacePlugin]:
         """Search for plugins."""
         raise NotImplementedError
 
-    async def get_plugin_info(self, plugin_id: str) -> Optional[MarketplacePlugin]:
+    async def get_plugin_info(self, plugin_id: str) -> MarketplacePlugin | None:
         """Get detailed plugin information."""
         raise NotImplementedError
 
@@ -179,7 +185,7 @@ class GitHubMarketplace(MarketplaceSource):
 
     SEARCH_TOPICS = ["skynette-plugin", "skynette"]
 
-    async def search(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
+    async def search(self, query: str = "", limit: int = 20) -> list[MarketplacePlugin]:
         """Search GitHub for Skynette plugins."""
         plugins = []
 
@@ -202,34 +208,36 @@ class GitHubMarketplace(MarketplaceSource):
                 data = response.json()
 
                 for item in data.get("items", []):
-                    plugins.append(MarketplacePlugin(
-                        id=item["full_name"].replace("/", "-"),
-                        name=item["name"],
-                        version="latest",
-                        description=item.get("description") or "",
-                        author=item["owner"]["login"],
-                        downloads=0,  # GitHub doesn't provide this
-                        stars=item.get("stargazers_count", 0),
-                        forks=item.get("forks_count", 0),
-                        categories=item.get("topics", []),
-                        icon_url=item["owner"]["avatar_url"],
-                        download_url=f"https://github.com/{item['full_name']}/archive/refs/heads/{item.get('default_branch', 'main')}.zip",
-                        source=PluginSource.GITHUB,
-                        source_url=item["html_url"],
-                        created_at=item.get("created_at", ""),
-                        updated_at=item.get("updated_at", ""),
-                    ))
+                    plugins.append(
+                        MarketplacePlugin(
+                            id=item["full_name"].replace("/", "-"),
+                            name=item["name"],
+                            version="latest",
+                            description=item.get("description") or "",
+                            author=item["owner"]["login"],
+                            downloads=0,  # GitHub doesn't provide this
+                            stars=item.get("stargazers_count", 0),
+                            forks=item.get("forks_count", 0),
+                            categories=item.get("topics", []),
+                            icon_url=item["owner"]["avatar_url"],
+                            download_url=f"https://github.com/{item['full_name']}/archive/refs/heads/{item.get('default_branch', 'main')}.zip",
+                            source=PluginSource.GITHUB,
+                            source_url=item["html_url"],
+                            created_at=item.get("created_at", ""),
+                            updated_at=item.get("updated_at", ""),
+                        )
+                    )
 
         except Exception as e:
             print(f"GitHub search error: {e}")
 
         return plugins
 
-    async def get_popular(self, limit: int = 10) -> List[MarketplacePlugin]:
+    async def get_popular(self, limit: int = 10) -> list[MarketplacePlugin]:
         """Get popular Skynette plugins from GitHub."""
         return await self.search("", limit=limit)
 
-    async def get_plugin_releases(self, owner: str, repo: str) -> List[dict]:
+    async def get_plugin_releases(self, owner: str, repo: str) -> list[dict]:
         """Get releases for a GitHub repository."""
         releases = []
 
@@ -247,7 +255,7 @@ class GitHubMarketplace(MarketplaceSource):
 
         return releases
 
-    async def get_manifest_from_repo(self, owner: str, repo: str) -> Optional[PluginManifest]:
+    async def get_manifest_from_repo(self, owner: str, repo: str) -> PluginManifest | None:
         """Try to get plugin manifest from a GitHub repo."""
         try:
             async with httpx.AsyncClient(timeout=30) as client:
@@ -271,7 +279,7 @@ class NpmMarketplace(MarketplaceSource):
 
     PACKAGE_PREFIX = "skynette-plugin-"
 
-    async def search(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
+    async def search(self, query: str = "", limit: int = 20) -> list[MarketplacePlugin]:
         """Search npm for Skynette plugins."""
         plugins = []
 
@@ -292,20 +300,29 @@ class NpmMarketplace(MarketplaceSource):
 
                 for item in data.get("objects", []):
                     pkg = item.get("package", {})
-                    plugins.append(MarketplacePlugin(
-                        id=pkg.get("name", ""),
-                        name=pkg.get("name", "").replace(self.PACKAGE_PREFIX, "").replace("-", " ").title(),
-                        version=pkg.get("version", "0.0.0"),
-                        description=pkg.get("description", ""),
-                        author=pkg.get("author", {}).get("name", "") if isinstance(pkg.get("author"), dict) else str(pkg.get("author", "")),
-                        downloads=item.get("downloads", {}).get("all", 0) if isinstance(item.get("downloads"), dict) else 0,
-                        categories=pkg.get("keywords", []),
-                        download_url=f"https://registry.npmjs.org/{pkg.get('name', '')}/-/{pkg.get('name', '')}-{pkg.get('version', '')}.tgz",
-                        source=PluginSource.NPM,
-                        source_url=f"https://www.npmjs.com/package/{pkg.get('name', '')}",
-                        created_at=pkg.get("date", ""),
-                        updated_at=pkg.get("date", ""),
-                    ))
+                    plugins.append(
+                        MarketplacePlugin(
+                            id=pkg.get("name", ""),
+                            name=pkg.get("name", "")
+                            .replace(self.PACKAGE_PREFIX, "")
+                            .replace("-", " ")
+                            .title(),
+                            version=pkg.get("version", "0.0.0"),
+                            description=pkg.get("description", ""),
+                            author=pkg.get("author", {}).get("name", "")
+                            if isinstance(pkg.get("author"), dict)
+                            else str(pkg.get("author", "")),
+                            downloads=item.get("downloads", {}).get("all", 0)
+                            if isinstance(item.get("downloads"), dict)
+                            else 0,
+                            categories=pkg.get("keywords", []),
+                            download_url=f"https://registry.npmjs.org/{pkg.get('name', '')}/-/{pkg.get('name', '')}-{pkg.get('version', '')}.tgz",
+                            source=PluginSource.NPM,
+                            source_url=f"https://www.npmjs.com/package/{pkg.get('name', '')}",
+                            created_at=pkg.get("date", ""),
+                            updated_at=pkg.get("date", ""),
+                        )
+                    )
 
         except Exception as e:
             print(f"npm search error: {e}")
@@ -323,7 +340,7 @@ class OfficialRegistrySource(MarketplaceSource):
     def __init__(self, registry_url: str = OFFICIAL_REGISTRY_URL):
         self.registry_url = registry_url
         self._cache: dict = {}
-        self._cache_time: Optional[datetime] = None
+        self._cache_time: datetime | None = None
         self._cache_ttl = 300  # 5 minutes
 
     async def _fetch_registry(self) -> dict:
@@ -344,7 +361,7 @@ class OfficialRegistrySource(MarketplaceSource):
             print(f"Failed to fetch official registry: {e}")
             return {"featured": [], "community": []}
 
-    async def search(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
+    async def search(self, query: str = "", limit: int = 20) -> list[MarketplacePlugin]:
         """Search official registry for plugins."""
         registry = await self._fetch_registry()
         plugins = []
@@ -356,50 +373,56 @@ class OfficialRegistrySource(MarketplaceSource):
             # Filter by query if provided
             if query:
                 query_lower = query.lower()
-                if (query_lower not in entry.get("name", "").lower() and
-                    query_lower not in entry.get("description", "").lower() and
-                    not any(query_lower in tag.lower() for tag in entry.get("tags", []))):
+                if (
+                    query_lower not in entry.get("name", "").lower()
+                    and query_lower not in entry.get("description", "").lower()
+                    and not any(query_lower in tag.lower() for tag in entry.get("tags", []))
+                ):
                     continue
 
             is_featured = entry in registry.get("featured", [])
 
-            plugins.append(MarketplacePlugin(
-                id=entry.get("id", ""),
-                name=entry.get("name", ""),
-                version=entry.get("version", "1.0.0"),
-                description=entry.get("description", ""),
-                author=entry.get("author", ""),
-                downloads=entry.get("downloads", 0),
-                categories=entry.get("tags", []),
-                download_url=f"https://github.com/{entry.get('repo', '')}/archive/refs/heads/main.zip",
-                source=PluginSource.OFFICIAL,
-                source_url=f"https://github.com/{entry.get('repo', '')}",
-                is_verified=entry.get("verified", False),
-                is_featured=is_featured,
-            ))
+            plugins.append(
+                MarketplacePlugin(
+                    id=entry.get("id", ""),
+                    name=entry.get("name", ""),
+                    version=entry.get("version", "1.0.0"),
+                    description=entry.get("description", ""),
+                    author=entry.get("author", ""),
+                    downloads=entry.get("downloads", 0),
+                    categories=entry.get("tags", []),
+                    download_url=f"https://github.com/{entry.get('repo', '')}/archive/refs/heads/main.zip",
+                    source=PluginSource.OFFICIAL,
+                    source_url=f"https://github.com/{entry.get('repo', '')}",
+                    is_verified=entry.get("verified", False),
+                    is_featured=is_featured,
+                )
+            )
 
         return plugins[:limit]
 
-    async def get_featured(self) -> List[MarketplacePlugin]:
+    async def get_featured(self) -> list[MarketplacePlugin]:
         """Get featured plugins from official registry."""
         registry = await self._fetch_registry()
         plugins = []
 
         for entry in registry.get("featured", []):
-            plugins.append(MarketplacePlugin(
-                id=entry.get("id", ""),
-                name=entry.get("name", ""),
-                version=entry.get("version", "1.0.0"),
-                description=entry.get("description", ""),
-                author=entry.get("author", ""),
-                downloads=entry.get("downloads", 0),
-                categories=entry.get("tags", []),
-                download_url=f"https://github.com/{entry.get('repo', '')}/archive/refs/heads/main.zip",
-                source=PluginSource.OFFICIAL,
-                source_url=f"https://github.com/{entry.get('repo', '')}",
-                is_verified=entry.get("verified", False),
-                is_featured=True,
-            ))
+            plugins.append(
+                MarketplacePlugin(
+                    id=entry.get("id", ""),
+                    name=entry.get("name", ""),
+                    version=entry.get("version", "1.0.0"),
+                    description=entry.get("description", ""),
+                    author=entry.get("author", ""),
+                    downloads=entry.get("downloads", 0),
+                    categories=entry.get("tags", []),
+                    download_url=f"https://github.com/{entry.get('repo', '')}/archive/refs/heads/main.zip",
+                    source=PluginSource.OFFICIAL,
+                    source_url=f"https://github.com/{entry.get('repo', '')}",
+                    is_verified=entry.get("verified", False),
+                    is_featured=True,
+                )
+            )
 
         return plugins
 
@@ -414,16 +437,16 @@ class PluginMarketplace:
             PluginSource.GITHUB: GitHubMarketplace(),
             PluginSource.NPM: NpmMarketplace(),
         }
-        self._cache: dict[str, List[MarketplacePlugin]] = {}
+        self._cache: dict[str, list[MarketplacePlugin]] = {}
         self._cache_time: dict[str, datetime] = {}
         self._cache_ttl = 300  # 5 minutes
 
     async def search(
         self,
         query: str = "",
-        sources: List[PluginSource] = None,
+        sources: list[PluginSource] = None,
         limit: int = 20,
-    ) -> List[MarketplacePlugin]:
+    ) -> list[MarketplacePlugin]:
         """
         Search for plugins across all or specified sources.
 
@@ -456,11 +479,11 @@ class PluginMarketplace:
                     print(f"Search error: {result}")
 
         # Sort by stars/downloads
-        all_plugins.sort(key=lambda p: (p.stars + p.downloads), reverse=True)
+        all_plugins.sort(key=lambda p: p.stars + p.downloads, reverse=True)
 
-        return all_plugins[:limit * len(sources)]
+        return all_plugins[: limit * len(sources)]
 
-    async def get_popular(self, limit: int = 10) -> List[MarketplacePlugin]:
+    async def get_popular(self, limit: int = 10) -> list[MarketplacePlugin]:
         """Get popular plugins from all sources."""
         cache_key = f"popular_{limit}"
 
@@ -478,19 +501,19 @@ class PluginMarketplace:
 
         return plugins
 
-    async def search_github(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
+    async def search_github(self, query: str = "", limit: int = 20) -> list[MarketplacePlugin]:
         """Search only GitHub for plugins."""
         return await self.search(query, sources=[PluginSource.GITHUB], limit=limit)
 
-    async def search_npm(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
+    async def search_npm(self, query: str = "", limit: int = 20) -> list[MarketplacePlugin]:
         """Search only npm for plugins."""
         return await self.search(query, sources=[PluginSource.NPM], limit=limit)
 
-    async def get_featured(self) -> List[MarketplacePlugin]:
+    async def get_featured(self) -> list[MarketplacePlugin]:
         """Get featured plugins from the official registry."""
         return await self._official.get_featured()
 
-    async def search_official(self, query: str = "", limit: int = 20) -> List[MarketplacePlugin]:
+    async def search_official(self, query: str = "", limit: int = 20) -> list[MarketplacePlugin]:
         """Search only the official registry for plugins."""
         return await self.search(query, sources=[PluginSource.OFFICIAL], limit=limit)
 
@@ -500,7 +523,7 @@ class PluginManager:
     Manages plugin lifecycle including discovery, loading, and unloading.
     """
 
-    def __init__(self, plugins_dir: Optional[Path] = None, config_dir: Optional[Path] = None):
+    def __init__(self, plugins_dir: Path | None = None, config_dir: Path | None = None):
         self.plugins_dir = plugins_dir or Path.home() / "skynette" / "plugins"
         self.config_dir = config_dir or Path.home() / "skynette" / "config"
 
@@ -581,7 +604,7 @@ class PluginManager:
         """Get list of installed plugins."""
         return list(self._installed.values())
 
-    def get_plugin(self, plugin_id: str) -> Optional[InstalledPlugin]:
+    def get_plugin(self, plugin_id: str) -> InstalledPlugin | None:
         """Get a specific plugin by ID."""
         return self._installed.get(plugin_id)
 
@@ -622,10 +645,7 @@ class PluginManager:
             if not init_path.exists():
                 return
 
-            spec = importlib.util.spec_from_file_location(
-                f"skynette_plugin_{plugin.id}",
-                init_path
-            )
+            spec = importlib.util.spec_from_file_location(f"skynette_plugin_{plugin.id}", init_path)
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 sys.modules[f"skynette_plugin_{plugin.id}"] = module
@@ -665,7 +685,7 @@ class PluginManager:
     async def install_from_marketplace(
         self,
         plugin_info: MarketplacePlugin,
-        progress_callback: Optional[Callable[[str, float], None]] = None,
+        progress_callback: Callable[[str, float], None] | None = None,
     ) -> bool:
         """Install a plugin from the marketplace."""
         import httpx
@@ -694,6 +714,7 @@ class PluginManager:
 
                 # Extract
                 import zipfile
+
                 with zipfile.ZipFile(temp_zip, "r") as zip_ref:
                     zip_ref.extractall(temp_dir)
 
@@ -785,7 +806,7 @@ class PluginManager:
 
 
 # Singleton instance
-_manager: Optional[PluginManager] = None
+_manager: PluginManager | None = None
 
 
 def get_plugin_manager() -> PluginManager:

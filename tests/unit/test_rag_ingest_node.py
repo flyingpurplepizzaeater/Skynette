@@ -9,8 +9,8 @@ class TestIngestDocumentNode:
     """Test IngestDocument workflow node."""
 
     @pytest.fixture
-    async def rag_service(self, tmp_path):
-        """Create temp RAG service."""
+    async def rag_service(self, tmp_path, mock_sentence_transformer):
+        """Create temp RAG service with mocked embeddings."""
         service = RAGService(storage_path=str(tmp_path / "rag"))
         await service.initialize()
         return service

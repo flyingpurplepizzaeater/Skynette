@@ -2,9 +2,7 @@
 Text Generation Node - Generate text using AI.
 """
 
-from typing import Any
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class TextGenerationNode(BaseNode):
@@ -99,7 +97,7 @@ class TextGenerationNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Execute text generation."""
-        from src.ai import get_gateway, AIMessage, GenerationConfig
+        from src.ai import AIMessage, GenerationConfig, get_gateway
 
         gateway = get_gateway()
 

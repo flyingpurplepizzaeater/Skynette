@@ -21,6 +21,7 @@ import httpx
 @dataclass
 class ModelInfo:
     """Information about a model."""
+
     id: str
     name: str
     description: str = ""
@@ -35,18 +36,19 @@ class ModelInfo:
 
     @property
     def size_gb(self) -> float:
-        return self.size_bytes / (1024 ** 3)
+        return self.size_bytes / (1024**3)
 
     @property
     def size_display(self) -> str:
-        if self.size_bytes < 1024 ** 3:
-            return f"{self.size_bytes / (1024 ** 2):.1f} MB"
+        if self.size_bytes < 1024**3:
+            return f"{self.size_bytes / (1024**2):.1f} MB"
         return f"{self.size_gb:.2f} GB"
 
 
 @dataclass
 class DownloadProgress:
     """Progress information for downloads."""
+
     model_id: str
     downloaded_bytes: int
     total_bytes: int
@@ -162,25 +164,41 @@ class ModelHub:
                 except Exception:
                     pass
 
-            self._local_models.append(ModelInfo(
-                id=model_id,
-                name=metadata.get("name", model_id.replace("-", " ").replace("_", " ").title()),
-                description=metadata.get("description", ""),
-                size_bytes=size_bytes,
-                quantization=metadata.get("quantization", self._detect_quantization(model_id)),
-                source=metadata.get("source", "local"),
-                source_url=metadata.get("source_url", ""),
-                local_path=model_path,
-                is_downloaded=True,
-                metadata=metadata,
-            ))
+            self._local_models.append(
+                ModelInfo(
+                    id=model_id,
+                    name=metadata.get("name", model_id.replace("-", " ").replace("_", " ").title()),
+                    description=metadata.get("description", ""),
+                    size_bytes=size_bytes,
+                    quantization=metadata.get("quantization", self._detect_quantization(model_id)),
+                    source=metadata.get("source", "local"),
+                    source_url=metadata.get("source_url", ""),
+                    local_path=model_path,
+                    is_downloaded=True,
+                    metadata=metadata,
+                )
+            )
 
         return self._local_models
 
     def _detect_quantization(self, model_id: str) -> str:
         """Try to detect quantization from model filename."""
-        quants = ["Q2_K", "Q3_K_S", "Q3_K_M", "Q3_K_L", "Q4_0", "Q4_K_S", "Q4_K_M",
-                  "Q5_0", "Q5_K_S", "Q5_K_M", "Q6_K", "Q8_0", "F16", "F32"]
+        quants = [
+            "Q2_K",
+            "Q3_K_S",
+            "Q3_K_M",
+            "Q3_K_L",
+            "Q4_0",
+            "Q4_K_S",
+            "Q4_K_M",
+            "Q5_0",
+            "Q5_K_S",
+            "Q5_K_M",
+            "Q6_K",
+            "Q8_0",
+            "F16",
+            "F32",
+        ]
         model_upper = model_id.upper()
         for q in quants:
             if q in model_upper:
@@ -329,15 +347,19 @@ class ModelHub:
             # Save metadata
             meta_path = dest_path.with_suffix(".json")
             with open(meta_path, "w") as f:
-                json.dump({
-                    "id": model.id,
-                    "name": model.name,
-                    "description": model.description,
-                    "quantization": model.quantization,
-                    "source": model.source,
-                    "source_url": model.source_url,
-                    "metadata": model.metadata,
-                }, f, indent=2)
+                json.dump(
+                    {
+                        "id": model.id,
+                        "name": model.name,
+                        "description": model.description,
+                        "quantization": model.quantization,
+                        "source": model.source,
+                        "source_url": model.source_url,
+                        "metadata": model.metadata,
+                    },
+                    f,
+                    indent=2,
+                )
 
             progress.status = "complete"
             if progress_callback:

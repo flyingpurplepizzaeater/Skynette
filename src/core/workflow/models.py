@@ -4,10 +4,11 @@ Workflow Data Models
 Pydantic models for workflow definitions.
 """
 
-from datetime import datetime, UTC
-from typing import Any, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class WorkflowNode(BaseModel):
@@ -48,7 +49,7 @@ class Workflow(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     tags: list[str] = Field(default_factory=list)
 
-    def get_node(self, node_id: str) -> Optional[WorkflowNode]:
+    def get_node(self, node_id: str) -> WorkflowNode | None:
         """Get a node by ID."""
         for node in self.nodes:
             if node.id == node_id:
@@ -139,12 +140,11 @@ class Workflow(BaseModel):
                 if config_str:
                     lines.append(
                         f'workflow.add_node("{node.type}", name="{node.name}", '
-                        f"id=\"{node.id}\", config={{{config_str}}})"
+                        f'id="{node.id}", config={{{config_str}}})'
                     )
                 else:
                     lines.append(
-                        f'workflow.add_node("{node.type}", name="{node.name}", '
-                        f'id="{node.id}")'
+                        f'workflow.add_node("{node.type}", name="{node.name}", id="{node.id}")'
                     )
             lines.append("")
 
@@ -152,9 +152,7 @@ class Workflow(BaseModel):
         if self.connections:
             lines.append("# Connections")
             for conn in self.connections:
-                lines.append(
-                    f'workflow.connect("{conn.source_node_id}", "{conn.target_node_id}")'
-                )
+                lines.append(f'workflow.connect("{conn.source_node_id}", "{conn.target_node_id}")')
             lines.append("")
 
         # Add variables
@@ -291,10 +289,10 @@ class ExecutionResult(BaseModel):
     node_id: str
     success: bool
     data: Any = None
-    error: Optional[str] = None
+    error: str | None = None
     duration_ms: float = 0
     started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
 
 class WorkflowExecution(BaseModel):
@@ -307,15 +305,15 @@ class WorkflowExecution(BaseModel):
     trigger_data: dict = Field(default_factory=dict)
     node_results: list[ExecutionResult] = Field(default_factory=list)
     started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    completed_at: Optional[datetime] = None
-    error: Optional[str] = None
+    completed_at: datetime | None = None
+    error: str | None = None
     duration_ms: float = 0
 
     def add_result(self, result: ExecutionResult):
         """Add a node execution result."""
         self.node_results.append(result)
 
-    def get_result(self, node_id: str) -> Optional[ExecutionResult]:
+    def get_result(self, node_id: str) -> ExecutionResult | None:
         """Get result for a specific node."""
         for result in self.node_results:
             if result.node_id == node_id:

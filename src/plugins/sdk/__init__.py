@@ -29,25 +29,26 @@ Quick Start:
             return {"greeting": f"Hello, {config['name']}!"}
 """
 
-from typing import Any, Callable, Optional, Type, List
-from functools import wraps
+import builtins
 import logging
+from collections.abc import Callable
+from functools import wraps
+from typing import Any, List, Optional, Type
 
 # Re-export base classes for plugin developers
 from src.core.nodes.base import (
-    BaseNode,
-    TriggerNode,
     AINode,
-    HTTPNode,
+    BaseNode,
     DataNode,
+    FieldType,
     FlowNode,
-    UtilityNode,
+    HTTPNode,
+    NodeDefinition,
     NodeField,
     NodeOutput,
-    NodeDefinition,
-    FieldType,
+    TriggerNode,
+    UtilityNode,
 )
-
 from src.core.nodes.registry import NodeRegistry
 
 logger = logging.getLogger(__name__)
@@ -87,6 +88,7 @@ __all__ = [
 # DECORATORS
 # =============================================================================
 
+
 def node(
     type: str,
     name: str,
@@ -116,7 +118,8 @@ def node(
             async def execute(self, config, context):
                 return {"result": config["input_name"]}
     """
-    def decorator(cls: Type[BaseNode]) -> Type[BaseNode]:
+
+    def decorator(cls: builtins.type[BaseNode]) -> builtins.type[BaseNode]:
         cls.type = type
         cls.name = name
         cls.category = category
@@ -127,24 +130,29 @@ def node(
         cls.is_trigger = False
 
         # Handle inputs() method if defined
-        if hasattr(cls, 'inputs') and callable(getattr(cls, 'inputs')):
+        if hasattr(cls, "inputs") and callable(getattr(cls, "inputs")):
             original_inputs = cls.inputs
+
             @classmethod
             def get_inputs(klass) -> list[NodeField]:
                 result = original_inputs()
                 return result if isinstance(result, list) else []
+
             cls.get_inputs = get_inputs
 
         # Handle outputs() method if defined
-        if hasattr(cls, 'outputs') and callable(getattr(cls, 'outputs')):
+        if hasattr(cls, "outputs") and callable(getattr(cls, "outputs")):
             original_outputs = cls.outputs
+
             @classmethod
             def get_outputs(klass) -> list[NodeOutput]:
                 result = original_outputs()
                 return result if isinstance(result, list) else []
+
             cls.get_outputs = get_outputs
 
         return cls
+
     return decorator
 
 
@@ -175,7 +183,8 @@ def trigger(
             async def execute(self, config, context):
                 return context.get("$trigger", {})
     """
-    def decorator(cls: Type[TriggerNode]) -> Type[TriggerNode]:
+
+    def decorator(cls: builtins.type[TriggerNode]) -> builtins.type[TriggerNode]:
         cls.type = type
         cls.name = name
         cls.description = description or f"{name} trigger"
@@ -186,15 +195,18 @@ def trigger(
         cls.requires_credentials = requires_credentials or []
 
         # Handle inputs() method if defined
-        if hasattr(cls, 'inputs') and callable(getattr(cls, 'inputs')):
+        if hasattr(cls, "inputs") and callable(getattr(cls, "inputs")):
             original_inputs = cls.inputs
+
             @classmethod
             def get_inputs(klass) -> list[NodeField]:
                 result = original_inputs()
                 return result if isinstance(result, list) else []
+
             cls.get_inputs = get_inputs
 
         return cls
+
     return decorator
 
 
@@ -227,6 +239,7 @@ def on_unload(func: Callable):
 # =============================================================================
 # FIELD HELPERS
 # =============================================================================
+
 
 class FieldBuilder:
     """
@@ -444,6 +457,7 @@ field = FieldBuilder()
 # OUTPUT HELPERS
 # =============================================================================
 
+
 class OutputBuilder:
     """Helper for defining node outputs."""
 
@@ -474,6 +488,7 @@ output = OutputBuilder()
 # =============================================================================
 # CONTEXT AND CREDENTIALS
 # =============================================================================
+
 
 class PluginContext:
     """
@@ -514,7 +529,7 @@ class PluginContext:
         return self._context.get(key, default)
 
 
-def get_credential(service: str, field_name: str = "api_key") -> Optional[str]:
+def get_credential(service: str, field_name: str = "api_key") -> str | None:
     """
     Get a credential value from the credential vault.
 
@@ -527,6 +542,7 @@ def get_credential(service: str, field_name: str = "api_key") -> Optional[str]:
     """
     try:
         from src.data.credentials import get_api_key
+
         return get_api_key(service, field_name)
     except ImportError:
         logger.warning("Credential vault not available")
@@ -560,7 +576,8 @@ def require_credential(service: str, field_name: str = "api_key") -> str:
 # REGISTRATION HELPERS
 # =============================================================================
 
-def register_node(node_class: Type[BaseNode]) -> None:
+
+def register_node(node_class: type[BaseNode]) -> None:
     """
     Register a node class with the global registry.
 
@@ -575,7 +592,7 @@ def register_node(node_class: Type[BaseNode]) -> None:
     logger.debug(f"Plugin registered node: {node_class.type}")
 
 
-def register_nodes(node_classes: List[Type[BaseNode]]) -> None:
+def register_nodes(node_classes: list[type[BaseNode]]) -> None:
     """
     Register multiple node classes at once.
 
@@ -591,6 +608,7 @@ def register_nodes(node_classes: List[Type[BaseNode]]) -> None:
 # =============================================================================
 # PLUGIN MANIFEST HELPERS
 # =============================================================================
+
 
 def create_manifest(
     id: str,
@@ -630,6 +648,7 @@ def create_manifest(
 # =============================================================================
 # HTTP HELPERS
 # =============================================================================
+
 
 async def http_request(
     method: str,
@@ -764,5 +783,5 @@ def generate_plugin_template(
     return PLUGIN_TEMPLATE.format(
         id=id,
         name=name,
-        description=description or f"Custom plugin for Skynette",
+        description=description or "Custom plugin for Skynette",
     )

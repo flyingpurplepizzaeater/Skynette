@@ -128,7 +128,7 @@ class ModelLibraryTab(ft.Column):
                             spacing=8,
                         ),
                         padding=ft.Padding.all(48),
-                        alignment=ft.alignment.Alignment(0, 0),
+                        alignment=ft.Alignment.CENTER,
                         expand=True,
                     ),
                 ],
@@ -456,6 +456,7 @@ class ModelLibraryTab(ft.Column):
 
     def _start_download(self, model: ModelInfo):
         """Start downloading a model."""
+
         async def do_download():
             def on_progress(progress: DownloadProgress):
                 # Update UI
@@ -491,6 +492,7 @@ class ModelLibraryTab(ft.Column):
 
         async def do_search():
             from src.ai.models.sources.huggingface import HuggingFaceSource
+
             source = HuggingFaceSource()
             results = await source.search(query, limit=10)
 
@@ -501,9 +503,7 @@ class ModelLibraryTab(ft.Column):
                 )
             else:
                 for model in results.models:
-                    self.hf_search_results.controls.append(
-                        self._build_hf_search_result_card(model)
-                    )
+                    self.hf_search_results.controls.append(self._build_hf_search_result_card(model))
             if self._page:
                 self._page.update()
 
@@ -518,9 +518,16 @@ class ModelLibraryTab(ft.Column):
                     ft.Icon(ft.Icons.AUTO_AWESOME, color=Theme.PRIMARY, size=24),
                     ft.Column(
                         controls=[
-                            ft.Text(model.name, size=13, weight=ft.FontWeight.W_600, color=Theme.TEXT_PRIMARY),
                             ft.Text(
-                                model.description[:80] + "..." if len(model.description) > 80 else model.description,
+                                model.name,
+                                size=13,
+                                weight=ft.FontWeight.W_600,
+                                color=Theme.TEXT_PRIMARY,
+                            ),
+                            ft.Text(
+                                model.description[:80] + "..."
+                                if len(model.description) > 80
+                                else model.description,
                                 size=11,
                                 color=Theme.TEXT_SECONDARY,
                             ),
@@ -551,6 +558,7 @@ class ModelLibraryTab(ft.Column):
 
         async def do_add():
             from src.ai.models.sources.huggingface import HuggingFaceSource
+
             source = HuggingFaceSource()
 
             try:
@@ -594,7 +602,9 @@ class ModelLibraryTab(ft.Column):
                 content=ft.Column(
                     controls=[
                         ft.Text(
-                            model.description[:200] + "..." if len(model.description) > 200 else model.description,
+                            model.description[:200] + "..."
+                            if len(model.description) > 200
+                            else model.description,
                             size=12,
                             color=Theme.TEXT_SECONDARY,
                         ),
@@ -611,23 +621,26 @@ class ModelLibraryTab(ft.Column):
                 width=450,
             ),
             actions=[
-                ft.TextButton("Close", on_click=lambda e: self._page.close(dialog) if self._page else None),
+                ft.TextButton(
+                    "Close", on_click=lambda e: self._page.close(dialog) if self._page else None
+                ),
             ],
         )
 
         async def load_files():
             from src.ai.models.sources.huggingface import HuggingFaceSource
+
             source = HuggingFaceSource()
 
             files_list.controls.clear()
-            files_list.controls.append(
-                ft.Text("Loading files...", color=Theme.TEXT_SECONDARY)
-            )
+            files_list.controls.append(ft.Text("Loading files...", color=Theme.TEXT_SECONDARY))
             if self._page:
                 self._page.update()
 
             try:
-                files = await source.get_model_files(model.source_url or model.id.replace("--", "/"))
+                files = await source.get_model_files(
+                    model.source_url or model.id.replace("--", "/")
+                )
                 files_list.controls.clear()
 
                 # Files are already filtered for GGUF by get_model_files
@@ -644,11 +657,19 @@ class ModelLibraryTab(ft.Column):
                             ft.Container(
                                 content=ft.Row(
                                     controls=[
-                                        ft.Icon(ft.Icons.INSERT_DRIVE_FILE, size=20, color=Theme.PRIMARY),
+                                        ft.Icon(
+                                            ft.Icons.INSERT_DRIVE_FILE, size=20, color=Theme.PRIMARY
+                                        ),
                                         ft.Column(
                                             controls=[
-                                                ft.Text(filename, size=12, weight=ft.FontWeight.W_500),
-                                                ft.Text(f"{quant} - {size_display}", size=11, color=Theme.TEXT_MUTED),
+                                                ft.Text(
+                                                    filename, size=12, weight=ft.FontWeight.W_500
+                                                ),
+                                                ft.Text(
+                                                    f"{quant} - {size_display}",
+                                                    size=11,
+                                                    color=Theme.TEXT_MUTED,
+                                                ),
                                             ],
                                             spacing=2,
                                             expand=True,
@@ -657,7 +678,9 @@ class ModelLibraryTab(ft.Column):
                                             "Download",
                                             icon=ft.Icons.DOWNLOAD,
                                             bgcolor=Theme.PRIMARY,
-                                            on_click=lambda e, file=f: self._download_hf_file(model, file, dialog),
+                                            on_click=lambda e, file=f: self._download_hf_file(
+                                                model, file, dialog
+                                            ),
                                         ),
                                     ],
                                     spacing=8,
@@ -671,9 +694,7 @@ class ModelLibraryTab(ft.Column):
                     self._page.update()
             except Exception as ex:
                 files_list.controls.clear()
-                files_list.controls.append(
-                    ft.Text(f"Error loading files: {ex}", color=Theme.ERROR)
-                )
+                files_list.controls.append(ft.Text(f"Error loading files: {ex}", color=Theme.ERROR))
                 if self._page:
                     self._page.update()
 
@@ -683,8 +704,10 @@ class ModelLibraryTab(ft.Column):
 
     def _download_hf_file(self, model, file_info, dialog):
         """Download a specific file from HF model."""
+
         async def do_download():
             from src.ai.models.sources.huggingface import HuggingFaceSource
+
             source = HuggingFaceSource()
 
             filename = file_info.get("filename", "")
@@ -699,6 +722,7 @@ class ModelLibraryTab(ft.Column):
                 )
 
             try:
+
                 def on_progress(progress):
                     # Could show progress in a dialog, for now just track internally
                     pass
@@ -831,7 +855,12 @@ class ModelLibraryTab(ft.Column):
                             ft.Icon(ft.Icons.SMART_TOY, color=Theme.PRIMARY, size=28),
                             ft.Column(
                                 controls=[
-                                    ft.Text(m["name"], size=14, weight=ft.FontWeight.W_600, color=Theme.TEXT_PRIMARY),
+                                    ft.Text(
+                                        m["name"],
+                                        size=14,
+                                        weight=ft.FontWeight.W_600,
+                                        color=Theme.TEXT_PRIMARY,
+                                    ),
                                     ft.Text(m["desc"], size=12, color=Theme.TEXT_SECONDARY),
                                 ],
                                 spacing=2,
@@ -858,8 +887,10 @@ class ModelLibraryTab(ft.Column):
 
     def _check_ollama_status(self, e):
         """Check if Ollama is running and update UI."""
+
         async def do_check():
             from src.ai.models.sources.ollama import OllamaSource
+
             source = OllamaSource()
             is_running = await source.is_running()
 
@@ -871,7 +902,9 @@ class ModelLibraryTab(ft.Column):
                     self.ollama_status_text.color = Theme.SUCCESS
                 else:
                     self.ollama_status_icon.color = Theme.ERROR
-                    self.ollama_status_text.value = "Status: Not running - Start Ollama to use local models"
+                    self.ollama_status_text.value = (
+                        "Status: Not running - Start Ollama to use local models"
+                    )
                     self.ollama_status_text.color = Theme.ERROR
 
                 if self._page:
@@ -882,6 +915,7 @@ class ModelLibraryTab(ft.Column):
 
     def _pull_ollama_model(self, model_name):
         """Pull a model from Ollama library with progress tracking."""
+
         async def do_pull():
             from src.ai.models.hub import ModelInfo
             from src.ai.models.sources.ollama import OllamaSource
@@ -912,12 +946,13 @@ class ModelLibraryTab(ft.Column):
                 self._page.open(dialog)
 
             try:
+
                 def on_progress(progress):
                     if progress.status == "downloading":
                         if progress.total_bytes > 0:
                             pct = progress.downloaded_bytes / progress.total_bytes
                             progress_bar.value = pct
-                            status_text.value = f"Downloading: {pct*100:.1f}%"
+                            status_text.value = f"Downloading: {pct * 100:.1f}%"
                         else:
                             progress_bar.value = None  # Indeterminate
                             status_text.value = "Downloading..."
@@ -1051,28 +1086,29 @@ class ModelLibraryTab(ft.Column):
             expand=True,
         )
 
-    def _select_local_file(self, e):
+    async def _select_local_file(self, e):
         """Open file picker for local GGUF import."""
-        def on_file_picked(e_result: ft.FilePickerResultEvent):
-            if e_result.files:
-                for file in e_result.files:
-                    self._import_local_gguf(file.path)
-
         if not self.file_picker:
-            self.file_picker = ft.FilePicker(on_result=on_file_picked)
+            self.file_picker = ft.FilePicker()
             if self._page:
                 self._page.overlay.append(self.file_picker)
                 self._page.update()
 
         # Open file picker for GGUF files
-        self.file_picker.pick_files(
+        files = await self.file_picker.pick_files(
             dialog_title="Select GGUF Model File",
             allowed_extensions=["gguf"],
             allow_multiple=False,
         )
 
+        # Handle selected files
+        if files:
+            for file in files:
+                self._import_local_gguf(file.path)
+
     def _import_local_gguf(self, file_path: str):
         """Import a local GGUF file."""
+
         async def do_import():
             from pathlib import Path
 

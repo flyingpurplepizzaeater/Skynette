@@ -4,7 +4,7 @@ Ollama Provider - Local LLM integration via Ollama API.
 Connects to Ollama running locally on port 11434.
 """
 
-from typing import AsyncIterator, Optional
+from collections.abc import AsyncIterator
 
 import httpx
 
@@ -38,7 +38,7 @@ class OllamaProvider(BaseProvider):
     def __init__(
         self,
         base_url: str = "http://localhost:11434",
-        default_model: Optional[str] = None,
+        default_model: str | None = None,
     ):
         super().__init__()
         self.base_url = base_url
@@ -79,14 +79,16 @@ class OllamaProvider(BaseProvider):
             details = model.get("details", {})
             size = model.get("size", 0)
 
-            models.append({
-                "id": name,
-                "name": name.split(":")[0].replace("-", " ").title(),
-                "size": size,
-                "quantization": details.get("quantization_level", ""),
-                "family": details.get("family", ""),
-                "parameter_size": details.get("parameter_size", ""),
-            })
+            models.append(
+                {
+                    "id": name,
+                    "name": name.split(":")[0].replace("-", " ").title(),
+                    "size": size,
+                    "quantization": details.get("quantization_level", ""),
+                    "family": details.get("family", ""),
+                    "parameter_size": details.get("parameter_size", ""),
+                }
+            )
 
         return models
 
@@ -105,10 +107,7 @@ class OllamaProvider(BaseProvider):
             raise ValueError("No model available. Please pull a model first.")
 
         # Convert messages to Ollama format
-        ollama_messages = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
-        ]
+        ollama_messages = [{"role": msg.role, "content": msg.content} for msg in messages]
 
         payload = {
             "model": model,
@@ -173,10 +172,7 @@ class OllamaProvider(BaseProvider):
             raise ValueError("No model available. Please pull a model first.")
 
         # Convert messages to Ollama format
-        ollama_messages = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
-        ]
+        ollama_messages = [{"role": msg.role, "content": msg.content} for msg in messages]
 
         payload = {
             "model": model,
@@ -284,7 +280,7 @@ class OllamaProvider(BaseProvider):
     async def embeddings(
         self,
         text: str | list[str],
-        model: Optional[str] = None,
+        model: str | None = None,
     ) -> list[list[float]]:
         """Generate embeddings for text."""
         if not self._is_initialized:

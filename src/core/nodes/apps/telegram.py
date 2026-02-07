@@ -2,9 +2,7 @@
 Telegram Integration Nodes - Send messages via Telegram Bot API.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class TelegramSendMessageNode(BaseNode):

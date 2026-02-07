@@ -9,15 +9,14 @@ Supports:
 
 import asyncio
 import json
-import re
 import shutil
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 from urllib.parse import urlparse
 
 import httpx
 
-from ..hub import ModelInfo, DownloadProgress, RECOMMENDED_MODELS
+from ..hub import RECOMMENDED_MODELS, DownloadProgress, ModelInfo
 from . import ModelSource, SearchResult
 
 
@@ -29,10 +28,20 @@ class HuggingFaceSource(ModelSource):
 
     # Common quantization patterns
     QUANT_PATTERNS = [
-        "Q2_K", "Q3_K_S", "Q3_K_M", "Q3_K_L",
-        "Q4_0", "Q4_K_S", "Q4_K_M",
-        "Q5_0", "Q5_K_S", "Q5_K_M",
-        "Q6_K", "Q8_0", "F16", "F32",
+        "Q2_K",
+        "Q3_K_S",
+        "Q3_K_M",
+        "Q3_K_L",
+        "Q4_0",
+        "Q4_K_S",
+        "Q4_K_M",
+        "Q5_0",
+        "Q5_K_S",
+        "Q5_K_M",
+        "Q6_K",
+        "Q8_0",
+        "F16",
+        "F32",
     ]
 
     @property
@@ -78,20 +87,24 @@ class HuggingFaceSource(ModelSource):
                 model_id = item.get("modelId", "")
                 downloads = item.get("downloads", 0)
 
-                models.append(ModelInfo(
-                    id=model_id.replace("/", "--"),
-                    name=model_id.split("/")[-1],
-                    description=item.get("description", "")[:200] if item.get("description") else "",
-                    size_bytes=0,  # Will be filled when selecting specific file
-                    quantization="",
-                    source="huggingface",
-                    source_url=model_id,
-                    metadata={
-                        "downloads": downloads,
-                        "likes": item.get("likes", 0),
-                        "tags": item.get("tags", []),
-                    },
-                ))
+                models.append(
+                    ModelInfo(
+                        id=model_id.replace("/", "--"),
+                        name=model_id.split("/")[-1],
+                        description=item.get("description", "")[:200]
+                        if item.get("description")
+                        else "",
+                        size_bytes=0,  # Will be filled when selecting specific file
+                        quantization="",
+                        source="huggingface",
+                        source_url=model_id,
+                        metadata={
+                            "downloads": downloads,
+                            "likes": item.get("likes", 0),
+                            "tags": item.get("tags", []),
+                        },
+                    )
+                )
 
             return SearchResult(
                 models=models,
@@ -99,7 +112,7 @@ class HuggingFaceSource(ModelSource):
                 has_more=len(models) == limit,
             )
 
-        except Exception as e:
+        except Exception:
             return SearchResult(
                 models=[],
                 total_count=0,
@@ -137,13 +150,15 @@ class HuggingFaceSource(ModelSource):
                 filename = path.split("/")[-1]
                 quant = self._detect_quantization(filename)
 
-                files.append({
-                    "filename": filename,
-                    "path": path,
-                    "size": size,
-                    "quantization": quant,
-                    "size_display": self._format_size(size),
-                })
+                files.append(
+                    {
+                        "filename": filename,
+                        "path": path,
+                        "size": size,
+                        "quantization": quant,
+                        "size_display": self._format_size(size),
+                    }
+                )
 
             # Sort by quantization quality (Q4_K_M is common default)
             quant_order = {q: i for i, q in enumerate(self.QUANT_PATTERNS)}
@@ -151,10 +166,10 @@ class HuggingFaceSource(ModelSource):
 
             return files
 
-        except Exception as e:
+        except Exception:
             return []
 
-    async def validate_url(self, url: str) -> Optional[ModelInfo]:
+    async def validate_url(self, url: str) -> ModelInfo | None:
         """
         Validate a Hugging Face URL and extract model info.
 
@@ -198,7 +213,7 @@ class HuggingFaceSource(ModelSource):
         except Exception:
             return None
 
-    def _extract_repo_id(self, url: str) -> Optional[str]:
+    def _extract_repo_id(self, url: str) -> str | None:
         """Extract repo ID from URL or direct input."""
         # Direct repo ID format: "TheBloke/Llama-2-7B-GGUF"
         if "/" in url and not url.startswith("http"):
@@ -222,8 +237,8 @@ class HuggingFaceSource(ModelSource):
         self,
         model: ModelInfo,
         dest_dir: Path,
-        progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
-        filename: Optional[str] = None,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
+        filename: str | None = None,
     ) -> Path:
         """
         Download a model from Hugging Face.
@@ -303,16 +318,20 @@ class HuggingFaceSource(ModelSource):
             # Save metadata
             meta_path = dest_path.with_suffix(".json")
             with open(meta_path, "w") as f:
-                json.dump({
-                    "id": model.id,
-                    "name": model.name,
-                    "description": model.description,
-                    "quantization": model.quantization,
-                    "source": "huggingface",
-                    "source_url": repo_id,
-                    "filename": filename,
-                    "metadata": model.metadata,
-                }, f, indent=2)
+                json.dump(
+                    {
+                        "id": model.id,
+                        "name": model.name,
+                        "description": model.description,
+                        "quantization": model.quantization,
+                        "source": "huggingface",
+                        "source_url": repo_id,
+                        "filename": filename,
+                        "metadata": model.metadata,
+                    },
+                    f,
+                    indent=2,
+                )
 
             progress.status = "complete"
             if progress_callback:
@@ -341,6 +360,6 @@ class HuggingFaceSource(ModelSource):
 
     def _format_size(self, size_bytes: int) -> str:
         """Format size in human readable format."""
-        if size_bytes < 1024 ** 3:
-            return f"{size_bytes / (1024 ** 2):.1f} MB"
-        return f"{size_bytes / (1024 ** 3):.2f} GB"
+        if size_bytes < 1024**3:
+            return f"{size_bytes / (1024**2):.1f} MB"
+        return f"{size_bytes / (1024**3):.2f} GB"

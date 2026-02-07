@@ -5,8 +5,8 @@ Provides unified AI capabilities through multiple providers.
 """
 
 from src.ai.gateway import (
-    AIGateway,
     AICapability,
+    AIGateway,
     AIMessage,
     AIResponse,
     AIStreamChunk,
@@ -14,10 +14,10 @@ from src.ai.gateway import (
     get_gateway,
 )
 from src.ai.providers import (
+    AnthropicProvider,
     BaseProvider,
     LocalProvider,
     OpenAIProvider,
-    AnthropicProvider,
 )
 
 __all__ = [

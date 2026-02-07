@@ -182,11 +182,15 @@ class SetupWizard(ft.Column):
                             color=Theme.SUCCESS,
                         ),
                         ft.Container(height=Theme.SPACING_LG),
-                        ft.Text("Local models will be available after downloading them in the Model Library."),
+                        ft.Text(
+                            "Local models will be available after downloading them in the Model Library."
+                        ),
                         ft.Container(expand=True),
                         ft.Row(
                             controls=[
-                                ft.TextButton("<- Back", on_click=lambda e: self._wizard_prev_step()),
+                                ft.TextButton(
+                                    "<- Back", on_click=lambda e: self._wizard_prev_step()
+                                ),
                                 ft.Container(expand=True),
                                 ft.Button(
                                     "Next ->",
@@ -207,7 +211,9 @@ class SetupWizard(ft.Column):
             password=True,
             can_reveal_password=True,
             hint_text=f"Enter your {provider_name} API key",
-            on_change=lambda e, pid=provider_id: self._update_provider_config(pid, "api_key", e.control.value),
+            on_change=lambda e, pid=provider_id: self._update_provider_config(
+                pid, "api_key", e.control.value
+            ),
         )
 
         test_button = ft.Button(

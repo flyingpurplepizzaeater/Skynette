@@ -5,17 +5,17 @@ Uses Jira REST API with Basic Auth (email + API token).
 """
 
 import base64
-from typing import Optional
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
-def _get_credential(credential_id: Optional[str]) -> Optional[dict]:
+def _get_credential(credential_id: str | None) -> dict | None:
     """Load credential from vault if ID is provided."""
     if not credential_id:
         return None
     try:
         from src.data.credentials import CredentialVault
+
         vault = CredentialVault()
         cred = vault.get_credential(credential_id)
         if cred:
@@ -587,13 +587,8 @@ class JiraCreateIssueNode(BaseNode):
                 "type": "doc",
                 "version": 1,
                 "content": [
-                    {
-                        "type": "paragraph",
-                        "content": [
-                            {"type": "text", "text": description}
-                        ]
-                    }
-                ]
+                    {"type": "paragraph", "content": [{"type": "text", "text": description}]}
+                ],
             }
 
         priority = config.get("priority")
@@ -770,13 +765,8 @@ class JiraUpdateIssueNode(BaseNode):
                 "type": "doc",
                 "version": 1,
                 "content": [
-                    {
-                        "type": "paragraph",
-                        "content": [
-                            {"type": "text", "text": description}
-                        ]
-                    }
-                ]
+                    {"type": "paragraph", "content": [{"type": "text", "text": description}]}
+                ],
             }
 
         priority = config.get("priority")
@@ -916,14 +906,7 @@ class JiraAddCommentNode(BaseNode):
             "body": {
                 "type": "doc",
                 "version": 1,
-                "content": [
-                    {
-                        "type": "paragraph",
-                        "content": [
-                            {"type": "text", "text": comment}
-                        ]
-                    }
-                ]
+                "content": [{"type": "paragraph", "content": [{"type": "text", "text": comment}]}],
             }
         }
 
@@ -1052,9 +1035,7 @@ class JiraTransitionIssueNode(BaseNode):
             "Content-Type": "application/json",
         }
 
-        body = {
-            "transition": {"id": transition_id}
-        }
+        body = {"transition": {"id": transition_id}}
 
         # Add comment if provided
         comment = config.get("comment")
@@ -1069,11 +1050,9 @@ class JiraTransitionIssueNode(BaseNode):
                                 "content": [
                                     {
                                         "type": "paragraph",
-                                        "content": [
-                                            {"type": "text", "text": comment}
-                                        ]
+                                        "content": [{"type": "text", "text": comment}],
                                     }
-                                ]
+                                ],
                             }
                         }
                     }

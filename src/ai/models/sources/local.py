@@ -6,14 +6,12 @@ Allows importing GGUF files from local filesystem.
 
 import json
 import re
-import shutil
 import struct
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
-from ..hub import ModelInfo, DownloadProgress
+from ..hub import DownloadProgress, ModelInfo
 from . import ModelSource, SearchResult
-
 
 # GGUF magic number
 GGUF_MAGIC = 0x46554747  # "GGUF" in little-endian
@@ -24,14 +22,27 @@ class LocalFileSource(ModelSource):
 
     # Quantization patterns for detection
     QUANT_PATTERNS = [
-        "Q2_K", "Q3_K_S", "Q3_K_M", "Q3_K_L",
-        "Q4_0", "Q4_K_S", "Q4_K_M",
-        "Q5_0", "Q5_K_S", "Q5_K_M",
-        "Q6_K", "Q8_0", "F16", "F32",
-        "IQ1_S", "IQ2_XXS", "IQ2_XS", "IQ3_XXS",
+        "Q2_K",
+        "Q3_K_S",
+        "Q3_K_M",
+        "Q3_K_L",
+        "Q4_0",
+        "Q4_K_S",
+        "Q4_K_M",
+        "Q5_0",
+        "Q5_K_S",
+        "Q5_K_M",
+        "Q6_K",
+        "Q8_0",
+        "F16",
+        "F32",
+        "IQ1_S",
+        "IQ2_XXS",
+        "IQ2_XS",
+        "IQ3_XXS",
     ]
 
-    def __init__(self, models_dir: Optional[Path] = None):
+    def __init__(self, models_dir: Path | None = None):
         self.models_dir = models_dir or Path.home() / "skynette" / "models"
 
     @property
@@ -68,7 +79,7 @@ class LocalFileSource(ModelSource):
         self,
         model: ModelInfo,
         dest_dir: Path,
-        progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
     ) -> Path:
         """
         Import a local file (copy or move).
@@ -111,16 +122,20 @@ class LocalFileSource(ModelSource):
             # Save metadata
             meta_path = dest_path.with_suffix(".json")
             with open(meta_path, "w") as f:
-                json.dump({
-                    "id": model.id,
-                    "name": model.name,
-                    "description": model.description,
-                    "quantization": model.quantization,
-                    "source": "local",
-                    "source_url": str(source_path),
-                    "original_filename": source_path.name,
-                    "metadata": model.metadata,
-                }, f, indent=2)
+                json.dump(
+                    {
+                        "id": model.id,
+                        "name": model.name,
+                        "description": model.description,
+                        "quantization": model.quantization,
+                        "source": "local",
+                        "source_url": str(source_path),
+                        "original_filename": source_path.name,
+                        "metadata": model.metadata,
+                    },
+                    f,
+                    indent=2,
+                )
 
             progress.status = "complete"
             if progress_callback:
@@ -140,7 +155,7 @@ class LocalFileSource(ModelSource):
 
             raise
 
-    async def validate_file(self, file_path: Path) -> Optional[ModelInfo]:
+    async def validate_file(self, file_path: Path) -> ModelInfo | None:
         """
         Validate a local GGUF file and extract info.
 
@@ -255,7 +270,7 @@ class LocalFileSource(ModelSource):
         """Estimate RAM requirement for a model."""
         # Rule of thumb: model needs ~1.2x its size in RAM
         ram_bytes = size_bytes * 1.2
-        ram_gb = ram_bytes / (1024 ** 3)
+        ram_gb = ram_bytes / (1024**3)
 
         if ram_gb < 4:
             return f"{ram_gb:.1f} GB (should work on most systems)"

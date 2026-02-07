@@ -56,9 +56,7 @@ class LineNumbers(ft.Container):
                     size=13,
                     font_family="monospace",
                     color=(
-                        SkynetteTheme.TEXT_PRIMARY
-                        if is_current
-                        else SkynetteTheme.TEXT_SECONDARY
+                        SkynetteTheme.TEXT_PRIMARY if is_current else SkynetteTheme.TEXT_SECONDARY
                     ),
                     text_align=ft.TextAlign.RIGHT,
                 )

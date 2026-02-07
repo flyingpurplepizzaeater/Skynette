@@ -10,6 +10,8 @@ import sys
 import pytest
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock, patch
+import numpy as np
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -104,3 +106,30 @@ def multiple_workflows_data() -> list:
         }
         for i in range(1, 4)
     ]
+
+
+@pytest.fixture
+def mock_sentence_transformer():
+    """Mock SentenceTransformer for RAG tests."""
+    with patch('src.rag.embeddings.SentenceTransformer') as mock:
+        mock_model = Mock()
+        mock_model.get_sentence_embedding_dimension.return_value = 384
+        
+        # Create a function that returns normalized random vectors
+        def mock_encode(text, **kwargs):
+            if isinstance(text, list):
+                # Batch mode
+                embeddings = []
+                for _ in text:
+                    vec = np.random.randn(384).astype(np.float32)
+                    vec = vec / np.linalg.norm(vec)
+                    embeddings.append(vec)
+                return np.array(embeddings)
+            else:
+                # Single mode
+                vec = np.random.randn(384).astype(np.float32)
+                return vec / np.linalg.norm(vec)
+        
+        mock_model.encode.side_effect = mock_encode
+        mock.return_value = mock_model
+        yield mock

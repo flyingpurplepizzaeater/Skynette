@@ -4,10 +4,10 @@ Schedule Trigger Node
 Triggers a workflow on a schedule (cron expression).
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
-from src.core.nodes.base import TriggerNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import FieldType, NodeField, NodeOutput, TriggerNode
 
 
 class ScheduleTriggerNode(TriggerNode):

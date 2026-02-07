@@ -3,27 +3,33 @@ Supervisor Agent - Orchestrates multi-agent tasks.
 Ported and adapted from AgentOrchestrator for Skynette.
 """
 
-import json
 import asyncio
-from typing import List, AsyncIterator
+import json
+from collections.abc import AsyncIterator
+
 from pydantic import BaseModel
-from src.ai.gateway import get_gateway, AIMessage
-from src.core.agents.base import AgentFactory, AgentResponse
+
+from src.ai.gateway import AIMessage, get_gateway
+from src.core.agents.base import AgentFactory
+
 
 class SubTask(BaseModel):
     agent_name: str
     agent_role: str
     task_description: str
 
+
 class SupervisorPlan(BaseModel):
     plan_overview: str
-    subtasks: List[SubTask]
+    subtasks: list[SubTask]
+
 
 class Supervisor:
     """
     The Supervisor breaks down complex user requests into subtasks
     and delegates them to specialized agents.
     """
+
     def __init__(self):
         self.gateway = get_gateway()
 
@@ -48,7 +54,7 @@ Do not include markdown formatting like ```json ... ```. Just the raw JSON.
         try:
             messages = [
                 AIMessage(role="system", content=system_prompt),
-                AIMessage(role="user", content=f"User Request: {user_prompt}")
+                AIMessage(role="user", content=f"User Request: {user_prompt}"),
             ]
 
             # Use gateway to generate plan
@@ -71,14 +77,14 @@ Do not include markdown formatting like ```json ... ```. Just the raw JSON.
             # Fallback plan
             print(f"Plan generation failed: {e}")
             return SupervisorPlan(
-                plan_overview=f"Plan generation failed. Executing as single task.",
+                plan_overview="Plan generation failed. Executing as single task.",
                 subtasks=[
                     SubTask(
                         agent_name="GeneralBot",
                         agent_role="General Assistant",
-                        task_description=user_prompt
+                        task_description=user_prompt,
                     )
-                ]
+                ],
             )
 
     async def execute(self, user_prompt: str) -> AsyncIterator[dict]:

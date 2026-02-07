@@ -107,7 +107,6 @@ class CodeEditorView(ft.Column):
 
         # File picker (must be added to page overlay before use)
         self._folder_picker = ft.FilePicker()
-        self._folder_picker.on_result = self._on_folder_picked
         if self._page_ref:
             self._page_ref.overlay.append(self._folder_picker)
 
@@ -243,7 +242,7 @@ class CodeEditorView(ft.Column):
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
                 expand=True,
-                alignment=ft.alignment.Alignment(0, 0),
+                alignment=ft.Alignment.CENTER,
             )
 
         # Create editor for active file
@@ -298,10 +297,7 @@ class CodeEditorView(ft.Column):
         file = self.state.open_files[index]
 
         # Check if closing a workflow file
-        is_workflow_file = (
-            self._current_workflow_id
-            and file.path.startswith("workflows/")
-        )
+        is_workflow_file = self._current_workflow_id and file.path.startswith("workflows/")
 
         if file.is_dirty:
             self._show_save_dialog(index)
@@ -545,14 +541,10 @@ class CodeEditorView(ft.Column):
             self._workflow_format = new_format
 
             # Update file extension in path
-            name = self._workflow_bridge.get_workflow_name(
-                self._current_workflow_id
-            ) or "workflow"
+            name = self._workflow_bridge.get_workflow_name(self._current_workflow_id) or "workflow"
             ext = {"yaml": "yaml", "json": "json", "python": "py"}[new_format.value]
             new_path = f"workflows/{name}.{ext}"
-            language = {"yaml": "yaml", "json": "json", "python": "python"}[
-                new_format.value
-            ]
+            language = {"yaml": "yaml", "json": "json", "python": "python"}[new_format.value]
 
             # Update the file in state
             if self.state.active_file_index >= 0:
@@ -586,9 +578,7 @@ class CodeEditorView(ft.Column):
             self._validation_task.cancel()
 
         # Schedule new validation after 500ms
-        self._validation_task = asyncio.create_task(
-            self._validate_after_delay(content, 0.5)
-        )
+        self._validation_task = asyncio.create_task(self._validate_after_delay(content, 0.5))
 
     async def _validate_after_delay(self, content: str, delay: float) -> None:
         """Validate workflow content after delay.
@@ -639,20 +629,13 @@ class CodeEditorView(ft.Column):
         self._page_ref.snack_bar.open = True
         self._page_ref.update()
 
-    def _open_folder(self) -> None:
+    async def _open_folder(self) -> None:
         """Open folder picker."""
-        self._folder_picker.get_directory_path()
-
-    def _on_folder_picked(self, e: ft.FilePickerResultEvent) -> None:
-        """Handle folder picker result.
-
-        Args:
-            e: File picker result event.
-        """
-        if e.path:
-            self.state.set_file_tree_root(e.path)
+        path = await self._folder_picker.get_directory_path()
+        if path:
+            self.state.set_file_tree_root(path)
             if self._file_tree:
-                self._file_tree.set_root(e.path)
+                self._file_tree.set_root(path)
 
     def _show_save_dialog(self, index: int) -> None:
         """Show save/discard/cancel dialog for dirty file.

@@ -8,15 +8,14 @@ import logging
 import logging.handlers
 import sys
 from pathlib import Path
-from typing import Optional
 
 
 def setup_logging(
     level: str = "INFO",
-    log_file: Optional[Path] = None,
+    log_file: Path | None = None,
     max_bytes: int = 10 * 1024 * 1024,  # 10MB
     backup_count: int = 5,
-    format_string: Optional[str] = None
+    format_string: str | None = None,
 ) -> None:
     """Configure logging for the application.
 
@@ -37,15 +36,11 @@ def setup_logging(
     # Default format with timestamp, level, logger name, and message
     if format_string is None:
         format_string = (
-            "%(asctime)s - %(name)s - %(levelname)s - "
-            "%(filename)s:%(lineno)d - %(message)s"
+            "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
         )
 
     # Create formatter
-    formatter = logging.Formatter(
-        format_string,
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    formatter = logging.Formatter(format_string, datefmt="%Y-%m-%d %H:%M:%S")
 
     # Get root logger
     root_logger = logging.getLogger()
@@ -66,10 +61,7 @@ def setup_logging(
         log_file.parent.mkdir(parents=True, exist_ok=True)
 
         file_handler = logging.handlers.RotatingFileHandler(
-            log_file,
-            maxBytes=max_bytes,
-            backupCount=backup_count,
-            encoding="utf-8"
+            log_file, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
         )
         file_handler.setLevel(numeric_level)
         file_handler.setFormatter(formatter)

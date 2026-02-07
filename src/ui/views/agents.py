@@ -3,11 +3,13 @@ Agents View - Agent Orchestrator Interface.
 Visualizes and manages autonomous agent tasks.
 """
 
-import flet as ft
 import asyncio
-import json
-from src.ui.theme import Theme
+
+import flet as ft
+
 from src.core.agents.supervisor import Supervisor, SupervisorPlan
+from src.ui.theme import Theme
+
 
 class AgentsView(ft.Column):
     """View for running complex agentic tasks."""
@@ -111,15 +113,22 @@ class AgentsView(ft.Column):
                         controls=[
                             ft.Container(
                                 content=ft.Text(str(i), size=12, weight=ft.FontWeight.BOLD),
-                                width=24, height=24,
+                                width=24,
+                                height=24,
                                 bgcolor=Theme.PRIMARY + "20",
                                 border_radius=12,
-                                alignment=ft.alignment.center,
+                                alignment=ft.Alignment.CENTER,
                             ),
                             ft.Column(
                                 controls=[
-                                    ft.Text(f"{task.agent_name} ({task.agent_role})", weight=ft.FontWeight.BOLD, size=13),
-                                    ft.Text(task.task_description, size=12, color=Theme.TEXT_SECONDARY),
+                                    ft.Text(
+                                        f"{task.agent_name} ({task.agent_role})",
+                                        weight=ft.FontWeight.BOLD,
+                                        size=13,
+                                    ),
+                                    ft.Text(
+                                        task.task_description, size=12, color=Theme.TEXT_SECONDARY
+                                    ),
                                 ],
                                 spacing=2,
                                 expand=True,
@@ -203,7 +212,7 @@ class AgentsView(ft.Column):
                 padding=16,
                 bgcolor=Theme.BG_TERTIARY,
                 border_radius=Theme.RADIUS_MD,
-                alignment=ft.alignment.center_right,
+                alignment=ft.Alignment.CENTER_right,
             )
         )
         if self._page:
@@ -232,51 +241,62 @@ class AgentsView(ft.Column):
                     plan = event["data"]
                     self.results_column.controls.append(self._build_plan_card(plan))
                     self.results_column.controls.append(
-                        ft.Row([ft.ProgressRing(width=16, height=16), ft.Text("Agents executing tasks...")])
+                        ft.Row(
+                            [
+                                ft.ProgressRing(width=16, height=16),
+                                ft.Text("Agents executing tasks..."),
+                            ]
+                        )
                     )
 
                 elif event["type"] == "result":
                     # Check if loading indicator is last, remove it temporarily to append result
                     has_loading = False
-                    if self.results_column.controls and isinstance(self.results_column.controls[-1], ft.Row):
+                    if self.results_column.controls and isinstance(
+                        self.results_column.controls[-1], ft.Row
+                    ):
                         self.results_column.controls.pop()
                         has_loading = True
 
                     result_data = event["data"]
                     self.results_column.controls.append(
                         self._build_result_card(
-                            result_data.agent_name,
-                            result_data.result,
-                            result_data.status
+                            result_data.agent_name, result_data.result, result_data.status
                         )
                     )
 
                     if has_loading:
                         self.results_column.controls.append(
-                            ft.Row([ft.ProgressRing(width=16, height=16), ft.Text("Agents executing tasks...")])
+                            ft.Row(
+                                [
+                                    ft.ProgressRing(width=16, height=16),
+                                    ft.Text("Agents executing tasks..."),
+                                ]
+                            )
                         )
 
                 if self._page:
                     self._page.update()
 
             # Final cleanup of loading
-            if self.results_column.controls and isinstance(self.results_column.controls[-1], ft.Row):
+            if self.results_column.controls and isinstance(
+                self.results_column.controls[-1], ft.Row
+            ):
                 self.results_column.controls.pop()
 
             self.results_column.controls.append(
                 ft.Container(
-                    content=ft.Text("All tasks completed.", color=Theme.SUCCESS, weight=ft.FontWeight.BOLD),
+                    content=ft.Text(
+                        "All tasks completed.", color=Theme.SUCCESS, weight=ft.FontWeight.BOLD
+                    ),
                     padding=10,
-                    alignment=ft.alignment.center
+                    alignment=ft.Alignment.CENTER,
                 )
             )
 
         except Exception as e:
             self.results_column.controls.append(
-                ft.Container(
-                    content=ft.Text(f"Error: {str(e)}", color=Theme.ERROR),
-                    padding=10
-                )
+                ft.Container(content=ft.Text(f"Error: {str(e)}", color=Theme.ERROR), padding=10)
             )
 
         finally:

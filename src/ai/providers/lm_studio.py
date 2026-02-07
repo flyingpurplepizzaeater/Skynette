@@ -4,8 +4,6 @@ LM Studio Provider - Local LLM integration via OpenAI-compatible API.
 Connects to LM Studio running locally on port 1234.
 """
 
-from typing import Optional
-
 from src.ai.gateway import AICapability
 from src.ai.providers.openai import OpenAIProvider
 
@@ -59,17 +57,23 @@ class LMStudioProvider(OpenAIProvider):
         if not self._client:
             await self.initialize()
             if not self._client:
-                return [{"id": "local-model", "name": "Local Model (Not Connected)", "context": 32768}]
+                return [
+                    {"id": "local-model", "name": "Local Model (Not Connected)", "context": 32768}
+                ]
 
         try:
             response = await self._client.models.list()
             models = []
             for model in response.data:
-                models.append({
-                    "id": model.id,
-                    "name": model.id.split("/")[-1].replace("-", " ").title(),  # Clean up ID for display
-                    "context": 32768  # LM Studio doesn't always report context, assume high
-                })
+                models.append(
+                    {
+                        "id": model.id,
+                        "name": model.id.split("/")[-1]
+                        .replace("-", " ")
+                        .title(),  # Clean up ID for display
+                        "context": 32768,  # LM Studio doesn't always report context, assume high
+                    }
+                )
             return models
         except Exception as e:
             print(f"Failed to fetch models from LM Studio: {e}")

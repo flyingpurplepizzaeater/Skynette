@@ -5,12 +5,14 @@ Visualizes AI usage metrics, costs, and budget tracking.
 
 import asyncio
 import csv
-import flet as ft
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from io import StringIO
-from typing import Optional, Dict, Any, Tuple
-from src.ui.theme import Theme
+from typing import Any
+
+import flet as ft
+
 from src.ai.storage import get_ai_storage
+from src.ui.theme import Theme
 
 
 class UsageDashboardView(ft.Column):
@@ -25,8 +27,8 @@ class UsageDashboardView(ft.Column):
 
         # State
         self.current_time_range = "this_month"
-        self.start_date: Optional[date] = None
-        self.end_date: Optional[date] = None
+        self.start_date: date | None = None
+        self.end_date: date | None = None
 
         # Budget dialog state
         self.budget_dialog = None
@@ -34,7 +36,7 @@ class UsageDashboardView(ft.Column):
         self.budget_threshold_slider = None
         self.budget_reset_day_dropdown = None
 
-    def _calculate_time_range(self, range_type: str) -> Tuple[date, date]:
+    def _calculate_time_range(self, range_type: str) -> tuple[date, date]:
         """Calculate start and end dates for time range."""
         today = date.today()
 
@@ -54,7 +56,7 @@ class UsageDashboardView(ft.Column):
             # Default to this month
             return date(today.year, today.month, 1), today
 
-    async def _fetch_usage_data(self) -> Dict[str, Any]:
+    async def _fetch_usage_data(self) -> dict[str, Any]:
         """Fetch usage statistics for current time range."""
         try:
             stats = await self.ai_storage.get_usage_stats(self.start_date, self.end_date)
@@ -77,7 +79,7 @@ class UsageDashboardView(ft.Column):
             print(f"Error fetching budget data: {e}")
             return None
 
-    async def _fetch_provider_breakdown(self) -> Dict[str, float]:
+    async def _fetch_provider_breakdown(self) -> dict[str, float]:
         """Fetch cost breakdown by provider for current time range."""
         try:
             # For monthly ranges, use get_cost_by_provider
@@ -93,7 +95,7 @@ class UsageDashboardView(ft.Column):
             print(f"Error fetching provider breakdown: {e}")
             return {}
 
-    async def _fetch_workflow_breakdown(self) -> Dict[str, float]:
+    async def _fetch_workflow_breakdown(self) -> dict[str, float]:
         """Fetch cost breakdown by workflow for current time range."""
         try:
             # For monthly ranges, use get_cost_by_workflow
@@ -115,11 +117,13 @@ class UsageDashboardView(ft.Column):
             self._fetch_usage_data(),
             self._fetch_budget_data(),
             self._fetch_provider_breakdown(),
-            self._fetch_workflow_breakdown()
+            self._fetch_workflow_breakdown(),
         )
 
         # Update UI with fetched data
-        self._update_metrics_with_data(usage_stats, budget_settings, provider_breakdown, workflow_costs)
+        self._update_metrics_with_data(
+            usage_stats, budget_settings, provider_breakdown, workflow_costs
+        )
 
         # Check for budget alerts
         self.budget_alert = await self._check_budget_alert()
@@ -127,7 +131,13 @@ class UsageDashboardView(ft.Column):
         if self._page:
             self._page.update()
 
-    def _update_metrics_with_data(self, usage_stats: Dict[str, Any], budget_settings, provider_breakdown: Dict[str, float] = None, workflow_costs: Dict[str, float] = None):
+    def _update_metrics_with_data(
+        self,
+        usage_stats: dict[str, Any],
+        budget_settings,
+        provider_breakdown: dict[str, float] = None,
+        workflow_costs: dict[str, float] = None,
+    ):
         """Update metrics cards with fetched data."""
         # Store data for rendering
         self.usage_stats = usage_stats
@@ -174,11 +184,13 @@ class UsageDashboardView(ft.Column):
             controls.insert(0, alert_banner)
 
         # Add remaining dashboard components
-        controls.extend([
-            self._build_metrics_cards(),
-            self._build_provider_breakdown(),
-            self._build_workflow_breakdown(),
-        ])
+        controls.extend(
+            [
+                self._build_metrics_cards(),
+                self._build_provider_breakdown(),
+                self._build_workflow_breakdown(),
+            ]
+        )
 
         return ft.Column(
             controls=[
@@ -231,9 +243,9 @@ class UsageDashboardView(ft.Column):
             border=ft.Border.only(bottom=ft.BorderSide(1, Theme.BORDER)),
         )
 
-    def _build_alert_banner(self) -> Optional[ft.Container]:
+    def _build_alert_banner(self) -> ft.Container | None:
         """Build budget alert banner if alert is active."""
-        alert = getattr(self, 'budget_alert', None)
+        alert = getattr(self, "budget_alert", None)
         if not alert:
             return None
 
@@ -245,7 +257,7 @@ class UsageDashboardView(ft.Column):
         else:  # threshold
             bgcolor = Theme.WARNING
             icon = ft.Icons.WARNING
-            percentage = int(alert['percentage'] * 100)
+            percentage = int(alert["percentage"] * 100)
             message = f"⚠️ You've used {percentage}% of your monthly AI budget (${alert['current']:.2f} of ${alert['limit']:.2f})"
 
         return ft.Container(
@@ -266,7 +278,12 @@ class UsageDashboardView(ft.Column):
         return ft.Container(
             content=ft.Row(
                 controls=[
-                    ft.Text("Time Range:", size=14, color=Theme.TEXT_SECONDARY, weight=ft.FontWeight.W_500),
+                    ft.Text(
+                        "Time Range:",
+                        size=14,
+                        color=Theme.TEXT_SECONDARY,
+                        weight=ft.FontWeight.W_500,
+                    ),
                     self._build_time_range_button("Last 7 days", "last_7d"),
                     self._build_time_range_button("Last 30 days", "last_30d"),
                     self._build_time_range_button("This Month", "this_month"),
@@ -346,9 +363,7 @@ class UsageDashboardView(ft.Column):
             padding=ft.Padding.only(bottom=Theme.SPACING_MD),
         )
 
-    def _build_metric_card(
-        self, label: str, value: str, icon: str, color: str
-    ) -> ft.Container:
+    def _build_metric_card(self, label: str, value: str, icon: str, color: str) -> ft.Container:
         """Build a single metric card."""
         return ft.Container(
             content=ft.Column(
@@ -468,7 +483,7 @@ class UsageDashboardView(ft.Column):
         }
 
         # Get provider data
-        provider_data = self.provider_breakdown if hasattr(self, 'provider_breakdown') else {}
+        provider_data = self.provider_breakdown if hasattr(self, "provider_breakdown") else {}
 
         # Calculate total cost
         total_cost = sum(provider_data.values()) if provider_data else 0.0
@@ -483,7 +498,7 @@ class UsageDashboardView(ft.Column):
                     provider_name=provider_name,
                     cost=cost,
                     total=total_cost,
-                    color=provider_colors.get(provider_name.lower(), "#6b7280")
+                    color=provider_colors.get(provider_name.lower(), "#6b7280"),
                 )
                 for provider_name, cost in sorted_providers
             ]
@@ -537,7 +552,9 @@ class UsageDashboardView(ft.Column):
             padding=ft.Padding.only(bottom=Theme.SPACING_MD),
         )
 
-    def _build_provider_bar(self, provider_name: str, cost: float, total: float, color: str) -> ft.Container:
+    def _build_provider_bar(
+        self, provider_name: str, cost: float, total: float, color: str
+    ) -> ft.Container:
         """Build a single provider bar chart element."""
         percentage = (cost / total) * 100 if total > 0 else 0
         bar_width = (cost / total) * 400 if total > 0 else 0  # Max width 400px
@@ -583,7 +600,7 @@ class UsageDashboardView(ft.Column):
     def _build_workflow_breakdown(self) -> ft.Container:
         """Build workflow cost breakdown table."""
         # Get workflow data
-        workflow_data = self.workflow_costs if hasattr(self, 'workflow_costs') else {}
+        workflow_data = self.workflow_costs if hasattr(self, "workflow_costs") else {}
 
         # Build table or empty state
         if workflow_data:
@@ -598,10 +615,34 @@ class UsageDashboardView(ft.Column):
                 ft.Container(
                     content=ft.Row(
                         controls=[
-                            ft.Text("Workflow", width=200, size=12, weight=ft.FontWeight.BOLD, color=Theme.TEXT_SECONDARY),
-                            ft.Text("Cost", width=100, size=12, weight=ft.FontWeight.BOLD, color=Theme.TEXT_SECONDARY),
-                            ft.Text("Calls", width=100, size=12, weight=ft.FontWeight.BOLD, color=Theme.TEXT_SECONDARY),
-                            ft.Text("Tokens", width=100, size=12, weight=ft.FontWeight.BOLD, color=Theme.TEXT_SECONDARY),
+                            ft.Text(
+                                "Workflow",
+                                width=200,
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=Theme.TEXT_SECONDARY,
+                            ),
+                            ft.Text(
+                                "Cost",
+                                width=100,
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=Theme.TEXT_SECONDARY,
+                            ),
+                            ft.Text(
+                                "Calls",
+                                width=100,
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=Theme.TEXT_SECONDARY,
+                            ),
+                            ft.Text(
+                                "Tokens",
+                                width=100,
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=Theme.TEXT_SECONDARY,
+                            ),
                         ],
                         spacing=16,
                     ),
@@ -616,10 +657,18 @@ class UsageDashboardView(ft.Column):
                     ft.Container(
                         content=ft.Row(
                             controls=[
-                                ft.Text(workflow_name, width=200, size=12, color=Theme.TEXT_PRIMARY),
-                                ft.Text(f"${cost:.2f}", width=100, size=12, color=Theme.TEXT_PRIMARY),
-                                ft.Text("—", width=100, size=12, color=Theme.TEXT_MUTED),  # Placeholder
-                                ft.Text("—", width=100, size=12, color=Theme.TEXT_MUTED),  # Placeholder
+                                ft.Text(
+                                    workflow_name, width=200, size=12, color=Theme.TEXT_PRIMARY
+                                ),
+                                ft.Text(
+                                    f"${cost:.2f}", width=100, size=12, color=Theme.TEXT_PRIMARY
+                                ),
+                                ft.Text(
+                                    "—", width=100, size=12, color=Theme.TEXT_MUTED
+                                ),  # Placeholder
+                                ft.Text(
+                                    "—", width=100, size=12, color=Theme.TEXT_MUTED
+                                ),  # Placeholder
                             ],
                             spacing=16,
                         ),
@@ -694,7 +743,7 @@ class UsageDashboardView(ft.Column):
     def _open_budget_dialog(self):
         """Open budget settings dialog."""
         # Load current budget settings
-        budget = self.budget_settings if hasattr(self, 'budget_settings') else None
+        budget = self.budget_settings if hasattr(self, "budget_settings") else None
         if budget:
             initial_limit = str(budget.monthly_limit_usd)
             initial_threshold = budget.alert_threshold
@@ -752,8 +801,7 @@ class UsageDashboardView(ft.Column):
             actions=[
                 ft.TextButton("Cancel", on_click=lambda e: self._close_budget_dialog()),
                 ft.ElevatedButton(
-                    "Save",
-                    on_click=lambda e: asyncio.create_task(self._save_budget_settings())
+                    "Save", on_click=lambda e: asyncio.create_task(self._save_budget_settings())
                 ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
@@ -787,6 +835,7 @@ class UsageDashboardView(ft.Column):
 
             # Create budget settings object
             from src.ai.models import BudgetSettings
+
             budget = BudgetSettings(
                 monthly_limit_usd=monthly_limit,
                 alert_threshold=threshold,
@@ -821,16 +870,20 @@ class UsageDashboardView(ft.Column):
 
             # Use Flet's file picker to save
             if self._page:
-                file_picker = ft.FilePicker(on_result=lambda e: self._on_csv_save_result(e, csv_content))
+                file_picker = ft.FilePicker()
                 self._page.overlay.append(file_picker)
                 self._page.update()
 
                 # Open save dialog
-                file_picker.save_file(
+                save_path = await file_picker.save_file(
                     dialog_title="Export Usage Data",
                     file_name=filename,
                     allowed_extensions=["csv"],
                 )
+
+                # Handle the save result
+                if save_path:
+                    await self._save_csv_file(save_path, csv_content)
 
         except Exception as e:
             print(f"Error exporting CSV: {e}")
@@ -857,28 +910,32 @@ class UsageDashboardView(ft.Column):
         rows.append(header)
 
         # Add provider costs
-        provider_costs = getattr(self, 'provider_costs', {})
+        provider_costs = getattr(self, "provider_costs", {})
         for provider, cost in provider_costs.items():
-            rows.append([
-                f"{self.start_date} to {self.end_date}",
-                provider,
-                "All Workflows",
-                f"{cost:.2f}",
-                "-",
-                "-",
-            ])
+            rows.append(
+                [
+                    f"{self.start_date} to {self.end_date}",
+                    provider,
+                    "All Workflows",
+                    f"{cost:.2f}",
+                    "-",
+                    "-",
+                ]
+            )
 
         # Add workflow costs
-        workflow_costs = getattr(self, 'workflow_costs', {})
+        workflow_costs = getattr(self, "workflow_costs", {})
         for workflow, cost in workflow_costs.items():
-            rows.append([
-                f"{self.start_date} to {self.end_date}",
-                "All Providers",
-                workflow,
-                f"{cost:.2f}",
-                "-",
-                "-",
-            ])
+            rows.append(
+                [
+                    f"{self.start_date} to {self.end_date}",
+                    "All Providers",
+                    workflow,
+                    f"{cost:.2f}",
+                    "-",
+                    "-",
+                ]
+            )
 
         # Convert to CSV string
         output = StringIO()
@@ -886,31 +943,35 @@ class UsageDashboardView(ft.Column):
         writer.writerows(rows)
         return output.getvalue()
 
-    def _on_csv_save_result(self, e: ft.FilePickerResultEvent, csv_content: str):
-        """Handle CSV file save result."""
-        if e.path:
-            try:
-                # Write CSV to selected file
-                with open(e.path, 'w', newline='', encoding='utf-8') as f:
-                    f.write(csv_content)
+    async def _save_csv_file(self, path: str, csv_content: str):
+        """Save CSV file to the specified path.
 
-                # Show success snackbar
-                if self._page:
-                    snackbar = ft.SnackBar(
-                        ft.Text(f"Exported to {e.path}"),
-                        bgcolor=Theme.SUCCESS,
-                    )
-                    self._page.overlay.append(snackbar)
-                    snackbar.open = True
-                    self._page.update()
+        Args:
+            path: File path to save to
+            csv_content: CSV content to write
+        """
+        try:
+            # Write CSV to selected file
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                f.write(csv_content)
 
-            except Exception as ex:
-                print(f"Error writing CSV file: {ex}")
-                if self._page:
-                    snackbar = ft.SnackBar(ft.Text(f"Save failed: {str(ex)}"), bgcolor=Theme.ERROR)
-                    self._page.overlay.append(snackbar)
-                    snackbar.open = True
-                    self._page.update()
+            # Show success snackbar
+            if self._page:
+                snackbar = ft.SnackBar(
+                    ft.Text(f"Exported to {path}"),
+                    bgcolor=Theme.SUCCESS,
+                )
+                self._page.overlay.append(snackbar)
+                snackbar.open = True
+                self._page.update()
+
+        except Exception as ex:
+            print(f"Error writing CSV file: {ex}")
+            if self._page:
+                snackbar = ft.SnackBar(ft.Text(f"Save failed: {str(ex)}"), bgcolor=Theme.ERROR)
+                self._page.overlay.append(snackbar)
+                snackbar.open = True
+                self._page.update()
 
     def _show_error_snackbar(self, message: str):
         """Show error snackbar notification."""

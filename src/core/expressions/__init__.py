@@ -1,11 +1,11 @@
 """Expression parser and evaluator."""
 
 from src.core.expressions.parser import (
-    ExpressionParser,
     ExpressionError,
+    ExpressionParser,
+    evaluate_expression,
     get_parser,
     resolve_expressions,
-    evaluate_expression,
 )
 
 __all__ = [

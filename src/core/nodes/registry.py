@@ -4,7 +4,6 @@ Node Registry
 Central registry for all available node types.
 """
 
-from typing import Optional, Type
 import logging
 
 from src.core.nodes.base import BaseNode, NodeDefinition
@@ -16,7 +15,7 @@ class NodeRegistry:
     """Registry for node types."""
 
     _instance = None
-    _handlers: dict[str, Type[BaseNode]] = {}
+    _handlers: dict[str, type[BaseNode]] = {}
 
     def __new__(cls):
         """Singleton pattern."""
@@ -35,14 +34,14 @@ class NodeRegistry:
     def _load_builtin_nodes(self):
         """Load all built-in nodes."""
         # Import and register built-in nodes
-        from src.core.nodes.triggers.manual import ManualTriggerNode
-        from src.core.nodes.triggers.schedule import ScheduleTriggerNode
-        from src.core.nodes.http.request import HTTPRequestNode
-        from src.core.nodes.flow.if_else import IfElseNode
-        from src.core.nodes.flow.set_variable import SetVariableNode
         from src.core.nodes.data.read_file import ReadFileNode
         from src.core.nodes.data.write_file import WriteFileNode
+        from src.core.nodes.flow.if_else import IfElseNode
         from src.core.nodes.flow.log_debug import LogDebugNode
+        from src.core.nodes.flow.set_variable import SetVariableNode
+        from src.core.nodes.http.request import HTTPRequestNode
+        from src.core.nodes.triggers.manual import ManualTriggerNode
+        from src.core.nodes.triggers.schedule import ScheduleTriggerNode
 
         builtin_nodes = [
             ManualTriggerNode,
@@ -61,6 +60,7 @@ class NodeRegistry:
         # Load AI nodes
         try:
             from src.core.nodes.ai import AI_NODES
+
             for node_class in AI_NODES:
                 self.register(node_class)
             logger.info(f"Loaded {len(AI_NODES)} AI nodes")
@@ -70,6 +70,7 @@ class NodeRegistry:
         # Load App integration nodes
         try:
             from src.core.nodes.apps import APP_NODES
+
             for node_class in APP_NODES:
                 self.register(node_class)
             logger.info(f"Loaded {len(APP_NODES)} App nodes")
@@ -79,6 +80,7 @@ class NodeRegistry:
         # Load Utility nodes
         try:
             from src.core.nodes.utility import UTILITY_NODES
+
             for node_class in UTILITY_NODES:
                 self.register(node_class)
             logger.info(f"Loaded {len(UTILITY_NODES)} Utility nodes")
@@ -88,6 +90,7 @@ class NodeRegistry:
         # Load Coding/Development nodes
         try:
             from src.core.nodes.coding import CODING_NODES
+
             for node_class in CODING_NODES:
                 self.register(node_class)
             logger.info(f"Loaded {len(CODING_NODES)} Coding nodes")
@@ -97,6 +100,7 @@ class NodeRegistry:
         # Load Execution nodes
         try:
             from src.core.nodes.execution import EXECUTION_NODES
+
             for node_class in EXECUTION_NODES:
                 self.register(node_class)
             logger.info(f"Loaded {len(EXECUTION_NODES)} Execution nodes")
@@ -105,7 +109,7 @@ class NodeRegistry:
 
         logger.info(f"Total: {len(self._handlers)} nodes registered")
 
-    def register(self, node_class: Type[BaseNode]):
+    def register(self, node_class: type[BaseNode]):
         """Register a node type."""
         if not issubclass(node_class, BaseNode):
             raise TypeError(f"{node_class} must be a subclass of BaseNode")
@@ -118,14 +122,14 @@ class NodeRegistry:
         if node_type in self._handlers:
             del self._handlers[node_type]
 
-    def get_handler(self, node_type: str) -> Optional[BaseNode]:
+    def get_handler(self, node_type: str) -> BaseNode | None:
         """Get a node handler instance by type."""
         handler_class = self._handlers.get(node_type)
         if handler_class:
             return handler_class()
         return None
 
-    def get_definition(self, node_type: str) -> Optional[NodeDefinition]:
+    def get_definition(self, node_type: str) -> NodeDefinition | None:
         """Get the node definition by type."""
         handler_class = self._handlers.get(node_type)
         if handler_class:
@@ -138,19 +142,11 @@ class NodeRegistry:
 
     def get_by_category(self, category: str) -> list[NodeDefinition]:
         """Get all nodes in a category."""
-        return [
-            cls.get_definition()
-            for cls in self._handlers.values()
-            if cls.category == category
-        ]
+        return [cls.get_definition() for cls in self._handlers.values() if cls.category == category]
 
     def get_triggers(self) -> list[NodeDefinition]:
         """Get all trigger nodes."""
-        return [
-            cls.get_definition()
-            for cls in self._handlers.values()
-            if cls.is_trigger
-        ]
+        return [cls.get_definition() for cls in self._handlers.values() if cls.is_trigger]
 
     @property
     def node_types(self) -> list[str]:

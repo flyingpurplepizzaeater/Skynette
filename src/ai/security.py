@@ -4,14 +4,14 @@ API Key Security
 Secure storage of AI provider API keys using system keyring.
 """
 
-import keyring
-from typing import Optional
 import logging
+
+import keyring
 
 logger = logging.getLogger(__name__)
 
 # Keyring service name
-SERVICE_NAME = 'skynette-ai'
+SERVICE_NAME = "skynette-ai"
 
 
 def store_api_key(provider: str, api_key: str) -> None:
@@ -34,7 +34,7 @@ def store_api_key(provider: str, api_key: str) -> None:
         raise
 
 
-def get_api_key(provider: str) -> Optional[str]:
+def get_api_key(provider: str) -> str | None:
     """
     Retrieve API key from system keyring.
 
@@ -102,5 +102,5 @@ def list_stored_providers() -> list[str]:
     Returns:
         List of provider names
     """
-    known_providers = ['openai', 'anthropic', 'google', 'groq']
+    known_providers = ["openai", "anthropic", "google", "groq"]
     return [p for p in known_providers if has_api_key(p)]

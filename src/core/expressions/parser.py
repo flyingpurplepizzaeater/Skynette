@@ -22,17 +22,19 @@ Array operations:
 - $prev.items.length - Array length
 """
 
+import hashlib
+import json
 import os
 import re
-import json
-from datetime import datetime, UTC
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
-import hashlib
 
 
 class ExpressionError(Exception):
     """Error during expression evaluation."""
+
     pass
 
 
@@ -94,7 +96,9 @@ class ExpressionParser:
             "sum": lambda x: sum(x) if isinstance(x, list) else float(x) if x else 0,
             "avg": lambda x: sum(x) / len(x) if isinstance(x, list) and len(x) > 0 else 0,
             "range": lambda start, end, step=1: list(range(int(start), int(end), int(step))),
-            "slice": lambda x, start=0, end=None: x[int(start):int(end) if end else None] if x else [],
+            "slice": lambda x, start=0, end=None: (
+                x[int(start) : int(end) if end else None] if x else []
+            ),
             "contains": lambda x, item: item in x if x else False,
             "starts_with": lambda x, prefix: str(x).startswith(prefix) if x else False,
             "ends_with": lambda x, suffix: str(x).endswith(suffix) if x else False,
@@ -140,7 +144,9 @@ class ExpressionParser:
         result = value
         for match in matches:
             expr_value = self.evaluate(match.strip(), context)
-            result = result.replace(f"{{{{{match}}}}}", str(expr_value) if expr_value is not None else "")
+            result = result.replace(
+                f"{{{{{match}}}}}", str(expr_value) if expr_value is not None else ""
+            )
 
         return result
 

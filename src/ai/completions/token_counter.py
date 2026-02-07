@@ -72,9 +72,7 @@ class TokenCounter:
         """
         return self.count_tokens(text, provider) <= limit
 
-    def count_messages(
-        self, messages: list[dict], provider: str = "openai"
-    ) -> int:
+    def count_messages(self, messages: list[dict], provider: str = "openai") -> int:
         """Count tokens for a list of chat messages.
 
         Accounts for message formatting overhead.

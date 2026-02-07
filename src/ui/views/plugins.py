@@ -1,6 +1,7 @@
 """Plugins view - Plugin marketplace and management."""
 
 import flet as ft
+
 from src.ui.theme import Theme
 
 
@@ -99,9 +100,7 @@ class PluginsView(ft.Column):
 
         return ft.Container(
             content=ft.Column(
-                controls=[
-                    self._build_plugin_card(p, installed=True) for p in plugins
-                ],
+                controls=[self._build_plugin_card(p, installed=True) for p in plugins],
                 scroll=ft.ScrollMode.AUTO,
                 spacing=Theme.SPACING_SM,
             ),
@@ -162,9 +161,7 @@ class PluginsView(ft.Column):
                     ft.Container(height=Theme.SPACING_MD),
                     ft.Text("Featured Plugins", size=16, weight=ft.FontWeight.W_600),
                     ft.GridView(
-                        controls=[
-                            self._build_plugin_card(p, installed=False) for p in featured
-                        ],
+                        controls=[self._build_plugin_card(p, installed=False) for p in featured],
                         runs_count=2,
                         max_extent=400,
                         spacing=Theme.SPACING_MD,
@@ -212,7 +209,7 @@ class PluginsView(ft.Column):
                         padding=Theme.SPACING_XL,
                         border_radius=Theme.RADIUS_MD,
                         border=ft.Border.all(2, Theme.BORDER),
-                        alignment=ft.alignment.Alignment(0, 0),
+                        alignment=ft.Alignment.CENTER,
                     ),
                     ft.Container(height=Theme.SPACING_LG),
                     ft.Text("Documentation", size=16, weight=ft.FontWeight.W_600),

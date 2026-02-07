@@ -15,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import flet as ft
+
 from src.ui.app import SkynetteApp
 
 # Test mode configuration
@@ -31,11 +32,11 @@ def configure_test_mode():
     # Override data directory if specified
     if DATA_DIR:
         from src.data import storage
+
         storage._storage = storage.WorkflowStorage(data_dir=DATA_DIR)
 
     # Use mock AI providers if requested
     if MOCK_AI:
-        from src.ai import providers
         # The mock providers will be registered when running in test mode
         # Tests can inject their own mock providers as needed
         pass

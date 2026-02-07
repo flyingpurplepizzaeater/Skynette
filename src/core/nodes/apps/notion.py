@@ -2,9 +2,9 @@
 Notion Integration Nodes - Interact with Notion databases and pages.
 """
 
-from typing import Any, Optional
+from typing import Any
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class NotionQueryDatabaseNode(BaseNode):
@@ -213,8 +213,9 @@ class NotionCreatePageNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Create Notion page."""
-        import httpx
         import json
+
+        import httpx
 
         api_key = config.get("api_key", "")
         database_id = config.get("database_id", "")
@@ -239,13 +240,9 @@ class NotionCreatePageNode(BaseNode):
             if isinstance(value, str):
                 # Assume title for first property, rich_text for others
                 if not notion_props:
-                    notion_props[key] = {
-                        "title": [{"text": {"content": value}}]
-                    }
+                    notion_props[key] = {"title": [{"text": {"content": value}}]}
                 else:
-                    notion_props[key] = {
-                        "rich_text": [{"text": {"content": value}}]
-                    }
+                    notion_props[key] = {"rich_text": [{"text": {"content": value}}]}
             elif isinstance(value, bool):
                 notion_props[key] = {"checkbox": value}
             elif isinstance(value, (int, float)):
@@ -262,9 +259,7 @@ class NotionCreatePageNode(BaseNode):
                 {
                     "object": "block",
                     "type": "paragraph",
-                    "paragraph": {
-                        "rich_text": [{"type": "text", "text": {"content": content}}]
-                    },
+                    "paragraph": {"rich_text": [{"type": "text", "text": {"content": content}}]},
                 }
             ]
 
@@ -330,8 +325,9 @@ class NotionUpdatePageNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Update Notion page."""
-        import httpx
         import json
+
+        import httpx
 
         api_key = config.get("api_key", "")
         page_id = config.get("page_id", "")
@@ -352,9 +348,7 @@ class NotionUpdatePageNode(BaseNode):
         notion_props = {}
         for key, value in properties.items():
             if isinstance(value, str):
-                notion_props[key] = {
-                    "rich_text": [{"text": {"content": value}}]
-                }
+                notion_props[key] = {"rich_text": [{"text": {"content": value}}]}
             elif isinstance(value, bool):
                 notion_props[key] = {"checkbox": value}
             elif isinstance(value, (int, float)):

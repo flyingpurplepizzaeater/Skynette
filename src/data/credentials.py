@@ -5,16 +5,15 @@ Provides encrypted storage for API keys and sensitive credentials.
 Uses Fernet symmetric encryption with a master key derived from the machine.
 """
 
-import os
-import json
 import base64
 import hashlib
+import json
+import logging
+import os
 import secrets
 import sqlite3
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from datetime import datetime, timedelta, UTC
-from typing import Optional, Any
-import logging
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -35,7 +34,7 @@ class CredentialVault:
     Credentials are stored in SQLite with encrypted JSON payloads.
     """
 
-    def __init__(self, db_path: Optional[Path] = None, passphrase: Optional[str] = None):
+    def __init__(self, db_path: Path | None = None, passphrase: str | None = None):
         """
         Initialize the credential vault.
 
@@ -52,7 +51,7 @@ class CredentialVault:
 
         # Initialize encryption
         self._passphrase = passphrase
-        self._fernet: Optional[Fernet] = None
+        self._fernet: Fernet | None = None
         self._init_encryption()
 
         # Ensure table exists
@@ -72,8 +71,8 @@ class CredentialVault:
         - OS keychain (keyring library)
         - Cloud KMS
         """
-        import platform
         import getpass
+        import platform
 
         components = [
             platform.node(),  # Hostname
@@ -91,11 +90,11 @@ class CredentialVault:
         salt_file = self.db_path.parent / ".vault_salt"
 
         if salt_file.exists():
-            with open(salt_file, 'rb') as f:
+            with open(salt_file, "rb") as f:
                 salt = f.read()
         else:
             salt = secrets.token_bytes(16)
-            with open(salt_file, 'wb') as f:
+            with open(salt_file, "wb") as f:
                 f.write(salt)
             # Set restrictive permissions (Unix only)
             try:
@@ -147,24 +146,20 @@ class CredentialVault:
 
     def _encrypt(self, data: dict) -> str:
         """Encrypt data to base64 string."""
-        json_bytes = json.dumps(data).encode('utf-8')
+        json_bytes = json.dumps(data).encode("utf-8")
         encrypted = self._fernet.encrypt(json_bytes)
-        return base64.b64encode(encrypted).decode('utf-8')
+        return base64.b64encode(encrypted).decode("utf-8")
 
     def _decrypt(self, encrypted_str: str) -> dict:
         """Decrypt base64 string to data."""
-        encrypted = base64.b64decode(encrypted_str.encode('utf-8'))
+        encrypted = base64.b64decode(encrypted_str.encode("utf-8"))
         json_bytes = self._fernet.decrypt(encrypted)
-        return json.loads(json_bytes.decode('utf-8'))
+        return json.loads(json_bytes.decode("utf-8"))
 
     # ==================== Public API ====================
 
     def save_credential(
-        self,
-        name: str,
-        service: str,
-        data: dict,
-        credential_id: Optional[str] = None
+        self, name: str, service: str, data: dict, credential_id: str | None = None
     ) -> str:
         """
         Save a credential to the vault.
@@ -189,11 +184,14 @@ class CredentialVault:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO credentials
             (id, name, service, data, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (cred_id, name, service, encrypted_data, now, now))
+        """,
+            (cred_id, name, service, encrypted_data, now, now),
+        )
 
         conn.commit()
         conn.close()
@@ -201,7 +199,7 @@ class CredentialVault:
         logger.info(f"Saved credential '{name}' for service '{service}'")
         return cred_id
 
-    def get_credential(self, credential_id: str) -> Optional[dict]:
+    def get_credential(self, credential_id: str) -> dict | None:
         """
         Get a credential by ID.
 
@@ -213,10 +211,13 @@ class CredentialVault:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, name, service, data, created_at, updated_at
             FROM credentials WHERE id = ?
-        """, (credential_id,))
+        """,
+            (credential_id,),
+        )
 
         row = cursor.fetchone()
         conn.close()
@@ -225,21 +226,21 @@ class CredentialVault:
             return None
 
         try:
-            decrypted_data = self._decrypt(row['data'])
+            decrypted_data = self._decrypt(row["data"])
         except Exception as e:
             logger.error(f"Failed to decrypt credential {credential_id}: {e}")
             return None
 
         return {
-            'id': row['id'],
-            'name': row['name'],
-            'service': row['service'],
-            'data': decrypted_data,
-            'created_at': row['created_at'],
-            'updated_at': row['updated_at'],
+            "id": row["id"],
+            "name": row["name"],
+            "service": row["service"],
+            "data": decrypted_data,
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
         }
 
-    def get_credential_by_service(self, service: str) -> Optional[dict]:
+    def get_credential_by_service(self, service: str) -> dict | None:
         """
         Get the first credential for a service.
 
@@ -253,11 +254,14 @@ class CredentialVault:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, name, service, data, created_at, updated_at
             FROM credentials WHERE service = ?
             ORDER BY updated_at DESC LIMIT 1
-        """, (service,))
+        """,
+            (service,),
+        )
 
         row = cursor.fetchone()
         conn.close()
@@ -266,18 +270,18 @@ class CredentialVault:
             return None
 
         try:
-            decrypted_data = self._decrypt(row['data'])
+            decrypted_data = self._decrypt(row["data"])
         except Exception as e:
             logger.error(f"Failed to decrypt credential for {service}: {e}")
             return None
 
         return {
-            'id': row['id'],
-            'name': row['name'],
-            'service': row['service'],
-            'data': decrypted_data,
-            'created_at': row['created_at'],
-            'updated_at': row['updated_at'],
+            "id": row["id"],
+            "name": row["name"],
+            "service": row["service"],
+            "data": decrypted_data,
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
         }
 
     def list_credentials(self) -> list[dict]:
@@ -298,13 +302,15 @@ class CredentialVault:
 
         creds = []
         for row in cursor.fetchall():
-            creds.append({
-                'id': row['id'],
-                'name': row['name'],
-                'service': row['service'],
-                'created_at': row['created_at'],
-                'updated_at': row['updated_at'],
-            })
+            creds.append(
+                {
+                    "id": row["id"],
+                    "name": row["name"],
+                    "service": row["service"],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                }
+            )
 
         conn.close()
         return creds
@@ -315,21 +321,26 @@ class CredentialVault:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, name, service, created_at, updated_at
             FROM credentials WHERE service = ?
             ORDER BY updated_at DESC
-        """, (service,))
+        """,
+            (service,),
+        )
 
         creds = []
         for row in cursor.fetchall():
-            creds.append({
-                'id': row['id'],
-                'name': row['name'],
-                'service': row['service'],
-                'created_at': row['created_at'],
-                'updated_at': row['updated_at'],
-            })
+            creds.append(
+                {
+                    "id": row["id"],
+                    "name": row["name"],
+                    "service": row["service"],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                }
+            )
 
         conn.close()
         return creds
@@ -356,10 +367,7 @@ class CredentialVault:
         return deleted
 
     def update_credential(
-        self,
-        credential_id: str,
-        name: Optional[str] = None,
-        data: Optional[dict] = None
+        self, credential_id: str, name: str | None = None, data: dict | None = None
     ) -> bool:
         """
         Update a credential's name or data.
@@ -387,11 +395,14 @@ class CredentialVault:
         else:
             new_data = row[1]
 
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE credentials
             SET name = ?, data = ?, updated_at = ?
             WHERE id = ?
-        """, (new_name, new_data, now, credential_id))
+        """,
+            (new_name, new_data, now, credential_id),
+        )
 
         conn.commit()
         conn.close()
@@ -417,24 +428,24 @@ class CredentialVault:
 
         for row in cursor.fetchall():
             cred = {
-                'id': row['id'],
-                'name': row['name'],
-                'service': row['service'],
-                'created_at': row['created_at'],
-                'updated_at': row['updated_at'],
+                "id": row["id"],
+                "name": row["name"],
+                "service": row["service"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
             }
 
             if include_data:
                 try:
-                    cred['data'] = self._decrypt(row['data'])
+                    cred["data"] = self._decrypt(row["data"])
                 except Exception:
-                    cred['data'] = None
+                    cred["data"] = None
 
             creds.append(cred)
 
         conn.close()
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(creds, f, indent=2)
 
         logger.info(f"Exported {len(creds)} credentials to {output_path}")
@@ -447,30 +458,30 @@ class CredentialVault:
             input_path: Path to input file
             overwrite: If True, overwrite existing credentials
         """
-        with open(input_path, 'r') as f:
+        with open(input_path) as f:
             creds = json.load(f)
 
         imported = 0
         skipped = 0
 
         for cred in creds:
-            if 'data' not in cred:
+            if "data" not in cred:
                 logger.warning(f"Skipping credential {cred.get('name')} - no data")
                 skipped += 1
                 continue
 
             # Check if exists
-            existing = self.get_credential(cred['id'])
+            existing = self.get_credential(cred["id"])
             if existing and not overwrite:
                 logger.info(f"Skipping existing credential {cred['name']}")
                 skipped += 1
                 continue
 
             self.save_credential(
-                name=cred['name'],
-                service=cred['service'],
-                data=cred['data'],
-                credential_id=cred['id']
+                name=cred["name"],
+                service=cred["service"],
+                data=cred["data"],
+                credential_id=cred["id"],
             )
             imported += 1
 
@@ -479,7 +490,8 @@ class CredentialVault:
 
 # ==================== Credential Helper Functions ====================
 
-def get_api_key(service: str, field: str = 'api_key') -> Optional[str]:
+
+def get_api_key(service: str, field: str = "api_key") -> str | None:
     """
     Quick helper to get an API key from the vault.
 
@@ -493,13 +505,13 @@ def get_api_key(service: str, field: str = 'api_key') -> Optional[str]:
     vault = CredentialVault()
     cred = vault.get_credential_by_service(service)
 
-    if cred and cred.get('data'):
-        return cred['data'].get(field)
+    if cred and cred.get("data"):
+        return cred["data"].get(field)
 
     return None
 
 
-def store_api_key(service: str, api_key: str, name: Optional[str] = None) -> str:
+def store_api_key(service: str, api_key: str, name: str | None = None) -> str:
     """
     Quick helper to store an API key.
 
@@ -515,7 +527,7 @@ def store_api_key(service: str, api_key: str, name: Optional[str] = None) -> str
     return vault.save_credential(
         name=name or f"{service.title()} API Key",
         service=service,
-        data={'api_key': api_key, 'type': 'api_key'}
+        data={"api_key": api_key, "type": "api_key"},
     )
 
 
@@ -526,6 +538,7 @@ from enum import Enum
 
 class CredentialType(str, Enum):
     """Types of credentials supported."""
+
     API_KEY = "api_key"
     OAUTH2 = "oauth2"
     BASIC_AUTH = "basic_auth"
@@ -552,7 +565,7 @@ class OAuth2Manager:
                 "drive": ["https://www.googleapis.com/auth/drive"],
                 "sheets": ["https://www.googleapis.com/auth/spreadsheets"],
                 "gmail": ["https://www.googleapis.com/auth/gmail.modify"],
-            }
+            },
         },
         "microsoft": {
             "auth_url": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
@@ -561,7 +574,7 @@ class OAuth2Manager:
                 "teams": ["Chat.ReadWrite", "Channel.ReadBasic.All", "ChannelMessage.Send"],
                 "onedrive": ["Files.ReadWrite.All"],
                 "outlook": ["Mail.ReadWrite", "Mail.Send"],
-            }
+            },
         },
         "github": {
             "auth_url": "https://github.com/login/oauth/authorize",
@@ -570,25 +583,25 @@ class OAuth2Manager:
                 "repo": ["repo"],
                 "user": ["user"],
                 "workflow": ["workflow"],
-            }
+            },
         },
         "slack": {
             "auth_url": "https://slack.com/oauth/v2/authorize",
             "token_url": "https://slack.com/api/oauth.v2.access",
             "scopes": {
                 "bot": ["chat:write", "channels:read", "users:read"],
-            }
+            },
         },
         "notion": {
             "auth_url": "https://api.notion.com/v1/oauth/authorize",
             "token_url": "https://api.notion.com/v1/oauth/token",
             "scopes": {
                 "default": [],  # Notion uses capability-based access
-            }
+            },
         },
     }
 
-    def __init__(self, vault: Optional[CredentialVault] = None):
+    def __init__(self, vault: CredentialVault | None = None):
         """Initialize with optional vault instance."""
         self.vault = vault or CredentialVault()
 
@@ -596,11 +609,11 @@ class OAuth2Manager:
         self,
         service: str,
         access_token: str,
-        refresh_token: Optional[str] = None,
-        expires_at: Optional[str] = None,
-        scopes: Optional[list[str]] = None,
-        name: Optional[str] = None,
-        extra_data: Optional[dict] = None,
+        refresh_token: str | None = None,
+        expires_at: str | None = None,
+        scopes: list[str] | None = None,
+        name: str | None = None,
+        extra_data: dict | None = None,
     ) -> str:
         """
         Store OAuth2 tokens securely.
@@ -618,23 +631,21 @@ class OAuth2Manager:
             Credential ID
         """
         data = {
-            'type': CredentialType.OAUTH2.value,
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'expires_at': expires_at,
-            'scopes': scopes or [],
+            "type": CredentialType.OAUTH2.value,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "expires_at": expires_at,
+            "scopes": scopes or [],
         }
 
         if extra_data:
             data.update(extra_data)
 
         return self.vault.save_credential(
-            name=name or f"{service.title()} OAuth",
-            service=f"{service}_oauth",
-            data=data
+            name=name or f"{service.title()} OAuth", service=f"{service}_oauth", data=data
         )
 
-    def get_oauth_tokens(self, service: str) -> Optional[dict]:
+    def get_oauth_tokens(self, service: str) -> dict | None:
         """
         Get OAuth2 tokens for a service.
 
@@ -643,14 +654,14 @@ class OAuth2Manager:
         """
         cred = self.vault.get_credential_by_service(f"{service}_oauth")
         if cred:
-            return cred.get('data')
+            return cred.get("data")
         return None
 
-    def get_access_token(self, service: str) -> Optional[str]:
+    def get_access_token(self, service: str) -> str | None:
         """Get just the access token for a service."""
         tokens = self.get_oauth_tokens(service)
         if tokens:
-            return tokens.get('access_token')
+            return tokens.get("access_token")
         return None
 
     def is_token_expired(self, service: str) -> bool:
@@ -660,11 +671,11 @@ class OAuth2Manager:
         Returns True if expired or expiring within 5 minutes.
         """
         tokens = self.get_oauth_tokens(service)
-        if not tokens or not tokens.get('expires_at'):
+        if not tokens or not tokens.get("expires_at"):
             return True
 
         try:
-            expires_at = datetime.fromisoformat(tokens['expires_at'].replace('Z', '+00:00'))
+            expires_at = datetime.fromisoformat(tokens["expires_at"].replace("Z", "+00:00"))
             # Consider expired if within 5 minutes of expiry
             buffer = 300  # 5 minutes
             return datetime.now(UTC) >= expires_at - timedelta(seconds=buffer)
@@ -678,14 +689,14 @@ class OAuth2Manager:
             return False
 
         # Has refresh token and access token is expired
-        return bool(tokens.get('refresh_token')) and self.is_token_expired(service)
+        return bool(tokens.get("refresh_token")) and self.is_token_expired(service)
 
     def update_tokens(
         self,
         service: str,
         access_token: str,
-        expires_at: Optional[str] = None,
-        refresh_token: Optional[str] = None,
+        expires_at: str | None = None,
+        refresh_token: str | None = None,
     ) -> bool:
         """
         Update tokens after a refresh.
@@ -703,29 +714,29 @@ class OAuth2Manager:
         if not cred:
             return False
 
-        data = cred['data']
-        data['access_token'] = access_token
+        data = cred["data"]
+        data["access_token"] = access_token
         if expires_at:
-            data['expires_at'] = expires_at
+            data["expires_at"] = expires_at
         if refresh_token:
-            data['refresh_token'] = refresh_token
+            data["refresh_token"] = refresh_token
 
-        return self.vault.update_credential(cred['id'], data=data)
+        return self.vault.update_credential(cred["id"], data=data)
 
     def delete_oauth(self, service: str) -> bool:
         """Delete OAuth credentials for a service."""
         cred = self.vault.get_credential_by_service(f"{service}_oauth")
         if cred:
-            return self.vault.delete_credential(cred['id'])
+            return self.vault.delete_credential(cred["id"])
         return False
 
     def list_oauth_credentials(self) -> list[dict]:
         """List all OAuth credentials (metadata only)."""
         all_creds = self.vault.list_credentials()
-        return [c for c in all_creds if c['service'].endswith('_oauth')]
+        return [c for c in all_creds if c["service"].endswith("_oauth")]
 
     @classmethod
-    def get_provider_config(cls, provider: str) -> Optional[dict]:
+    def get_provider_config(cls, provider: str) -> dict | None:
         """Get OAuth2 configuration for a provider."""
         return cls.PROVIDERS.get(provider)
 
@@ -736,8 +747,8 @@ class OAuth2Manager:
         client_id: str,
         redirect_uri: str,
         scope_set: str = "default",
-        state: Optional[str] = None,
-    ) -> Optional[str]:
+        state: str | None = None,
+    ) -> str | None:
         """
         Build OAuth2 authorization URL.
 
@@ -757,22 +768,22 @@ class OAuth2Manager:
 
         from urllib.parse import urlencode
 
-        scopes = config['scopes'].get(scope_set, [])
+        scopes = config["scopes"].get(scope_set, [])
 
         params = {
-            'client_id': client_id,
-            'redirect_uri': redirect_uri,
-            'response_type': 'code',
-            'scope': ' '.join(scopes),
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": " ".join(scopes),
         }
 
         if state:
-            params['state'] = state
+            params["state"] = state
 
         # Provider-specific adjustments
-        if provider == 'google':
-            params['access_type'] = 'offline'
-            params['prompt'] = 'consent'
+        if provider == "google":
+            params["access_type"] = "offline"
+            params["prompt"] = "consent"
 
         return f"{config['auth_url']}?{urlencode(params)}"
 
@@ -783,7 +794,7 @@ class OAuth2Manager:
         client_id: str,
         client_secret: str,
         redirect_uri: str,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Exchange authorization code for tokens.
 
@@ -805,19 +816,19 @@ class OAuth2Manager:
             return None
 
         data = {
-            'grant_type': 'authorization_code',
-            'code': code,
-            'client_id': client_id,
-            'client_secret': client_secret,
-            'redirect_uri': redirect_uri,
+            "grant_type": "authorization_code",
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
         }
 
-        headers = {'Accept': 'application/json'}
+        headers = {"Accept": "application/json"}
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
-                    config['token_url'],
+                    config["token_url"],
                     data=data,
                     headers=headers,
                 )
@@ -830,18 +841,18 @@ class OAuth2Manager:
 
                 # Calculate expiry time
                 expires_at = None
-                if 'expires_in' in token_data:
+                if "expires_in" in token_data:
                     expires_at = (
-                        datetime.now(UTC) + timedelta(seconds=int(token_data['expires_in']))
+                        datetime.now(UTC) + timedelta(seconds=int(token_data["expires_in"]))
                     ).isoformat()
 
                 # Store tokens
                 self.store_oauth_tokens(
                     service=provider,
-                    access_token=token_data.get('access_token'),
-                    refresh_token=token_data.get('refresh_token'),
+                    access_token=token_data.get("access_token"),
+                    refresh_token=token_data.get("refresh_token"),
                     expires_at=expires_at,
-                    scopes=token_data.get('scope', '').split() if token_data.get('scope') else [],
+                    scopes=token_data.get("scope", "").split() if token_data.get("scope") else [],
                 )
 
                 logger.info(f"Successfully exchanged code for {provider} tokens")
@@ -856,7 +867,7 @@ class OAuth2Manager:
         provider: str,
         client_id: str,
         client_secret: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Refresh the access token using stored refresh token.
 
@@ -876,23 +887,23 @@ class OAuth2Manager:
             return None
 
         tokens = self.get_oauth_tokens(provider)
-        if not tokens or not tokens.get('refresh_token'):
+        if not tokens or not tokens.get("refresh_token"):
             logger.error(f"No refresh token available for {provider}")
             return None
 
         data = {
-            'grant_type': 'refresh_token',
-            'refresh_token': tokens['refresh_token'],
-            'client_id': client_id,
-            'client_secret': client_secret,
+            "grant_type": "refresh_token",
+            "refresh_token": tokens["refresh_token"],
+            "client_id": client_id,
+            "client_secret": client_secret,
         }
 
-        headers = {'Accept': 'application/json'}
+        headers = {"Accept": "application/json"}
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
-                    config['token_url'],
+                    config["token_url"],
                     data=data,
                     headers=headers,
                 )
@@ -905,22 +916,22 @@ class OAuth2Manager:
 
                 # Calculate new expiry time
                 expires_at = None
-                if 'expires_in' in token_data:
+                if "expires_in" in token_data:
                     expires_at = (
-                        datetime.now(UTC) + timedelta(seconds=int(token_data['expires_in']))
+                        datetime.now(UTC) + timedelta(seconds=int(token_data["expires_in"]))
                     ).isoformat()
 
                 # Update stored tokens
                 self.update_tokens(
                     service=provider,
-                    access_token=token_data.get('access_token'),
+                    access_token=token_data.get("access_token"),
                     expires_at=expires_at,
                     # Some providers rotate refresh tokens
-                    refresh_token=token_data.get('refresh_token'),
+                    refresh_token=token_data.get("refresh_token"),
                 )
 
                 logger.info(f"Successfully refreshed {provider} access token")
-                return token_data.get('access_token')
+                return token_data.get("access_token")
 
         except Exception as e:
             logger.error(f"Token refresh error: {e}")
@@ -931,7 +942,7 @@ class OAuth2Manager:
         provider: str,
         client_id: str,
         client_secret: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Get a valid access token, refreshing if necessary.
 
@@ -956,12 +967,8 @@ class OAuth2Manager:
 
 # ==================== Basic Auth Support ====================
 
-def store_basic_auth(
-    service: str,
-    username: str,
-    password: str,
-    name: Optional[str] = None
-) -> str:
+
+def store_basic_auth(service: str, username: str, password: str, name: str | None = None) -> str:
     """
     Store basic authentication credentials.
 
@@ -979,14 +986,14 @@ def store_basic_auth(
         name=name or f"{service.title()} Login",
         service=service,
         data={
-            'type': CredentialType.BASIC_AUTH.value,
-            'username': username,
-            'password': password,
-        }
+            "type": CredentialType.BASIC_AUTH.value,
+            "username": username,
+            "password": password,
+        },
     )
 
 
-def get_basic_auth(service: str) -> Optional[tuple[str, str]]:
+def get_basic_auth(service: str) -> tuple[str, str] | None:
     """
     Get basic auth credentials as (username, password) tuple.
 
@@ -996,10 +1003,10 @@ def get_basic_auth(service: str) -> Optional[tuple[str, str]]:
     vault = CredentialVault()
     cred = vault.get_credential_by_service(service)
 
-    if cred and cred.get('data'):
-        data = cred['data']
-        username = data.get('username')
-        password = data.get('password')
+    if cred and cred.get("data"):
+        data = cred["data"]
+        username = data.get("username")
+        password = data.get("password")
         if username and password:
             return (username, password)
 

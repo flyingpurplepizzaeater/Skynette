@@ -175,9 +175,7 @@ class DiffService:
 
         return "".join(lines)
 
-    def _apply_single_hunk_to_lines(
-        self, lines: list[str], hunk: DiffHunk
-    ) -> list[str]:
+    def _apply_single_hunk_to_lines(self, lines: list[str], hunk: DiffHunk) -> list[str]:
         """Apply a single hunk to a list of lines.
 
         Args:

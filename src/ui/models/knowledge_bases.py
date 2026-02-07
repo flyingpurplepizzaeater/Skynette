@@ -2,12 +2,13 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Dict, Any, Literal
+from typing import Any, Literal
 
 
 @dataclass
 class CollectionCardData:
     """UI representation of a RAG collection."""
+
     id: str
     name: str
     description: str
@@ -21,11 +22,12 @@ class CollectionCardData:
 @dataclass
 class UploadProgress:
     """Tracks upload/processing progress."""
+
     total_files: int
     processed_files: int
     current_file: str
     status: Literal["pending", "processing", "completed", "failed"]
-    errors: List['UploadError']
+    errors: list["UploadError"]
 
     @property
     def percentage(self) -> float:
@@ -36,6 +38,7 @@ class UploadProgress:
 @dataclass
 class UploadError:
     """Individual file upload error."""
+
     file_path: str
     error_message: str
     error_type: Literal["unsupported", "permission", "corrupted", "embedding_failed"]
@@ -44,13 +47,14 @@ class UploadError:
 @dataclass
 class QueryResultUI:
     """UI representation of a query result."""
+
     chunk_content: str
     source_file: str
     similarity: float
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
     @classmethod
-    def from_backend_result(cls, result: Dict[str, Any]) -> 'QueryResultUI':
+    def from_backend_result(cls, result: dict[str, Any]) -> "QueryResultUI":
         """Convert backend result to UI model with safe defaults."""
         metadata = result.get("metadata", {})
         return cls(

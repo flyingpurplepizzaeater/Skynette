@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Optional
+
 
 class GitOperations:
     """Handles git operations for the AutoFixer."""
@@ -19,7 +19,9 @@ class GitOperations:
         """Clone a repository."""
         self.cleanup()
         try:
-            subprocess.run(["git", "clone", repo_url, str(self.work_dir)], check=True, capture_output=True)
+            subprocess.run(
+                ["git", "clone", repo_url, str(self.work_dir)], check=True, capture_output=True
+            )
             return True
         except subprocess.CalledProcessError as e:
             print(f"Clone failed: {e}")
@@ -29,8 +31,8 @@ class GitOperations:
         """Get list of files in repo."""
         file_list = []
         for root, dirs, files in os.walk(self.work_dir):
-            if '.git' in dirs:
-                dirs.remove('.git')
+            if ".git" in dirs:
+                dirs.remove(".git")
             for file in files:
                 try:
                     full_path = Path(root) / file
@@ -40,11 +42,11 @@ class GitOperations:
                     pass
         return file_list
 
-    def read_file(self, filename: str) -> Optional[str]:
+    def read_file(self, filename: str) -> str | None:
         """Read content of a file."""
         try:
             path = self.work_dir / filename
-            return path.read_text(encoding='utf-8')
+            return path.read_text(encoding="utf-8")
         except Exception:
             return None
 
@@ -52,7 +54,7 @@ class GitOperations:
         """Write content to a file."""
         try:
             path = self.work_dir / filename
-            path.write_text(content, encoding='utf-8')
+            path.write_text(content, encoding="utf-8")
             return True
         except Exception:
             return False

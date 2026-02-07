@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 
-from src.ai.gateway import AIGateway, AIMessage, AIStreamChunk
+from src.ai.gateway import AIGateway, AIMessage
 from src.ui.theme import SkynetteTheme
 from src.ui.views.code_editor.ai_panel.chat_state import ChatMessage, ChatState
 
@@ -131,9 +131,7 @@ class ChatPanel(ft.Column):
                 bottom=SkynetteTheme.SPACING_SM,
             ),
             bgcolor=SkynetteTheme.BG_SECONDARY,
-            border=ft.border.only(
-                bottom=ft.BorderSide(1, SkynetteTheme.BORDER)
-            ),
+            border=ft.border.only(bottom=ft.BorderSide(1, SkynetteTheme.BORDER)),
         )
 
         # Message list
@@ -199,9 +197,7 @@ class ChatPanel(ft.Column):
             ),
             padding=ft.padding.all(SkynetteTheme.SPACING_SM),
             bgcolor=SkynetteTheme.BG_SECONDARY,
-            border=ft.border.only(
-                top=ft.BorderSide(1, SkynetteTheme.BORDER)
-            ),
+            border=ft.border.only(top=ft.BorderSide(1, SkynetteTheme.BORDER)),
         )
 
         # Assemble layout
@@ -254,7 +250,8 @@ class ChatPanel(ft.Column):
                         ),
                         ft.Container(
                             content=ft.Text(
-                                msg.code_context[:500] + ("..." if len(msg.code_context) > 500 else ""),
+                                msg.code_context[:500]
+                                + ("..." if len(msg.code_context) > 500 else ""),
                                 size=SkynetteTheme.FONT_XS,
                                 font_family="monospace",
                                 color=SkynetteTheme.TEXT_SECONDARY,
@@ -331,6 +328,7 @@ class ChatPanel(ft.Column):
 
             # Extract filename from path
             import os
+
             filename = os.path.basename(path)
 
             source_item = ft.Container(
@@ -406,11 +404,7 @@ class ChatPanel(ft.Column):
         for i, msg in enumerate(self.state.messages):
             # Pass sources to the last assistant message
             sources = None
-            if (
-                msg.role == "assistant"
-                and i == len(self.state.messages) - 1
-                and self._last_sources
-            ):
+            if msg.role == "assistant" and i == len(self.state.messages) - 1 and self._last_sources:
                 sources = self._last_sources
             controls.append(self._build_message_bubble(msg, sources))
 
@@ -424,8 +418,7 @@ class ChatPanel(ft.Column):
         if self._send_button:
             self._send_button.disabled = self.state.is_streaming
             self._send_button.icon_color = (
-                SkynetteTheme.TEXT_MUTED if self.state.is_streaming
-                else SkynetteTheme.PRIMARY
+                SkynetteTheme.TEXT_MUTED if self.state.is_streaming else SkynetteTheme.PRIMARY
             )
 
         # Try to update UI
@@ -531,6 +524,7 @@ class ChatPanel(ft.Column):
                     except Exception as e:
                         # Log but don't fail if RAG fails
                         import logging
+
                         logging.warning(f"RAG context retrieval failed: {e}")
 
         # Build messages for API (with RAG context)

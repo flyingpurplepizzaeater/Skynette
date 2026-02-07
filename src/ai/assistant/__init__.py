@@ -1,8 +1,8 @@
 """Skynet Assistant - AI-powered workflow building assistant."""
 
 from src.ai.assistant.skynet import (
-    SkynetAssistant,
     ChatMessage,
+    SkynetAssistant,
     WorkflowSuggestion,
     get_assistant,
 )

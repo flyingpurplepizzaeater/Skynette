@@ -2,9 +2,7 @@
 GitHub Integration Nodes - Interact with GitHub repositories.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class GitHubCreateIssueNode(BaseNode):

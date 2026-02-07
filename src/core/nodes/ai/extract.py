@@ -3,9 +3,8 @@ Extract Node - Extract structured data from text using AI.
 """
 
 import json
-from typing import Any
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class ExtractNode(BaseNode):
@@ -77,7 +76,7 @@ class ExtractNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Execute data extraction."""
-        from src.ai import get_gateway, AIMessage, GenerationConfig
+        from src.ai import AIMessage, GenerationConfig, get_gateway
 
         gateway = get_gateway()
 
@@ -148,6 +147,7 @@ Return as JSON:"""
         except json.JSONDecodeError:
             # Try to find JSON object in response
             import re
+
             json_match = re.search(r"\{[^{}]*\}", content, re.DOTALL)
             if json_match:
                 try:

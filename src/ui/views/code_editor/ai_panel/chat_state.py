@@ -69,9 +69,7 @@ class ChatState:
         for listener in self._listeners:
             listener()
 
-    def add_message(
-        self, role: str, content: str, code_context: str | None = None
-    ) -> None:
+    def add_message(self, role: str, content: str, code_context: str | None = None) -> None:
         """Add a new message to the conversation.
 
         Args:

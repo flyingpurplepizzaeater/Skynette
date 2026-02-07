@@ -7,9 +7,9 @@ and context-aware help for building automations.
 
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, Callable, Any
 from uuid import uuid4
 
 from src.ai.gateway import AIGateway, AIMessage, GenerationConfig, get_gateway
@@ -20,6 +20,7 @@ from src.core.workflow.models import Workflow, WorkflowNode
 @dataclass
 class ChatMessage:
     """A message in the assistant conversation."""
+
     id: str
     role: str  # "user", "assistant", "system"
     content: str
@@ -30,6 +31,7 @@ class ChatMessage:
 @dataclass
 class WorkflowSuggestion:
     """A suggested workflow from the assistant."""
+
     name: str
     description: str
     nodes: list[dict]
@@ -82,16 +84,16 @@ Don't over-engineer - prefer fewer nodes when possible."""
 
     def __init__(
         self,
-        gateway: Optional[AIGateway] = None,
-        registry: Optional[NodeRegistry] = None,
-        on_message: Optional[Callable[[ChatMessage], None]] = None,
+        gateway: AIGateway | None = None,
+        registry: NodeRegistry | None = None,
+        on_message: Callable[[ChatMessage], None] | None = None,
     ):
         self.gateway = gateway or get_gateway()
         self.registry = registry or NodeRegistry()
         self.on_message = on_message
 
         self.conversation: list[ChatMessage] = []
-        self.current_workflow: Optional[Workflow] = None
+        self.current_workflow: Workflow | None = None
         self.config = GenerationConfig(
             max_tokens=2048,
             temperature=0.7,
@@ -109,9 +111,7 @@ Don't over-engineer - prefer fewer nodes when possible."""
                 node_names.append(f"... and {len(nodes) - 10} more")
             node_info.append(f"- {category}: {', '.join(node_names)}")
 
-        return self.SYSTEM_PROMPT.format(
-            node_categories="\n".join(node_info)
-        )
+        return self.SYSTEM_PROMPT.format(node_categories="\n".join(node_info))
 
     def _add_message(self, role: str, content: str, metadata: dict = None) -> ChatMessage:
         """Add a message to the conversation."""
@@ -128,7 +128,7 @@ Don't over-engineer - prefer fewer nodes when possible."""
 
         return msg
 
-    def set_context(self, workflow: Optional[Workflow] = None):
+    def set_context(self, workflow: Workflow | None = None):
         """Set the current workflow context."""
         self.current_workflow = workflow
 
@@ -143,10 +143,7 @@ Don't over-engineer - prefer fewer nodes when possible."""
             if self.current_workflow.nodes:
                 node_list = [f"- {n.name} ({n.type})" for n in self.current_workflow.nodes]
                 context += "Current nodes:\n" + "\n".join(node_list)
-            messages[0] = AIMessage(
-                role="system",
-                content=messages[0].content + context
-            )
+            messages[0] = AIMessage(role="system", content=messages[0].content + context)
 
         # Add conversation history
         for msg in self.conversation[-20:]:  # Last 20 messages for context
@@ -176,7 +173,7 @@ Don't over-engineer - prefer fewer nodes when possible."""
             assistant_msg = self._add_message(
                 "assistant",
                 response.content,
-                {"provider": response.provider, "model": response.model}
+                {"provider": response.provider, "model": response.model},
             )
             return assistant_msg
         except Exception as e:
@@ -186,11 +183,11 @@ Don't over-engineer - prefer fewer nodes when possible."""
                 "This might be because no AI provider is configured. "
                 "Go to Settings > AI Providers to set up a provider, or "
                 "download a local model from the AI Hub.",
-                {"error": str(e)}
+                {"error": str(e)},
             )
             return error_msg
 
-    async def generate_workflow(self, description: str) -> Optional[WorkflowSuggestion]:
+    async def generate_workflow(self, description: str) -> WorkflowSuggestion | None:
         """
         Generate a workflow from a natural language description.
 
@@ -214,7 +211,7 @@ Output ONLY valid JSON with the workflow structure. No explanation needed."""
             response = await self.gateway.chat(messages, self.config)
 
             # Extract JSON from response
-            json_match = re.search(r'```json\s*(.*?)\s*```', response.content, re.DOTALL)
+            json_match = re.search(r"```json\s*(.*?)\s*```", response.content, re.DOTALL)
             if json_match:
                 json_str = json_match.group(1)
             else:
@@ -236,7 +233,7 @@ Output ONLY valid JSON with the workflow structure. No explanation needed."""
                 "assistant",
                 f"I've generated a workflow called '{suggestion.name}' with "
                 f"{len(suggestion.nodes)} nodes. Would you like me to create it?",
-                {"workflow_suggestion": suggestion}
+                {"workflow_suggestion": suggestion},
             )
 
             return suggestion
@@ -252,14 +249,11 @@ Output ONLY valid JSON with the workflow structure. No explanation needed."""
             self._add_message(
                 "assistant",
                 f"I encountered an error while generating the workflow: {str(e)}",
-                {"error": str(e)}
+                {"error": str(e)},
             )
             return None
 
-    def create_workflow_from_suggestion(
-        self,
-        suggestion: WorkflowSuggestion
-    ) -> Workflow:
+    def create_workflow_from_suggestion(self, suggestion: WorkflowSuggestion) -> Workflow:
         """
         Create an actual Workflow from a suggestion.
 
@@ -279,7 +273,7 @@ Output ONLY valid JSON with the workflow structure. No explanation needed."""
         for i, node_data in enumerate(suggestion.nodes):
             node = WorkflowNode(
                 type=node_data.get("type", "manual_trigger"),
-                name=node_data.get("name", f"Node {i+1}"),
+                name=node_data.get("name", f"Node {i + 1}"),
                 config=node_data.get("config", {}),
                 position=node_data.get("position", {"x": i * 200, "y": 100}),
             )
@@ -324,12 +318,14 @@ Output ONLY valid JSON with the workflow structure. No explanation needed."""
         for node_type in recommended:
             node_def = self.registry.get_definition(node_type)
             if node_def:
-                suggestions.append({
-                    "type": node_type,
-                    "name": node_def.name,
-                    "description": node_def.description,
-                    "category": node_def.category,
-                })
+                suggestions.append(
+                    {
+                        "type": node_type,
+                        "name": node_def.name,
+                        "description": node_def.description,
+                        "category": node_def.category,
+                    }
+                )
 
         return suggestions
 
@@ -378,14 +374,14 @@ Output ONLY valid JSON with the workflow structure. No explanation needed."""
             "- **Debug errors** and explain what went wrong\n"
             "- **Suggest improvements** to your workflows\n\n"
             "Try saying something like:\n"
-            "- \"Create a workflow that sends a Slack message every morning\"\n"
-            "- \"What's the best way to call an API and save the response?\"\n"
-            "- \"Why did my HTTP request fail?\""
+            '- "Create a workflow that sends a Slack message every morning"\n'
+            '- "What\'s the best way to call an API and save the response?"\n'
+            '- "Why did my HTTP request fail?"'
         )
 
 
 # Singleton instance
-_assistant: Optional[SkynetAssistant] = None
+_assistant: SkynetAssistant | None = None
 
 
 def get_assistant() -> SkynetAssistant:

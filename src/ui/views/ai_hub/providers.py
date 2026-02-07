@@ -104,35 +104,43 @@ class ProvidersTab(ft.Column):
         for p_def in PROVIDER_DEFINITIONS:
             if p_def["id"] == "local":
                 # Local is always available
-                providers.append({
-                    **p_def,
-                    "status": "Ready (Demo mode)",
-                    "configured": True,
-                })
+                providers.append(
+                    {
+                        **p_def,
+                        "status": "Ready (Demo mode)",
+                        "configured": True,
+                    }
+                )
             elif p_def["id"] == "ollama":
                 # Ollama handled specially with status indicator
-                providers.append({
-                    **p_def,
-                    "status": None,  # Status shown via _build_ollama_status
-                    "configured": self.state.ollama_connected,
-                    "is_ollama": True,
-                })
+                providers.append(
+                    {
+                        **p_def,
+                        "status": None,  # Status shown via _build_ollama_status
+                        "configured": self.state.ollama_connected,
+                        "is_ollama": True,
+                    }
+                )
             elif p_def["id"] == "groq":
                 # Groq has free tier
                 configured = has_api_key(p_def["id"])
-                providers.append({
-                    **p_def,
-                    "status": "Configured" if configured else "Free tier available",
-                    "configured": configured,
-                })
+                providers.append(
+                    {
+                        **p_def,
+                        "status": "Configured" if configured else "Free tier available",
+                        "configured": configured,
+                    }
+                )
             else:
                 # Cloud providers need API key
                 configured = has_api_key(p_def["id"])
-                providers.append({
-                    **p_def,
-                    "status": "Configured" if configured else "Not configured",
-                    "configured": configured,
-                })
+                providers.append(
+                    {
+                        **p_def,
+                        "status": "Configured" if configured else "Not configured",
+                        "configured": configured,
+                    }
+                )
 
         provider_cards = []
         for p in providers:

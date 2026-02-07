@@ -5,9 +5,10 @@ Makes HTTP requests to external APIs.
 """
 
 from typing import Any
+
 import httpx
 
-from src.core.nodes.base import HTTPNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import FieldType, HTTPNode, NodeField, NodeOutput
 
 
 class HTTPRequestNode(HTTPNode):

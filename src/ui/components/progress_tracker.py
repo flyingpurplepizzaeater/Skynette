@@ -1,9 +1,9 @@
 """Progress tracker component for upload operations."""
 
 import flet as ft
-from typing import List
-from src.ui.theme import Theme
+
 from src.ui.models.knowledge_bases import UploadProgress
+from src.ui.theme import Theme
 
 
 class ProgressTracker(ft.Column):

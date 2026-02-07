@@ -2,18 +2,18 @@
 Google Drive Integration Nodes - Upload, download, and manage files.
 """
 
-from typing import Any, Optional
 import base64
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
-def _get_credential(credential_id: Optional[str]) -> Optional[dict]:
+def _get_credential(credential_id: str | None) -> dict | None:
     """Load credential from vault if ID is provided."""
     if not credential_id:
         return None
     try:
         from src.data.credentials import CredentialVault
+
         vault = CredentialVault()
         cred = vault.get_credential(credential_id)
         if cred:
@@ -204,12 +204,16 @@ class GoogleDriveListNode(BaseNode):
         query = " and ".join(query_parts)
 
         # Fetch files
-        results = service.files().list(
-            q=query,
-            pageSize=min(max_results, 1000),
-            orderBy=order_by,
-            fields="files(id, name, mimeType, size, createdTime, modifiedTime, parents, webViewLink)",
-        ).execute()
+        results = (
+            service.files()
+            .list(
+                q=query,
+                pageSize=min(max_results, 1000),
+                orderBy=order_by,
+                fields="files(id, name, mimeType, size, createdTime, modifiedTime, parents, webViewLink)",
+            )
+            .execute()
+        )
 
         files = results.get("files", [])
 
@@ -306,7 +310,6 @@ class GoogleDriveDownloadNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Download file from Google Drive."""
-        import io
 
         service = _get_drive_service(config)
 
@@ -314,10 +317,14 @@ class GoogleDriveDownloadNode(BaseNode):
         export_format = config.get("export_format", "auto")
 
         # Get file metadata
-        file_meta = service.files().get(
-            fileId=file_id,
-            fields="id, name, mimeType, size",
-        ).execute()
+        file_meta = (
+            service.files()
+            .get(
+                fileId=file_id,
+                fields="id, name, mimeType, size",
+            )
+            .execute()
+        )
 
         mime_type = file_meta.get("mimeType", "")
         filename = file_meta.get("name", "")
@@ -346,8 +353,7 @@ class GoogleDriveDownloadNode(BaseNode):
         if mime_type in google_mime_types:
             # Export Google Workspace file
             export_mime = google_mime_types[mime_type].get(
-                export_format,
-                google_mime_types[mime_type]["auto"]
+                export_format, google_mime_types[mime_type]["auto"]
             )
 
             request = service.files().export_media(
@@ -520,11 +526,15 @@ class GoogleDriveUploadNode(BaseNode):
         )
 
         # Upload file
-        file = service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields="id, webViewLink",
-        ).execute()
+        file = (
+            service.files()
+            .create(
+                body=file_metadata,
+                media_body=media,
+                fields="id, webViewLink",
+            )
+            .execute()
+        )
 
         return {
             "file_id": file.get("id", ""),
@@ -614,10 +624,14 @@ class GoogleDriveCreateFolderNode(BaseNode):
             file_metadata["parents"] = [parent_id]
 
         # Create folder
-        folder = service.files().create(
-            body=file_metadata,
-            fields="id, webViewLink",
-        ).execute()
+        folder = (
+            service.files()
+            .create(
+                body=file_metadata,
+                fields="id, webViewLink",
+            )
+            .execute()
+        )
 
         return {
             "folder_id": folder.get("id", ""),

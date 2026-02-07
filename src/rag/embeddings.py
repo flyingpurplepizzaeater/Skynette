@@ -7,7 +7,7 @@ Sprint 1: Local model only (all-MiniLM-L6-v2).
 """
 
 import asyncio
-from typing import List
+
 from sentence_transformers import SentenceTransformer
 
 
@@ -28,14 +28,11 @@ class EmbeddingManager:
 
         # Load model in thread pool (blocking I/O)
         loop = asyncio.get_event_loop()
-        self.model = await loop.run_in_executor(
-            None,
-            lambda: SentenceTransformer(self.model_name)
-        )
+        self.model = await loop.run_in_executor(None, lambda: SentenceTransformer(self.model_name))
 
         self.is_initialized = True
 
-    async def embed(self, text: str) -> List[float]:
+    async def embed(self, text: str) -> list[float]:
         """
         Generate embedding for single text.
 
@@ -48,13 +45,12 @@ class EmbeddingManager:
         # Run in thread pool (CPU-bound)
         loop = asyncio.get_event_loop()
         embedding = await loop.run_in_executor(
-            None,
-            lambda: self.model.encode(text, normalize_embeddings=True)
+            None, lambda: self.model.encode(text, normalize_embeddings=True)
         )
 
         return embedding.tolist()
 
-    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """
         Generate embeddings for multiple texts.
 
@@ -73,7 +69,7 @@ class EmbeddingManager:
         loop = asyncio.get_event_loop()
         embeddings = await loop.run_in_executor(
             None,
-            lambda: self.model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+            lambda: self.model.encode(texts, normalize_embeddings=True, show_progress_bar=False),
         )
 
         return [emb.tolist() for emb in embeddings]

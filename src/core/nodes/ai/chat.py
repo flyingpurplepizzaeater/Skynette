@@ -2,9 +2,7 @@
 Chat Node - Multi-turn conversation with AI.
 """
 
-from typing import Any
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class ChatNode(BaseNode):
@@ -108,7 +106,7 @@ class ChatNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Execute chat message."""
-        from src.ai import get_gateway, AIMessage, GenerationConfig
+        from src.ai import AIMessage, GenerationConfig, get_gateway
 
         gateway = get_gateway()
 
@@ -126,16 +124,20 @@ class ChatNode(BaseNode):
             self._conversations[conversation_id] = []
             # Add system prompt if this is a new conversation
             if system_prompt:
-                self._conversations[conversation_id].append({
-                    "role": "system",
-                    "content": system_prompt,
-                })
+                self._conversations[conversation_id].append(
+                    {
+                        "role": "system",
+                        "content": system_prompt,
+                    }
+                )
 
         # Add user message
-        self._conversations[conversation_id].append({
-            "role": "user",
-            "content": message,
-        })
+        self._conversations[conversation_id].append(
+            {
+                "role": "user",
+                "content": message,
+            }
+        )
 
         # Build AIMessage list
         messages = [
@@ -160,10 +162,12 @@ class ChatNode(BaseNode):
         )
 
         # Add assistant response to history
-        self._conversations[conversation_id].append({
-            "role": "assistant",
-            "content": response.content,
-        })
+        self._conversations[conversation_id].append(
+            {
+                "role": "assistant",
+                "content": response.content,
+            }
+        )
 
         return {
             "response": response.content,

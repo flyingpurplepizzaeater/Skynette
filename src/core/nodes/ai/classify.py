@@ -2,9 +2,7 @@
 Classify Node - Classify text into categories using AI.
 """
 
-from typing import Any
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class ClassifyNode(BaseNode):
@@ -101,7 +99,8 @@ class ClassifyNode(BaseNode):
     async def execute(self, config: dict, context: dict) -> dict:
         """Execute classification."""
         import json
-        from src.ai import get_gateway, AIMessage, GenerationConfig
+
+        from src.ai import AIMessage, GenerationConfig, get_gateway
 
         gateway = get_gateway()
 
@@ -125,9 +124,17 @@ class ClassifyNode(BaseNode):
 
         # Build prompt
         categories_list = ", ".join(categories)
-        multi_instruction = "You may select multiple categories if applicable." if multi_label else "Select exactly one category."
-        confidence_instruction = "Include a confidence score (0.0-1.0) for each category." if include_confidence else ""
-        context_instruction = f"\n\nContext: {classification_context}" if classification_context else ""
+        multi_instruction = (
+            "You may select multiple categories if applicable."
+            if multi_label
+            else "Select exactly one category."
+        )
+        confidence_instruction = (
+            "Include a confidence score (0.0-1.0) for each category." if include_confidence else ""
+        )
+        context_instruction = (
+            f"\n\nContext: {classification_context}" if classification_context else ""
+        )
 
         system_prompt = f"""You are a text classification assistant. Classify the given text into one or more of these categories: {categories_list}
 

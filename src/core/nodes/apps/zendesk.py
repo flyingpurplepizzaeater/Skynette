@@ -1,9 +1,10 @@
 """Zendesk customer support integration nodes."""
 
 from typing import Any
+
 import httpx
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 def _get_auth(email: str, api_token: str) -> tuple:

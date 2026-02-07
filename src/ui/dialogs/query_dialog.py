@@ -1,11 +1,12 @@
 """Query dialog for testing collection searches."""
 
-import flet as ft
 import time
-from typing import List
-from src.ui.theme import Theme
-from src.ui.models.knowledge_bases import QueryResultUI
+
+import flet as ft
+
 from src.rag.service import RAGService
+from src.ui.models.knowledge_bases import QueryResultUI
+from src.ui.theme import Theme
 
 
 class QueryDialog(ft.AlertDialog):
@@ -62,16 +63,20 @@ class QueryDialog(ft.AlertDialog):
                 self.query_field,
                 ft.Container(height=8),
                 ft.Text("Options", weight=ft.FontWeight.BOLD),
-                ft.Row([
-                    ft.Text("Top K results:", size=14),
-                    ft.Container(expand=True),
-                    self.top_k_slider,
-                ]),
-                ft.Row([
-                    ft.Text("Min similarity:", size=14),
-                    ft.Container(expand=True),
-                    self.min_similarity_slider,
-                ]),
+                ft.Row(
+                    [
+                        ft.Text("Top K results:", size=14),
+                        ft.Container(expand=True),
+                        self.top_k_slider,
+                    ]
+                ),
+                ft.Row(
+                    [
+                        ft.Text("Min similarity:", size=14),
+                        ft.Container(expand=True),
+                        self.min_similarity_slider,
+                    ]
+                ),
                 ft.Container(height=8),
                 ft.Button("Search", on_click=self._on_search, icon=ft.Icons.SEARCH),
                 ft.Divider(),
@@ -144,8 +149,7 @@ class QueryDialog(ft.AlertDialog):
                 ]
             else:
                 self.results_column.controls = [
-                    self._build_result_card(i + 1, result)
-                    for i, result in enumerate(ui_results)
+                    self._build_result_card(i + 1, result) for i, result in enumerate(ui_results)
                 ]
 
         except Exception as ex:
@@ -218,13 +222,9 @@ class QueryDialog(ft.AlertDialog):
         if self.page:
             try:
                 self.page.set_clipboard(text)
-                self.page.show_snack_bar(
-                    ft.SnackBar(content=ft.Text("Copied to clipboard"))
-                )
+                self.page.show_snack_bar(ft.SnackBar(content=ft.Text("Copied to clipboard")))
             except Exception as e:
-                self.page.show_snack_bar(
-                    ft.SnackBar(content=ft.Text(f"Failed to copy: {str(e)}"))
-                )
+                self.page.show_snack_bar(ft.SnackBar(content=ft.Text(f"Failed to copy: {str(e)}")))
 
     def _close(self):
         """Close dialog."""

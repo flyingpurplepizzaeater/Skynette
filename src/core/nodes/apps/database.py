@@ -3,9 +3,8 @@ Database Nodes - Query and manipulate databases.
 """
 
 import asyncio
-from typing import Any, Optional
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class SQLiteQueryNode(BaseNode):
@@ -96,6 +95,7 @@ class SQLiteQueryNode(BaseNode):
         # Ensure parameters is a list
         if isinstance(parameters, str):
             import json
+
             try:
                 parameters = json.loads(parameters)
             except:
@@ -211,9 +211,7 @@ class PostgreSQLQueryNode(BaseNode):
         try:
             import asyncpg
         except ImportError:
-            raise RuntimeError(
-                "asyncpg not installed. Install with: pip install asyncpg"
-            )
+            raise RuntimeError("asyncpg not installed. Install with: pip install asyncpg")
 
         connection_string = config.get("connection_string", "")
         query = config.get("query", "")
@@ -223,6 +221,7 @@ class PostgreSQLQueryNode(BaseNode):
         # Ensure parameters is a list
         if isinstance(parameters, str):
             import json
+
             try:
                 parameters = json.loads(parameters)
             except:
@@ -372,9 +371,7 @@ class MySQLQueryNode(BaseNode):
         try:
             import aiomysql
         except ImportError:
-            raise RuntimeError(
-                "aiomysql not installed. Install with: pip install aiomysql"
-            )
+            raise RuntimeError("aiomysql not installed. Install with: pip install aiomysql")
 
         host = config.get("host", "localhost")
         port = config.get("port", 3306)
@@ -388,6 +385,7 @@ class MySQLQueryNode(BaseNode):
         # Ensure parameters is a tuple
         if isinstance(parameters, str):
             import json
+
             try:
                 parameters = json.loads(parameters)
             except:
@@ -509,7 +507,7 @@ class MongoDBQueryNode(BaseNode):
             label="Sort",
             type=FieldType.JSON,
             required=False,
-            description="Sort specification as JSON (e.g., {\"name\": 1}).",
+            description='Sort specification as JSON (e.g., {"name": 1}).',
         ),
         NodeField(
             name="limit",
@@ -541,9 +539,7 @@ class MongoDBQueryNode(BaseNode):
         try:
             from motor.motor_asyncio import AsyncIOMotorClient
         except ImportError:
-            raise RuntimeError(
-                "motor not installed. Install with: pip install motor"
-            )
+            raise RuntimeError("motor not installed. Install with: pip install motor")
 
         connection_string = config.get("connection_string", "")
         database = config.get("database", "")
@@ -556,6 +552,7 @@ class MongoDBQueryNode(BaseNode):
 
         # Parse JSON strings
         import json
+
         if isinstance(query, str):
             try:
                 query = json.loads(query)
@@ -753,9 +750,7 @@ class MongoDBWriteNode(BaseNode):
         try:
             from motor.motor_asyncio import AsyncIOMotorClient
         except ImportError:
-            raise RuntimeError(
-                "motor not installed. Install with: pip install motor"
-            )
+            raise RuntimeError("motor not installed. Install with: pip install motor")
 
         connection_string = config.get("connection_string", "")
         database = config.get("database", "")
@@ -767,6 +762,7 @@ class MongoDBWriteNode(BaseNode):
 
         # Parse JSON strings
         import json
+
         if isinstance(filter_doc, str):
             try:
                 filter_doc = json.loads(filter_doc)

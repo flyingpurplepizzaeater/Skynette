@@ -9,10 +9,8 @@ These nodes enable automated debugging workflows:
 """
 
 import asyncio
-from typing import Any, Optional, List, Dict
-from datetime import datetime
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class TryCatchNode(BaseNode):
@@ -186,7 +184,13 @@ class ErrorDetectorNode(BaseNode):
     inputs = [
         NodeField(name="stdout", label="Standard Output", type=FieldType.TEXT, required=False),
         NodeField(name="stderr", label="Standard Error", type=FieldType.TEXT, required=False),
-        NodeField(name="return_code", label="Return Code", type=FieldType.NUMBER, required=False, default=0),
+        NodeField(
+            name="return_code",
+            label="Return Code",
+            type=FieldType.NUMBER,
+            required=False,
+            default=0,
+        ),
         NodeField(name="test_output", label="Test Output", type=FieldType.TEXT, required=False),
     ]
 
@@ -254,17 +258,19 @@ class ErrorDetectorNode(BaseNode):
         for pattern, (error_name, error_type, fix_hint) in all_patterns.items():
             matches = re.findall(f"{pattern}.*", combined, re.IGNORECASE)
             for match in matches:
-                errors.append({
-                    "type": error_name,
-                    "message": match[:200],
-                    "category": error_type,
-                })
+                errors.append(
+                    {
+                        "type": error_name,
+                        "message": match[:200],
+                        "category": error_type,
+                    }
+                )
                 error_types.add(error_type)
                 if fix_hint not in suggested_fixes:
                     suggested_fixes.append(fix_hint)
 
         # Extract line numbers
-        line_matches = re.findall(r'[Ll]ine (\d+)', combined)
+        line_matches = re.findall(r"[Ll]ine (\d+)", combined)
         file_matches = re.findall(r'[Ff]ile ["\']([^"\']+)["\']', combined)
 
         for i, error in enumerate(errors):
@@ -426,7 +432,7 @@ class DebugLoopNode(BaseNode):
                 "errors_to_fix": errors,
                 "is_resolved": False,
                 "stuck_in_loop": True,
-                "summary": f"Same errors repeating. Manual intervention needed.",
+                "summary": "Same errors repeating. Manual intervention needed.",
             }
 
         # Continue fixing
@@ -455,10 +461,14 @@ class VerifyFixNode(BaseNode):
     color = "#28A745"  # Green for success
 
     inputs = [
-        NodeField(name="original_error", label="Original Error", type=FieldType.TEXT, required=True),
+        NodeField(
+            name="original_error", label="Original Error", type=FieldType.TEXT, required=True
+        ),
         NodeField(name="new_output", label="New Output", type=FieldType.TEXT, required=True),
         NodeField(name="new_stderr", label="New Stderr", type=FieldType.TEXT, required=False),
-        NodeField(name="expected_behavior", label="Expected Behavior", type=FieldType.TEXT, required=False),
+        NodeField(
+            name="expected_behavior", label="Expected Behavior", type=FieldType.TEXT, required=False
+        ),
         NodeField(name="test_passed", label="Test Passed", type=FieldType.BOOLEAN, required=False),
     ]
 
@@ -541,10 +551,18 @@ class ErrorAggregatorNode(BaseNode):
     color = "#17A2B8"  # Info blue
 
     inputs = [
-        NodeField(name="current_errors", label="Current Errors", type=FieldType.JSON, required=False),
-        NodeField(name="historical_errors", label="Historical Errors", type=FieldType.JSON, required=False),
-        NodeField(name="fixes_attempted", label="Fixes Attempted", type=FieldType.JSON, required=False),
-        NodeField(name="iteration", label="Iteration", type=FieldType.NUMBER, required=False, default=0),
+        NodeField(
+            name="current_errors", label="Current Errors", type=FieldType.JSON, required=False
+        ),
+        NodeField(
+            name="historical_errors", label="Historical Errors", type=FieldType.JSON, required=False
+        ),
+        NodeField(
+            name="fixes_attempted", label="Fixes Attempted", type=FieldType.JSON, required=False
+        ),
+        NodeField(
+            name="iteration", label="Iteration", type=FieldType.NUMBER, required=False, default=0
+        ),
     ]
 
     outputs = [
@@ -604,7 +622,9 @@ class ErrorAggregatorNode(BaseNode):
             report_lines.append("Current errors:")
             for err in current_errors[:5]:
                 if isinstance(err, dict):
-                    report_lines.append(f"  - {err.get('type', 'Error')}: {err.get('message', '')[:80]}")
+                    report_lines.append(
+                        f"  - {err.get('type', 'Error')}: {err.get('message', '')[:80]}"
+                    )
                 else:
                     report_lines.append(f"  - {str(err)[:80]}")
 
@@ -677,8 +697,12 @@ class WaitNode(BaseNode):
     color = "#6C757D"
 
     inputs = [
-        NodeField(name="seconds", label="Wait Seconds", type=FieldType.NUMBER, required=True, default=1),
-        NodeField(name="pass_through", label="Pass Through Data", type=FieldType.JSON, required=False),
+        NodeField(
+            name="seconds", label="Wait Seconds", type=FieldType.NUMBER, required=True, default=1
+        ),
+        NodeField(
+            name="pass_through", label="Pass Through Data", type=FieldType.JSON, required=False
+        ),
     ]
 
     outputs = [

@@ -2,9 +2,7 @@
 Twitter/X Integration Nodes - Post tweets and interact with Twitter API v2.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class TwitterPostTweetNode(BaseNode):

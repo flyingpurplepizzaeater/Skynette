@@ -8,15 +8,15 @@ Main service orchestrating RAG operations:
 """
 
 import hashlib
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, Any, List
-from datetime import datetime, timezone
+from typing import Any
 
-from src.rag.storage import RAGStorage
-from src.rag.processor import DocumentProcessor
-from src.rag.embeddings import EmbeddingManager
 from src.rag.chromadb_client import ChromaDBClient
+from src.rag.embeddings import EmbeddingManager
 from src.rag.models import Collection, Document
+from src.rag.processor import DocumentProcessor
+from src.rag.storage import RAGStorage
 
 
 class RAGService:
@@ -55,7 +55,7 @@ class RAGService:
         embedding_model: str = "local",
         chunk_size: int = 1024,
         chunk_overlap: int = 128,
-        max_chunk_size: int = 2048
+        max_chunk_size: int = 2048,
     ) -> str:
         """
         Create new collection.
@@ -69,7 +69,7 @@ class RAGService:
             embedding_model=embedding_model,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            max_chunk_size=max_chunk_size
+            max_chunk_size=max_chunk_size,
         )
 
         # Save to metadata storage
@@ -77,13 +77,12 @@ class RAGService:
 
         # Create ChromaDB collection
         await self.chromadb.create_collection(
-            collection.id,
-            embedding_dim=self.embedding_manager.embedding_dim
+            collection.id, embedding_dim=self.embedding_manager.embedding_dim
         )
 
         return collection.id
 
-    async def list_collections(self) -> List[Collection]:
+    async def list_collections(self) -> list[Collection]:
         """
         List all collections.
 
@@ -146,11 +145,7 @@ class RAGService:
 
         return True
 
-    async def ingest_document(
-        self,
-        file_path: str,
-        collection_id: str
-    ) -> Dict[str, Any]:
+    async def ingest_document(self, file_path: str, collection_id: str) -> dict[str, Any]:
         """
         Ingest document into collection.
 
@@ -181,7 +176,7 @@ class RAGService:
                 file_type=file_type,
                 file_hash=file_hash,
                 file_size=file_path_obj.stat().st_size,
-                status="processing"
+                status="processing",
             )
             self.storage.save_document(document)
 
@@ -209,35 +204,24 @@ class RAGService:
             # Update document status
             document.status = "indexed"
             document.chunk_count = len(chunks)
-            document.indexed_at = datetime.now(timezone.utc)
-            document.last_updated = datetime.now(timezone.utc)
+            document.indexed_at = datetime.now(UTC)
+            document.last_updated = datetime.now(UTC)
             self.storage.save_document(document)
 
-            return {
-                "status": "success",
-                "document_id": document.id,
-                "chunks_created": len(chunks)
-            }
+            return {"status": "success", "document_id": document.id, "chunks_created": len(chunks)}
 
         except Exception as e:
             # Update document status to failed
-            if 'document' in locals():
+            if "document" in locals():
                 document.status = "failed"
                 document.error = str(e)
                 self.storage.save_document(document)
 
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     async def query(
-        self,
-        query: str,
-        collection_id: str,
-        top_k: int = 5,
-        min_similarity: float = 0.0
-    ) -> List[Dict[str, Any]]:
+        self, query: str, collection_id: str, top_k: int = 5, min_similarity: float = 0.0
+    ) -> list[dict[str, Any]]:
         """
         Query collection for similar chunks.
 
@@ -255,30 +239,25 @@ class RAGService:
 
         # Query ChromaDB
         results = await self.chromadb.query(
-            collection_id,
-            query_embedding,
-            top_k=top_k,
-            min_similarity=min_similarity
+            collection_id, query_embedding, top_k=top_k, min_similarity=min_similarity
         )
 
         # Format results
         output = []
         for result in results:
             chunk = result["chunk"]
-            output.append({
-                "chunk_id": chunk.id,
-                "content": chunk.content,
-                "similarity": result["similarity"],
-                "metadata": chunk.metadata
-            })
+            output.append(
+                {
+                    "chunk_id": chunk.id,
+                    "content": chunk.content,
+                    "similarity": result["similarity"],
+                    "metadata": chunk.metadata,
+                }
+            )
 
         return output
 
-    async def delete_document(
-        self,
-        document_id: str,
-        collection_id: str
-    ):
+    async def delete_document(self, document_id: str, collection_id: str):
         """Delete document and all its chunks."""
         # Delete from ChromaDB
         await self.chromadb.delete_chunks_by_document(collection_id, document_id)
@@ -293,11 +272,12 @@ class RAGService:
             # Delete document
             with self.storage.db_path.parent.joinpath(self.storage.db_path).open() as conn:
                 import sqlite3
+
                 cursor = sqlite3.connect(str(self.storage.db_path)).cursor()
                 cursor.execute("DELETE FROM rag_documents WHERE id = ?", (document_id,))
                 cursor.connection.commit()
 
-    async def get_collection_stats(self, collection_id: str) -> Dict[str, Any]:
+    async def get_collection_stats(self, collection_id: str) -> dict[str, Any]:
         """Get statistics for a collection."""
         # Get documents (don't use context manager - it closes shared connection)
         documents = self.storage.get_collection_documents(collection_id)
@@ -314,7 +294,7 @@ class RAGService:
 
             # Estimate storage (chunk content length)
             for chunk in chunks:
-                storage_size_bytes += len(chunk.content.encode('utf-8'))
+                storage_size_bytes += len(chunk.content.encode("utf-8"))
 
             # Track latest update
             if doc.last_updated:
@@ -325,13 +305,13 @@ class RAGService:
             "document_count": document_count,
             "chunk_count": chunk_count,
             "storage_size_bytes": storage_size_bytes,
-            "last_updated": last_updated or datetime.now(timezone.utc),
+            "last_updated": last_updated or datetime.now(UTC),
         }
 
     def _compute_file_hash(self, file_path: str) -> str:
         """Compute SHA256 hash of file."""
         sha256 = hashlib.sha256()
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 sha256.update(chunk)
         return sha256.hexdigest()

@@ -167,6 +167,13 @@ class TestAIStorage:
 
     async def test_get_cost_by_provider(self, storage):
         """Test getting cost breakdown by provider."""
+        from datetime import datetime
+        
+        # Get current month and year for the test
+        now = datetime.now()
+        month = now.month
+        year = now.year
+        
         record1 = UsageRecord(
             provider="openai", model="gpt-4",
             prompt_tokens=100, completion_tokens=50, total_tokens=150,
@@ -181,7 +188,7 @@ class TestAIStorage:
         await storage.log_usage(record1)
         await storage.log_usage(record2)
 
-        costs = await storage.get_cost_by_provider(1, 2026)
+        costs = await storage.get_cost_by_provider(month, year)
         assert costs["openai"] == 0.50
         assert costs["anthropic"] == 0.30
 

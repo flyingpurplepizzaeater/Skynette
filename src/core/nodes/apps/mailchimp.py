@@ -1,10 +1,11 @@
 """Mailchimp email marketing integration nodes."""
 
-from typing import Any
 import hashlib
+from typing import Any
+
 import httpx
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 def _get_base_url(api_key: str) -> str:

@@ -3,7 +3,7 @@ Base Provider - Abstract base class for AI providers.
 """
 
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Optional
+from collections.abc import AsyncIterator
 
 from src.ai.gateway import (
     AICapability,
@@ -125,7 +125,7 @@ class BaseProvider(ABC):
         """
         return []
 
-    def get_default_model(self) -> Optional[str]:
+    def get_default_model(self) -> str | None:
         """Get the default model for this provider."""
         models = self.get_models()
         return models[0]["id"] if models else None
@@ -162,7 +162,7 @@ class BaseProvider(ABC):
                     "type": type(e).__name__,
                     "message": str(e),
                     "partial_content_length": len(partial_content),
-                }
+                },
             )
             # Re-raise wrapped exception for caller handling
             raise StreamInterruptedError(partial_content=partial_content, cause=e)
@@ -189,6 +189,7 @@ class BaseProvider(ABC):
         if retry_after is None:
             return None
         import time
+
         try:
             # Try as seconds
             return time.time() + int(retry_after)

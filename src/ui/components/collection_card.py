@@ -1,10 +1,12 @@
 """Collection card component for Knowledge Bases."""
 
+from collections.abc import Callable
+from datetime import UTC, datetime
+
 import flet as ft
-from datetime import datetime, timezone
-from typing import Callable
-from src.ui.theme import Theme
+
 from src.ui.models.knowledge_bases import CollectionCardData
+from src.ui.theme import Theme
 
 
 class CollectionCard(ft.Container):
@@ -37,7 +39,6 @@ class CollectionCard(ft.Container):
                     spacing=8,
                 ),
                 ft.Container(height=8),
-
                 # Stats
                 ft.Text(
                     f"📄 {data.document_count} documents",
@@ -59,9 +60,7 @@ class CollectionCard(ft.Container):
                     size=14,
                     color=Theme.TEXT_SECONDARY,
                 ),
-
                 ft.Container(height=16),
-
                 # Actions
                 ft.Row(
                     controls=[
@@ -90,7 +89,7 @@ class CollectionCard(ft.Container):
 
     def _format_time_ago(self, dt: datetime) -> str:
         """Format datetime as relative time."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         delta = now - dt
         total_seconds = delta.total_seconds()
 
@@ -113,7 +112,7 @@ class CollectionCard(ft.Container):
 
     def _format_bytes(self, bytes_count: int) -> str:
         """Format bytes as human-readable size."""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
             if bytes_count < 1024:
                 return f"{bytes_count:.1f} {unit}"
             bytes_count /= 1024

@@ -5,18 +5,17 @@ Handles the execution of workflows.
 """
 
 import asyncio
-from datetime import datetime, UTC
-from typing import Any, Optional
 import logging
+from datetime import UTC, datetime
 
+from src.core.expressions import resolve_expressions
+from src.core.nodes.registry import NodeRegistry
 from src.core.workflow.models import (
+    ExecutionResult,
     Workflow,
     WorkflowExecution,
-    ExecutionResult,
     WorkflowNode,
 )
-from src.core.nodes.registry import NodeRegistry
-from src.core.expressions import resolve_expressions
 
 logger = logging.getLogger(__name__)
 
@@ -26,15 +25,15 @@ class WorkflowExecutor:
 
     def __init__(self):
         self.node_registry = NodeRegistry()
-        self.current_execution: Optional[WorkflowExecution] = None
+        self.current_execution: WorkflowExecution | None = None
 
     async def execute(
         self,
         workflow: Workflow,
         trigger_data: dict = None,
         trigger_type: str = "manual",
-        resume_from: Optional[str] = None,
-        previous_context: Optional[dict] = None,
+        resume_from: str | None = None,
+        previous_context: dict | None = None,
     ) -> WorkflowExecution:
         """
         Execute a workflow and return the execution result.
@@ -70,7 +69,7 @@ class WorkflowExecutor:
                 # Resume with previous context
                 context = previous_context.copy()
                 context["$trigger"] = trigger_data or context.get("$trigger", {})
-                logger.info(f"Resuming with context from previous execution")
+                logger.info("Resuming with context from previous execution")
             else:
                 context = {
                     "$trigger": trigger_data,
@@ -142,9 +141,7 @@ class WorkflowExecutor:
 
         return execution
 
-    async def _execute_node(
-        self, node: WorkflowNode, context: dict
-    ) -> ExecutionResult:
+    async def _execute_node(self, node: WorkflowNode, context: dict) -> ExecutionResult:
         """Execute a single node."""
         start_time = datetime.now(UTC)
 
@@ -222,9 +219,7 @@ class DebugExecutor(WorkflowExecutor):
         self.step_mode = True
         self._pause_event.set()
 
-    async def _execute_node(
-        self, node: WorkflowNode, context: dict
-    ) -> ExecutionResult:
+    async def _execute_node(self, node: WorkflowNode, context: dict) -> ExecutionResult:
         """Execute a node with debug support."""
         # Check for breakpoint
         if node.id in self.breakpoints or self.step_mode:

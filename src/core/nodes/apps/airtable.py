@@ -4,17 +4,16 @@ Airtable Integration Nodes - Query and manipulate Airtable bases.
 Uses Airtable REST API with Personal Access Token authentication.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
-def _get_credential(credential_id: Optional[str]) -> Optional[dict]:
+def _get_credential(credential_id: str | None) -> dict | None:
     """Load credential from vault if ID is provided."""
     if not credential_id:
         return None
     try:
         from src.data.credentials import CredentialVault
+
         vault = CredentialVault()
         cred = vault.get_credential(credential_id)
         if cred:
@@ -213,8 +212,9 @@ class AirtableListRecordsNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """List Airtable records."""
-        import httpx
         from urllib.parse import quote
+
+        import httpx
 
         api_key = _get_api_key(config)
         if not api_key:
@@ -339,8 +339,9 @@ class AirtableGetRecordNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Get single Airtable record."""
-        import httpx
         from urllib.parse import quote
+
+        import httpx
 
         api_key = _get_api_key(config)
         if not api_key:
@@ -464,9 +465,10 @@ class AirtableCreateRecordNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Create Airtable record."""
-        import httpx
         import json
         from urllib.parse import quote
+
+        import httpx
 
         api_key = _get_api_key(config)
         if not api_key:
@@ -603,9 +605,10 @@ class AirtableUpdateRecordNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Update Airtable record."""
-        import httpx
         import json
         from urllib.parse import quote
+
+        import httpx
 
         api_key = _get_api_key(config)
         if not api_key:
@@ -728,8 +731,9 @@ class AirtableDeleteRecordNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Delete Airtable record."""
-        import httpx
         from urllib.parse import quote
+
+        import httpx
 
         api_key = _get_api_key(config)
         if not api_key:

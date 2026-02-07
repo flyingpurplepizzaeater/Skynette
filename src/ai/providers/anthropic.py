@@ -5,7 +5,7 @@ Supports Claude 3 models with long context and vision.
 """
 
 import os
-from typing import AsyncIterator, Optional
+from collections.abc import AsyncIterator
 
 from src.ai.gateway import (
     AICapability,
@@ -44,7 +44,7 @@ class AnthropicProvider(BaseProvider):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         model: str = "claude-3-5-sonnet-20241022",
     ):
         super().__init__()
@@ -150,9 +150,7 @@ class AnthropicProvider(BaseProvider):
     ) -> AsyncIterator[AIStreamChunk]:
         """Stream a chat response with error recovery."""
         try:
-            async for chunk in self._stream_with_recovery(
-                self._raw_chat_stream(messages, config)
-            ):
+            async for chunk in self._stream_with_recovery(self._raw_chat_stream(messages, config)):
                 yield chunk
         except StreamInterruptedError:
             # Error already yielded as final chunk, just return

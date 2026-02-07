@@ -2,9 +2,7 @@
 Summarize Node - Summarize text using AI.
 """
 
-from typing import Any
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class SummarizeNode(BaseNode):
@@ -104,7 +102,7 @@ class SummarizeNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Execute summarization."""
-        from src.ai import get_gateway, AIMessage, GenerationConfig
+        from src.ai import AIMessage, GenerationConfig, get_gateway
 
         gateway = get_gateway()
 

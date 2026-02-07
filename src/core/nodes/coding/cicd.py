@@ -3,9 +3,8 @@ CI/CD Integration Nodes - Continuous integration and deployment automation.
 """
 
 import asyncio
-from typing import Any, Optional
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class GitHubActionsNode(BaseNode):
@@ -35,8 +34,12 @@ class GitHubActionsNode(BaseNode):
                 {"value": "cancel", "label": "Cancel Run"},
             ],
         ),
-        NodeField(name="workflow_id", label="Workflow ID/Filename", type=FieldType.STRING, required=False),
-        NodeField(name="ref", label="Branch/Tag", type=FieldType.STRING, required=False, default="main"),
+        NodeField(
+            name="workflow_id", label="Workflow ID/Filename", type=FieldType.STRING, required=False
+        ),
+        NodeField(
+            name="ref", label="Branch/Tag", type=FieldType.STRING, required=False, default="main"
+        ),
         NodeField(name="inputs", label="Workflow Inputs", type=FieldType.JSON, required=False),
         NodeField(name="run_id", label="Run ID", type=FieldType.STRING, required=False),
     ]
@@ -207,8 +210,20 @@ class WaitForCINode(BaseNode):
         NodeField(name="owner", label="Owner/Org", type=FieldType.STRING, required=True),
         NodeField(name="repo", label="Repository", type=FieldType.STRING, required=True),
         NodeField(name="run_id", label="Run/Pipeline ID", type=FieldType.STRING, required=False),
-        NodeField(name="timeout", label="Timeout (seconds)", type=FieldType.NUMBER, required=False, default=600),
-        NodeField(name="poll_interval", label="Poll Interval (seconds)", type=FieldType.NUMBER, required=False, default=30),
+        NodeField(
+            name="timeout",
+            label="Timeout (seconds)",
+            type=FieldType.NUMBER,
+            required=False,
+            default=600,
+        ),
+        NodeField(
+            name="poll_interval",
+            label="Poll Interval (seconds)",
+            type=FieldType.NUMBER,
+            required=False,
+            default=30,
+        ),
     ]
 
     outputs = [
@@ -221,8 +236,9 @@ class WaitForCINode(BaseNode):
     ]
 
     async def execute(self, config: dict, context: dict) -> dict:
-        import httpx
         import time
+
+        import httpx
 
         token = config.get("token", "")
         provider = config.get("provider", "github")
@@ -240,7 +256,9 @@ class WaitForCINode(BaseNode):
                 try:
                     if provider == "github":
                         if run_id:
-                            url = f"https://api.github.com/repos/{owner}/{repo}/actions/runs/{run_id}"
+                            url = (
+                                f"https://api.github.com/repos/{owner}/{repo}/actions/runs/{run_id}"
+                            )
                         else:
                             url = f"https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=1"
 
@@ -288,7 +306,7 @@ class WaitForCINode(BaseNode):
                                 "url": data.get("web_url", ""),
                             }
 
-                except Exception as e:
+                except Exception:
                     pass  # Continue polling
 
                 await asyncio.sleep(poll_interval)
@@ -318,12 +336,20 @@ class NPMPublishNode(BaseNode):
         NodeField(name="project_path", label="Project Path", type=FieldType.STRING, required=True),
         NodeField(name="npm_token", label="NPM Token", type=FieldType.SECRET, required=True),
         NodeField(name="tag", label="Tag", type=FieldType.STRING, required=False, default="latest"),
-        NodeField(name="access", label="Access", type=FieldType.SELECT, required=False, default="public",
-                  options=[
-                      {"value": "public", "label": "Public"},
-                      {"value": "restricted", "label": "Restricted"},
-                  ]),
-        NodeField(name="dry_run", label="Dry Run", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="access",
+            label="Access",
+            type=FieldType.SELECT,
+            required=False,
+            default="public",
+            options=[
+                {"value": "public", "label": "Public"},
+                {"value": "restricted", "label": "Restricted"},
+            ],
+        ),
+        NodeField(
+            name="dry_run", label="Dry Run", type=FieldType.BOOLEAN, required=False, default=False
+        ),
     ]
 
     outputs = [
@@ -335,8 +361,8 @@ class NPMPublishNode(BaseNode):
     ]
 
     async def execute(self, config: dict, context: dict) -> dict:
-        import subprocess
         import json
+        import subprocess
         from pathlib import Path
 
         project_path = config.get("project_path", "")
@@ -374,11 +400,7 @@ class NPMPublishNode(BaseNode):
                     cmd.append("--dry-run")
 
                 result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    cwd=project_path,
-                    timeout=120
+                    cmd, capture_output=True, text=True, cwd=project_path, timeout=120
                 )
 
                 return {
@@ -418,11 +440,17 @@ class PyPIPublishNode(BaseNode):
     inputs = [
         NodeField(name="project_path", label="Project Path", type=FieldType.STRING, required=True),
         NodeField(name="pypi_token", label="PyPI Token", type=FieldType.SECRET, required=True),
-        NodeField(name="repository", label="Repository", type=FieldType.SELECT, required=False, default="pypi",
-                  options=[
-                      {"value": "pypi", "label": "PyPI"},
-                      {"value": "testpypi", "label": "TestPyPI"},
-                  ]),
+        NodeField(
+            name="repository",
+            label="Repository",
+            type=FieldType.SELECT,
+            required=False,
+            default="pypi",
+            options=[
+                {"value": "pypi", "label": "PyPI"},
+                {"value": "testpypi", "label": "TestPyPI"},
+            ],
+        ),
     ]
 
     outputs = [
@@ -449,7 +477,7 @@ class PyPIPublishNode(BaseNode):
                 capture_output=True,
                 text=True,
                 cwd=project_path,
-                timeout=120
+                timeout=120,
             )
 
             if build_result.returncode != 0:
@@ -477,7 +505,7 @@ class PyPIPublishNode(BaseNode):
                 text=True,
                 cwd=project_path,
                 env={**subprocess.os.environ, **env},
-                timeout=120
+                timeout=120,
             )
 
             return {

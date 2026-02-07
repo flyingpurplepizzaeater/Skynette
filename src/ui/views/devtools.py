@@ -2,11 +2,14 @@
 DevTools View - GitHub AutoFixer and other developer utilities.
 """
 
-import flet as ft
 import asyncio
-from src.ui.theme import Theme
+
+import flet as ft
+
 from src.core.coding.fixer import FixGenerator
 from src.core.coding.git_ops import GitOperations
+from src.ui.theme import Theme
+
 
 class DevToolsView(ft.Column):
     """View for Developer Tools."""
@@ -23,7 +26,7 @@ class DevToolsView(ft.Column):
             label="Repository URL",
             hint_text="https://github.com/username/repo",
             height=40,
-            text_size=13
+            text_size=13,
         )
         self.issue_title = ft.TextField(label="Issue Title")
         self.issue_body = ft.TextField(label="Issue Description", multiline=True, min_lines=3)
@@ -41,7 +44,9 @@ class DevToolsView(ft.Column):
                             ft.Container(
                                 content=ft.Column(
                                     controls=[
-                                        ft.Text("GitHub AutoFixer", size=16, weight=ft.FontWeight.BOLD),
+                                        ft.Text(
+                                            "GitHub AutoFixer", size=16, weight=ft.FontWeight.BOLD
+                                        ),
                                         self.repo_url,
                                         self.issue_title,
                                         self.issue_body,
@@ -50,7 +55,7 @@ class DevToolsView(ft.Column):
                                             icon=ft.Icons.AUTO_FIX_HIGH,
                                             bgcolor=Theme.PRIMARY,
                                             color=Theme.TEXT_PRIMARY,
-                                            on_click=self._run_autofixer
+                                            on_click=self._run_autofixer,
                                         ),
                                         ft.Divider(),
                                         ft.Text("Process Log", size=14, weight=ft.FontWeight.BOLD),
@@ -59,8 +64,8 @@ class DevToolsView(ft.Column):
                                             bgcolor=Theme.BG_TERTIARY,
                                             border_radius=Theme.RADIUS_SM,
                                             padding=10,
-                                            expand=True
-                                        )
+                                            expand=True,
+                                        ),
                                     ],
                                 ),
                                 width=400,
@@ -71,15 +76,19 @@ class DevToolsView(ft.Column):
                             ft.Container(
                                 content=ft.Column(
                                     controls=[
-                                        ft.Text("Generated Fix Preview", size=16, weight=ft.FontWeight.BOLD),
+                                        ft.Text(
+                                            "Generated Fix Preview",
+                                            size=16,
+                                            weight=ft.FontWeight.BOLD,
+                                        ),
                                         ft.Container(
                                             content=self.code_preview,
                                             expand=True,
                                             bgcolor=Theme.BG_TERTIARY,
                                             padding=10,
                                             border_radius=Theme.RADIUS_MD,
-                                            border=ft.Border.all(1, Theme.BORDER)
-                                        )
+                                            border=ft.Border.all(1, Theme.BORDER),
+                                        ),
                                     ],
                                 ),
                                 expand=True,
@@ -142,7 +151,9 @@ class DevToolsView(ft.Column):
             # Note: synchronous subprocess in git_ops, better to run in executor for GUI apps
             # For prototype, we'll keep it simple but in real app use run_in_executor
             loop = asyncio.get_running_loop()
-            success = await loop.run_in_executor(None, lambda: self.git_ops.clone_repo(self.repo_url.value))
+            success = await loop.run_in_executor(
+                None, lambda: self.git_ops.clone_repo(self.repo_url.value)
+            )
 
             if not success:
                 self._log("Failed to clone repository.", Theme.ERROR)
@@ -153,9 +164,7 @@ class DevToolsView(ft.Column):
             self._log(f"Analyzed {len(files)} files.")
 
             target_file = await self.fixer.analyze_issue(
-                self.issue_title.value,
-                self.issue_body.value,
-                files
+                self.issue_title.value, self.issue_body.value, files
             )
 
             if not target_file:
@@ -172,10 +181,7 @@ class DevToolsView(ft.Column):
 
             self._log("Generating fix with AI...", Theme.PRIMARY)
             fixed_code = await self.fixer.generate_fix(
-                self.issue_title.value,
-                self.issue_body.value,
-                content,
-                target_file
+                self.issue_title.value, self.issue_body.value, content, target_file
             )
 
             if fixed_code:

@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 import flet as ft
 
 from src.ui.views.ai_hub import AIHubView
+from src.ui.views.ai_hub.providers import ProvidersTab
 from tests.helpers import extract_text_from_control
 
 
@@ -20,15 +21,19 @@ class TestProviderStatusDisplay:
 
         mock_has_key.side_effect = has_key_side_effect
 
-        # Create AIHubView instance (page will be None, which is fine for this test)
-        ai_hub = AIHubView()
-        providers_tab = ai_hub._build_providers_tab()
+        # Create ProvidersTab instance (page will be None, which is fine for this test)
+        from src.ui.views.ai_hub.state import AIHubState
+        state = AIHubState()
+        providers_tab = ProvidersTab(page=None, state=state)
+        
+        # Build the UI and get the content
+        content = providers_tab.build()
 
         # Extract all text from the UI
-        all_text = extract_text_from_control(providers_tab)
+        all_text = extract_text_from_control(content)
 
-        # Verify that "Configured ✓" appears in the output
-        assert "Configured ✓" in all_text or "Configured" in all_text
+        # Verify that "Configured" appears in the output
+        assert "Configured" in all_text
 
     @patch('src.ai.security.has_api_key')
     def test_providers_show_not_configured_status(self, mock_has_key):
@@ -36,12 +41,16 @@ class TestProviderStatusDisplay:
         # Setup - No API keys stored
         mock_has_key.return_value = False
 
-        # Create AIHubView instance
-        ai_hub = AIHubView()
-        providers_tab = ai_hub._build_providers_tab()
+        # Create ProvidersTab instance
+        from src.ui.views.ai_hub.state import AIHubState
+        state = AIHubState()
+        providers_tab = ProvidersTab(page=None, state=state)
+        
+        # Build the UI and get the content
+        content = providers_tab.build()
 
         # Extract all text from the UI
-        all_text = extract_text_from_control(providers_tab)
+        all_text = extract_text_from_control(content)
 
         # Verify that "Not configured" appears in the output
         assert "Not configured" in all_text
@@ -52,12 +61,16 @@ class TestProviderStatusDisplay:
         # Setup
         mock_has_key.return_value = False
 
-        # Create AIHubView instance
-        ai_hub = AIHubView()
-        providers_tab = ai_hub._build_providers_tab()
+        # Create ProvidersTab instance
+        from src.ui.views.ai_hub.state import AIHubState
+        state = AIHubState()
+        providers_tab = ProvidersTab(page=None, state=state)
+        
+        # Build the UI and get the content
+        content = providers_tab.build()
 
         # Extract all text from the UI
-        all_text = extract_text_from_control(providers_tab)
+        all_text = extract_text_from_control(content)
 
-        # Verify that local provider shows ready status
-        assert "Ready (no key required)" in all_text or "Ready" in all_text
+        # Verify that local provider shows ready status (check for "Ready" or "Demo")
+        assert "Ready" in all_text or "Demo" in all_text

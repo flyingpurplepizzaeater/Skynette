@@ -4,19 +4,19 @@ AI Storage Service
 Handles all AI-related database operations.
 """
 
-import sqlite3
 import json
+import sqlite3
+from datetime import UTC, date, datetime
 from pathlib import Path
-from datetime import datetime, date, timezone
-from typing import Optional, List, Dict, Any
+from typing import Any
 
-from src.ai.models.data import ProviderConfig, UsageRecord, LocalModel, BudgetSettings
+from src.ai.models.data import BudgetSettings, LocalModel, ProviderConfig, UsageRecord
 
 
 class AIStorage:
     """Manages AI-related data persistence."""
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         """Initialize AI storage."""
         if db_path:
             self.db_path = Path(db_path)
@@ -43,31 +43,37 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO ai_providers
                 (id, name, enabled, priority, config, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                config.id,
-                config.name,
-                1 if config.enabled else 0,
-                config.priority,
-                json.dumps(config.config),
-                config.created_at.isoformat(),
-                config.updated_at.isoformat()
-            ))
+            """,
+                (
+                    config.id,
+                    config.name,
+                    1 if config.enabled else 0,
+                    config.priority,
+                    json.dumps(config.config),
+                    config.created_at.isoformat(),
+                    config.updated_at.isoformat(),
+                ),
+            )
 
             conn.commit()
 
-    async def get_provider_config(self, provider_id: str) -> Optional[ProviderConfig]:
+    async def get_provider_config(self, provider_id: str) -> ProviderConfig | None:
         """Get provider configuration by ID."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, name, enabled, priority, config, created_at, updated_at
                 FROM ai_providers WHERE id = ?
-            """, (provider_id,))
+            """,
+                (provider_id,),
+            )
 
             row = cursor.fetchone()
 
@@ -81,10 +87,10 @@ class AIStorage:
             priority=row[3],
             config=json.loads(row[4]),
             created_at=datetime.fromisoformat(row[5]),
-            updated_at=datetime.fromisoformat(row[6])
+            updated_at=datetime.fromisoformat(row[6]),
         )
 
-    async def get_provider_configs(self) -> List[ProviderConfig]:
+    async def get_provider_configs(self) -> list[ProviderConfig]:
         """Get all provider configurations."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -104,7 +110,7 @@ class AIStorage:
                 priority=row[3],
                 config=json.loads(row[4]),
                 created_at=datetime.fromisoformat(row[5]),
-                updated_at=datetime.fromisoformat(row[6])
+                updated_at=datetime.fromisoformat(row[6]),
             )
             for row in rows
         ]
@@ -114,11 +120,14 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE ai_providers
                 SET priority = ?, updated_at = ?
                 WHERE id = ?
-            """, (priority, datetime.now(timezone.utc).isoformat(), provider_id))
+            """,
+                (priority, datetime.now(UTC).isoformat(), provider_id),
+            )
 
             conn.commit()
 
@@ -138,35 +147,34 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO ai_usage
                 (id, workflow_id, node_id, provider, model, prompt_tokens,
                  completion_tokens, total_tokens, cost_usd, latency_ms,
                  timestamp, success, error_message)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                record.id,
-                record.workflow_id,
-                record.node_id,
-                record.provider,
-                record.model,
-                record.prompt_tokens,
-                record.completion_tokens,
-                record.total_tokens,
-                record.cost_usd,
-                record.latency_ms,
-                record.timestamp.isoformat(),
-                1 if record.success else 0,
-                record.error_message
-            ))
+            """,
+                (
+                    record.id,
+                    record.workflow_id,
+                    record.node_id,
+                    record.provider,
+                    record.model,
+                    record.prompt_tokens,
+                    record.completion_tokens,
+                    record.total_tokens,
+                    record.cost_usd,
+                    record.latency_ms,
+                    record.timestamp.isoformat(),
+                    1 if record.success else 0,
+                    record.error_message,
+                ),
+            )
 
             conn.commit()
 
-    async def get_usage_stats(
-        self,
-        start_date: date,
-        end_date: date
-    ) -> Dict[str, Any]:
+    async def get_usage_stats(self, start_date: date, end_date: date) -> dict[str, Any]:
         """Get usage statistics for date range."""
         if end_date < start_date:
             raise ValueError("end_date must be >= start_date")
@@ -174,10 +182,11 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            start_str = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc).isoformat()
-            end_str = datetime.combine(end_date, datetime.max.time(), tzinfo=timezone.utc).isoformat()
+            start_str = datetime.combine(start_date, datetime.min.time(), tzinfo=UTC).isoformat()
+            end_str = datetime.combine(end_date, datetime.max.time(), tzinfo=UTC).isoformat()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT
                     COUNT(*) as total_calls,
                     SUM(total_tokens) as total_tokens,
@@ -185,7 +194,9 @@ class AIStorage:
                     AVG(latency_ms) as avg_latency
                 FROM ai_usage
                 WHERE timestamp BETWEEN ? AND ?
-            """, (start_str, end_str))
+            """,
+                (start_str, end_str),
+            )
 
             row = cursor.fetchone()
 
@@ -193,49 +204,55 @@ class AIStorage:
             "total_calls": row[0] or 0,
             "total_tokens": row[1] or 0,
             "total_cost": row[2] or 0.0,
-            "avg_latency": row[3] or 0.0
+            "avg_latency": row[3] or 0.0,
         }
 
-    async def get_cost_by_provider(self, month: int, year: int) -> Dict[str, float]:
+    async def get_cost_by_provider(self, month: int, year: int) -> dict[str, float]:
         """Get cost breakdown by provider for a month."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            start_date = datetime(year, month, 1, tzinfo=timezone.utc)
+            start_date = datetime(year, month, 1, tzinfo=UTC)
             if month == 12:
-                end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+                end_date = datetime(year + 1, 1, 1, tzinfo=UTC)
             else:
-                end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc)
+                end_date = datetime(year, month + 1, 1, tzinfo=UTC)
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT provider, SUM(cost_usd) as total_cost
                 FROM ai_usage
                 WHERE timestamp >= ? AND timestamp < ?
                 GROUP BY provider
-            """, (start_date.isoformat(), end_date.isoformat()))
+            """,
+                (start_date.isoformat(), end_date.isoformat()),
+            )
 
             rows = cursor.fetchall()
 
         return {row[0]: row[1] for row in rows}
 
-    async def get_cost_by_workflow(self, month: int, year: int) -> Dict[str, float]:
+    async def get_cost_by_workflow(self, month: int, year: int) -> dict[str, float]:
         """Get cost breakdown by workflow for a month."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            start_date = datetime(year, month, 1, tzinfo=timezone.utc)
+            start_date = datetime(year, month, 1, tzinfo=UTC)
             if month == 12:
-                end_date = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+                end_date = datetime(year + 1, 1, 1, tzinfo=UTC)
             else:
-                end_date = datetime(year, month + 1, 1, tzinfo=timezone.utc)
+                end_date = datetime(year, month + 1, 1, tzinfo=UTC)
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT workflow_id, SUM(cost_usd) as total_cost
                 FROM ai_usage
                 WHERE timestamp >= ? AND timestamp < ?
                   AND workflow_id IS NOT NULL
                 GROUP BY workflow_id
-            """, (start_date.isoformat(), end_date.isoformat()))
+            """,
+                (start_date.isoformat(), end_date.isoformat()),
+            )
 
             rows = cursor.fetchall()
 
@@ -253,36 +270,42 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO local_models
                 (id, name, file_path, size_bytes, quantization, source,
                  huggingface_repo, downloaded_at, last_used, usage_count)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                model.id,
-                model.name,
-                str(model.file_path),
-                model.size_bytes,
-                model.quantization,
-                model.source,
-                model.huggingface_repo,
-                model.downloaded_at.isoformat(),
-                model.last_used.isoformat() if model.last_used else None,
-                model.usage_count
-            ))
+            """,
+                (
+                    model.id,
+                    model.name,
+                    str(model.file_path),
+                    model.size_bytes,
+                    model.quantization,
+                    model.source,
+                    model.huggingface_repo,
+                    model.downloaded_at.isoformat(),
+                    model.last_used.isoformat() if model.last_used else None,
+                    model.usage_count,
+                ),
+            )
 
             conn.commit()
 
-    async def get_model(self, model_id: str) -> Optional[LocalModel]:
+    async def get_model(self, model_id: str) -> LocalModel | None:
         """Get local model by ID."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, name, file_path, size_bytes, quantization, source,
                        huggingface_repo, downloaded_at, last_used, usage_count
                 FROM local_models WHERE id = ?
-            """, (model_id,))
+            """,
+                (model_id,),
+            )
 
             row = cursor.fetchone()
 
@@ -299,10 +322,10 @@ class AIStorage:
             huggingface_repo=row[6],
             downloaded_at=datetime.fromisoformat(row[7]),
             last_used=datetime.fromisoformat(row[8]) if row[8] else None,
-            usage_count=row[9]
+            usage_count=row[9],
         )
 
-    async def get_downloaded_models(self) -> List[LocalModel]:
+    async def get_downloaded_models(self) -> list[LocalModel]:
         """Get all downloaded models."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -326,7 +349,7 @@ class AIStorage:
                 huggingface_repo=row[6],
                 downloaded_at=datetime.fromisoformat(row[7]),
                 last_used=datetime.fromisoformat(row[8]) if row[8] else None,
-                usage_count=row[9]
+                usage_count=row[9],
             )
             for row in rows
         ]
@@ -336,12 +359,15 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE local_models
                 SET usage_count = usage_count + 1,
                     last_used = ?
                 WHERE id = ?
-            """, (datetime.now(timezone.utc).isoformat(), model_id))
+            """,
+                (datetime.now(UTC).isoformat(), model_id),
+            )
 
             conn.commit()
 
@@ -356,7 +382,7 @@ class AIStorage:
 
     # Budget Methods
 
-    async def get_budget_settings(self) -> Optional[BudgetSettings]:
+    async def get_budget_settings(self) -> BudgetSettings | None:
         """Get budget settings."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -380,10 +406,10 @@ class AIStorage:
             notification_email=row[4],
             reset_day=row[5],
             created_at=datetime.fromisoformat(row[6]),
-            updated_at=datetime.fromisoformat(row[7])
+            updated_at=datetime.fromisoformat(row[7]),
         )
 
-    async def check_budget_alert(self, current_cost: float) -> Optional[Dict[str, Any]]:
+    async def check_budget_alert(self, current_cost: float) -> dict[str, Any] | None:
         """
         Check if current cost triggers budget alert.
 
@@ -419,27 +445,30 @@ class AIStorage:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO ai_budgets
                 (id, monthly_limit_usd, alert_threshold, email_notifications,
                  notification_email, reset_day, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                settings.id,
-                settings.monthly_limit_usd,
-                settings.alert_threshold,
-                1 if settings.email_notifications else 0,
-                settings.notification_email,
-                settings.reset_day,
-                settings.created_at.isoformat(),
-                settings.updated_at.isoformat()
-            ))
+            """,
+                (
+                    settings.id,
+                    settings.monthly_limit_usd,
+                    settings.alert_threshold,
+                    1 if settings.email_notifications else 0,
+                    settings.notification_email,
+                    settings.reset_day,
+                    settings.created_at.isoformat(),
+                    settings.updated_at.isoformat(),
+                ),
+            )
 
             conn.commit()
 
 
 # Singleton instance
-_ai_storage_instance: Optional[AIStorage] = None
+_ai_storage_instance: AIStorage | None = None
 
 
 def get_ai_storage() -> AIStorage:
