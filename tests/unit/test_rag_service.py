@@ -9,8 +9,8 @@ class TestRAGService:
     """Test RAG service integration."""
 
     @pytest.fixture
-    async def service(self, tmp_path):
-        """Create temp RAG service."""
+    async def service(self, tmp_path, mock_sentence_transformer):
+        """Create temp RAG service with mocked embeddings."""
         service = RAGService(storage_path=str(tmp_path))
         await service.initialize()
         return service

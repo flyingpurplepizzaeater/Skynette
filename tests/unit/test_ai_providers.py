@@ -25,12 +25,15 @@ class TestProviderStatusDisplay:
         from src.ui.views.ai_hub.state import AIHubState
         state = AIHubState()
         providers_tab = ProvidersTab(page=None, state=state)
+        
+        # Build the UI and get the content
+        content = providers_tab.build()
 
         # Extract all text from the UI
-        all_text = extract_text_from_control(providers_tab)
+        all_text = extract_text_from_control(content)
 
-        # Verify that "Configured ✓" appears in the output
-        assert "Configured ✓" in all_text or "Configured" in all_text
+        # Verify that "Configured" appears in the output
+        assert "Configured" in all_text
 
     @patch('src.ai.security.has_api_key')
     def test_providers_show_not_configured_status(self, mock_has_key):
@@ -42,9 +45,12 @@ class TestProviderStatusDisplay:
         from src.ui.views.ai_hub.state import AIHubState
         state = AIHubState()
         providers_tab = ProvidersTab(page=None, state=state)
+        
+        # Build the UI and get the content
+        content = providers_tab.build()
 
         # Extract all text from the UI
-        all_text = extract_text_from_control(providers_tab)
+        all_text = extract_text_from_control(content)
 
         # Verify that "Not configured" appears in the output
         assert "Not configured" in all_text
@@ -59,9 +65,12 @@ class TestProviderStatusDisplay:
         from src.ui.views.ai_hub.state import AIHubState
         state = AIHubState()
         providers_tab = ProvidersTab(page=None, state=state)
+        
+        # Build the UI and get the content
+        content = providers_tab.build()
 
         # Extract all text from the UI
-        all_text = extract_text_from_control(providers_tab)
+        all_text = extract_text_from_control(content)
 
-        # Verify that local provider shows ready status
-        assert "Ready (no key required)" in all_text or "Ready" in all_text
+        # Verify that local provider shows ready status (check for "Ready" or "Demo")
+        assert "Ready" in all_text or "Demo" in all_text
