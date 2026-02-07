@@ -47,7 +47,7 @@ This project adheres to a Code of Conduct. By participating, you are expected to
 
 2. **Install development dependencies**:
    ```bash
-   pip install -e ".[dev]"
+   pip install -e ".[ai,dev]"
    ```
 
 3. **Install Playwright browsers** (for E2E tests):

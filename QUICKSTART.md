@@ -30,8 +30,8 @@ venv\Scripts\activate
 # macOS/Linux:
 source venv/bin/activate
 
-# 4. Install dependencies
-pip install -e ".[dev]"
+# 4. Install dependencies (includes AI features)
+pip install -e ".[ai,dev]"
 
 # 5. Run application
 python src/main.py
@@ -53,8 +53,8 @@ git remote add upstream https://github.com/flyingpurplepizzaeater/Skynette.git
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 
-# 4. Install with dev dependencies
-pip install -e ".[dev]"
+# 4. Install with dev and AI dependencies
+pip install -e ".[ai,dev]"
 
 # 5. Install Playwright browsers (for E2E tests)
 playwright install chromium
@@ -185,8 +185,8 @@ ai:
 # Ensure you're in virtual environment
 which python  # Should show venv path
 
-# Reinstall in editable mode
-pip install -e ".[dev]"
+# Reinstall in editable mode with AI features
+pip install -e ".[ai,dev]"
 ```
 
 ### Test Failures
