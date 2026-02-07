@@ -107,7 +107,6 @@ class CodeEditorView(ft.Column):
 
         # File picker (must be added to page overlay before use)
         self._folder_picker = ft.FilePicker()
-        self._folder_picker.on_result = self._on_folder_picked
         if self._page_ref:
             self._page_ref.overlay.append(self._folder_picker)
 
@@ -639,20 +638,13 @@ class CodeEditorView(ft.Column):
         self._page_ref.snack_bar.open = True
         self._page_ref.update()
 
-    def _open_folder(self) -> None:
+    async def _open_folder(self) -> None:
         """Open folder picker."""
-        self._folder_picker.get_directory_path()
-
-    def _on_folder_picked(self, e: ft.FilePickerResultEvent) -> None:
-        """Handle folder picker result.
-
-        Args:
-            e: File picker result event.
-        """
-        if e.path:
-            self.state.set_file_tree_root(e.path)
+        path = await self._folder_picker.get_directory_path()
+        if path:
+            self.state.set_file_tree_root(path)
             if self._file_tree:
-                self._file_tree.set_root(e.path)
+                self._file_tree.set_root(path)
 
     def _show_save_dialog(self, index: int) -> None:
         """Show save/discard/cancel dialog for dirty file.

@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 import flet as ft
 
 from src.ui.views.ai_hub import AIHubView
+from src.ui.views.ai_hub.providers import ProvidersTab
 from tests.helpers import extract_text_from_control
 
 
@@ -20,9 +21,10 @@ class TestProviderStatusDisplay:
 
         mock_has_key.side_effect = has_key_side_effect
 
-        # Create AIHubView instance (page will be None, which is fine for this test)
-        ai_hub = AIHubView()
-        providers_tab = ai_hub._build_providers_tab()
+        # Create ProvidersTab instance (page will be None, which is fine for this test)
+        from src.ui.views.ai_hub.state import AIHubState
+        state = AIHubState()
+        providers_tab = ProvidersTab(page=None, state=state)
 
         # Extract all text from the UI
         all_text = extract_text_from_control(providers_tab)
@@ -36,9 +38,10 @@ class TestProviderStatusDisplay:
         # Setup - No API keys stored
         mock_has_key.return_value = False
 
-        # Create AIHubView instance
-        ai_hub = AIHubView()
-        providers_tab = ai_hub._build_providers_tab()
+        # Create ProvidersTab instance
+        from src.ui.views.ai_hub.state import AIHubState
+        state = AIHubState()
+        providers_tab = ProvidersTab(page=None, state=state)
 
         # Extract all text from the UI
         all_text = extract_text_from_control(providers_tab)
@@ -52,9 +55,10 @@ class TestProviderStatusDisplay:
         # Setup
         mock_has_key.return_value = False
 
-        # Create AIHubView instance
-        ai_hub = AIHubView()
-        providers_tab = ai_hub._build_providers_tab()
+        # Create ProvidersTab instance
+        from src.ui.views.ai_hub.state import AIHubState
+        state = AIHubState()
+        providers_tab = ProvidersTab(page=None, state=state)
 
         # Extract all text from the UI
         all_text = extract_text_from_control(providers_tab)

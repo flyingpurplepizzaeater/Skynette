@@ -30,7 +30,6 @@ class UploadDialog(ft.AlertDialog):
 
         # File picker
         self.file_picker = ft.FilePicker()
-        self.file_picker.on_result = self._on_file_picker_result
         # Add file picker to page overlay
         if self._page_ref:
             self._page_ref.overlay.append(self.file_picker)
@@ -105,19 +104,18 @@ class UploadDialog(ft.AlertDialog):
             spacing=0,
         )
 
-    def _on_browse_files(self, e):
+    async def _on_browse_files(self, e):
         """Open file picker."""
-        self.file_picker.pick_files(
+        files = await self.file_picker.pick_files(
             allowed_extensions=["md", "txt"],
             allow_multiple=True,
             dialog_title="Select Documents",
         )
-
-    def _on_file_picker_result(self, e: ft.FilePickerResultEvent):
-        """Handle file picker result."""
-        if e.files:
+        
+        # Handle file picker result
+        if files:
             # Add selected files
-            for file in e.files:
+            for file in files:
                 file_path = file.path
                 if file_path not in [f["path"] for f in self.selected_files]:
                     self.selected_files.append({

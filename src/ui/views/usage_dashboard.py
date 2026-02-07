@@ -821,16 +821,20 @@ class UsageDashboardView(ft.Column):
 
             # Use Flet's file picker to save
             if self._page:
-                file_picker = ft.FilePicker(on_result=lambda e: self._on_csv_save_result(e, csv_content))
+                file_picker = ft.FilePicker()
                 self._page.overlay.append(file_picker)
                 self._page.update()
 
                 # Open save dialog
-                file_picker.save_file(
+                save_path = await file_picker.save_file(
                     dialog_title="Export Usage Data",
                     file_name=filename,
                     allowed_extensions=["csv"],
                 )
+
+                # Handle the save result
+                if save_path:
+                    await self._save_csv_file(save_path, csv_content)
 
         except Exception as e:
             print(f"Error exporting CSV: {e}")
@@ -886,31 +890,35 @@ class UsageDashboardView(ft.Column):
         writer.writerows(rows)
         return output.getvalue()
 
-    def _on_csv_save_result(self, e: ft.FilePickerResultEvent, csv_content: str):
-        """Handle CSV file save result."""
-        if e.path:
-            try:
-                # Write CSV to selected file
-                with open(e.path, 'w', newline='', encoding='utf-8') as f:
-                    f.write(csv_content)
+    async def _save_csv_file(self, path: str, csv_content: str):
+        """Save CSV file to the specified path.
+        
+        Args:
+            path: File path to save to
+            csv_content: CSV content to write
+        """
+        try:
+            # Write CSV to selected file
+            with open(path, 'w', newline='', encoding='utf-8') as f:
+                f.write(csv_content)
 
-                # Show success snackbar
-                if self._page:
-                    snackbar = ft.SnackBar(
-                        ft.Text(f"Exported to {e.path}"),
-                        bgcolor=Theme.SUCCESS,
-                    )
-                    self._page.overlay.append(snackbar)
-                    snackbar.open = True
-                    self._page.update()
+            # Show success snackbar
+            if self._page:
+                snackbar = ft.SnackBar(
+                    ft.Text(f"Exported to {path}"),
+                    bgcolor=Theme.SUCCESS,
+                )
+                self._page.overlay.append(snackbar)
+                snackbar.open = True
+                self._page.update()
 
-            except Exception as ex:
-                print(f"Error writing CSV file: {ex}")
-                if self._page:
-                    snackbar = ft.SnackBar(ft.Text(f"Save failed: {str(ex)}"), bgcolor=Theme.ERROR)
-                    self._page.overlay.append(snackbar)
-                    snackbar.open = True
-                    self._page.update()
+        except Exception as ex:
+            print(f"Error writing CSV file: {ex}")
+            if self._page:
+                snackbar = ft.SnackBar(ft.Text(f"Save failed: {str(ex)}"), bgcolor=Theme.ERROR)
+                self._page.overlay.append(snackbar)
+                snackbar.open = True
+                self._page.update()
 
     def _show_error_snackbar(self, message: str):
         """Show error snackbar notification."""

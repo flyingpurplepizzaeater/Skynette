@@ -1051,25 +1051,25 @@ class ModelLibraryTab(ft.Column):
             expand=True,
         )
 
-    def _select_local_file(self, e):
+    async def _select_local_file(self, e):
         """Open file picker for local GGUF import."""
-        def on_file_picked(e_result: ft.FilePickerResultEvent):
-            if e_result.files:
-                for file in e_result.files:
-                    self._import_local_gguf(file.path)
-
         if not self.file_picker:
-            self.file_picker = ft.FilePicker(on_result=on_file_picked)
+            self.file_picker = ft.FilePicker()
             if self._page:
                 self._page.overlay.append(self.file_picker)
                 self._page.update()
 
         # Open file picker for GGUF files
-        self.file_picker.pick_files(
+        files = await self.file_picker.pick_files(
             dialog_title="Select GGUF Model File",
             allowed_extensions=["gguf"],
             allow_multiple=False,
         )
+        
+        # Handle selected files
+        if files:
+            for file in files:
+                self._import_local_gguf(file.path)
 
     def _import_local_gguf(self, file_path: str):
         """Import a local GGUF file."""
