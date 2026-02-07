@@ -1,0 +1,39 @@
+# Include documentation files
+include README.md
+include LICENSE
+include CHANGELOG.md
+include INSTALLATION.md
+include QUICKSTART.md
+include CONTRIBUTING.md
+include CODE_OF_CONDUCT.md
+include SECURITY.md
+
+# Include requirements
+include requirements.txt
+include pyproject.toml
+
+# Include all source files
+recursive-include src *.py
+recursive-include src *.yaml
+recursive-include src *.json
+
+# Exclude build and cache files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude *.dylib
+global-exclude *.dll
+
+# Exclude development and build files
+exclude .pre-commit-config.yaml
+exclude *.spec
+exclude build*.py
+exclude setup_msi.py
+exclude Skynette.bat
+exclude build.bat
+recursive-exclude tests *
+recursive-exclude .github *
+recursive-exclude .planning *
+recursive-exclude .claude *
+recursive-exclude docs *

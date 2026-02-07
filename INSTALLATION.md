@@ -4,6 +4,10 @@ Complete guide for installing, building, and running Skynette on your local mach
 
 ## Table of Contents
 
+- [Installation Methods](#installation-methods)
+  - [Method 1: Install from PyPI (Recommended)](#method-1-install-from-pypi-recommended)
+  - [Method 2: Pre-built Executables](#method-2-pre-built-executables)
+  - [Method 3: Install from Source](#method-3-install-from-source)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Detailed Installation](#detailed-installation)
@@ -20,6 +24,116 @@ Complete guide for installing, building, and running Skynette on your local mach
 - [Optional Features](#optional-features)
 - [Troubleshooting](#troubleshooting)
 - [Verifying Installation](#verifying-installation)
+
+---
+
+## Installation Methods
+
+### Method 1: Install from PyPI (Recommended)
+
+The easiest way to install Skynette is via pip from the Python Package Index (PyPI).
+
+**Prerequisites:**
+- Python 3.11 or 3.12
+- pip (usually comes with Python)
+
+**Installation:**
+
+```bash
+# Basic installation
+pip install skynette
+
+# Install with AI features (recommended)
+pip install skynette[ai]
+
+# Install with database integrations
+pip install skynette[databases]
+
+# Install with cloud service integrations
+pip install skynette[cloud]
+
+# Install with all optional features
+pip install skynette[all]
+```
+
+**Running Skynette:**
+
+```bash
+# Run with the command-line tool
+skynette
+
+# Or run as a Python module
+python -m src.main
+```
+
+**Upgrade to the latest version:**
+
+```bash
+pip install --upgrade skynette
+```
+
+---
+
+### Method 2: Pre-built Executables
+
+Download ready-to-run executables from the [GitHub Releases](https://github.com/flyingpurplepizzaeater/Skynette/releases) page.
+
+#### Windows
+
+1. Download `Skynette-Windows.zip` from the latest release
+2. Extract the ZIP file to a folder (e.g., `C:\Program Files\Skynette`)
+3. Run `Skynette.exe`
+4. (Optional) Create a desktop shortcut for easy access
+
+#### macOS
+
+**Option A: DMG Installer**
+1. Download `Skynette.dmg` from the latest release
+2. Open the DMG file
+3. Drag `Skynette.app` to your Applications folder
+4. Launch from Applications or Spotlight
+
+**Option B: ZIP Archive**
+1. Download `Skynette-macOS.zip` from the latest release
+2. Extract the ZIP file
+3. Move `Skynette.app` to your Applications folder
+4. Right-click and select "Open" the first time (to bypass Gatekeeper)
+
+#### Linux
+
+**Option A: AppImage (Universal)**
+1. Download `Skynette-*.AppImage` from the latest release
+2. Make it executable: `chmod +x Skynette-*.AppImage`
+3. Run: `./Skynette-*.AppImage`
+4. (Optional) Use AppImageLauncher for desktop integration
+
+**Option B: Debian/Ubuntu Package**
+1. Download `skynette_*.deb` from the latest release
+2. Install: `sudo dpkg -i skynette_*.deb`
+3. Run: `skynette` or find it in your application menu
+
+**Option C: Tarball**
+1. Download `Skynette-Linux.tar.gz` from the latest release
+2. Extract: `tar -xzvf Skynette-Linux.tar.gz`
+3. Run: `cd Skynette && ./Skynette`
+
+**Verifying Downloads:**
+
+All releases include a `SHA256SUMS.txt` file for integrity verification:
+
+```bash
+# Download the release and checksums file
+# Then verify:
+sha256sum -c SHA256SUMS.txt
+```
+
+---
+
+### Method 3: Install from Source
+
+For developers or users who want the latest features.
+
+See the [Quick Start](#quick-start) and [Detailed Installation](#detailed-installation) sections below.
 
 ---
 
