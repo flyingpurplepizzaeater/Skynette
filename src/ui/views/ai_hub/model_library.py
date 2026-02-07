@@ -128,7 +128,7 @@ class ModelLibraryTab(ft.Column):
                             spacing=8,
                         ),
                         padding=ft.Padding.all(48),
-                        alignment=ft.alignment.Alignment(0, 0),
+                        alignment=ft.Alignment.CENTER,
                         expand=True,
                     ),
                 ],

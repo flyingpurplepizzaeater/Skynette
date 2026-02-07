@@ -240,7 +240,7 @@ class WorkflowEditorView(ft.Column):
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=Theme.SPACING_SM,
                         ),
-                        alignment=ft.alignment.Alignment(0, 0),
+                        alignment=ft.Alignment.CENTER,
                         expand=True,
                     ),
                     # Sample node for demonstration

@@ -242,7 +242,7 @@ class CodeEditorView(ft.Column):
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
                 expand=True,
-                alignment=ft.alignment.Alignment(0, 0),
+                alignment=ft.Alignment.CENTER,
             )
 
         # Create editor for active file

@@ -114,7 +114,7 @@ class AgentsView(ft.Column):
                                 width=24, height=24,
                                 bgcolor=Theme.PRIMARY + "20",
                                 border_radius=12,
-                                alignment=ft.alignment.center,
+                                alignment=ft.Alignment.CENTER,
                             ),
                             ft.Column(
                                 controls=[
@@ -203,7 +203,7 @@ class AgentsView(ft.Column):
                 padding=16,
                 bgcolor=Theme.BG_TERTIARY,
                 border_radius=Theme.RADIUS_MD,
-                alignment=ft.alignment.center_right,
+                alignment=ft.Alignment.CENTER_right,
             )
         )
         if self._page:
@@ -267,7 +267,7 @@ class AgentsView(ft.Column):
                 ft.Container(
                     content=ft.Text("All tasks completed.", color=Theme.SUCCESS, weight=ft.FontWeight.BOLD),
                     padding=10,
-                    alignment=ft.alignment.center
+                    alignment=ft.Alignment.CENTER
                 )
             )
 

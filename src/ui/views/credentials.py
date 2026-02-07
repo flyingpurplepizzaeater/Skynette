@@ -66,7 +66,7 @@ class CredentialsView(ft.Column):
                             spacing=Theme.SPACING_SM,
                         ),
                         padding=Theme.SPACING_XL,
-                        alignment=ft.alignment.center,
+                        alignment=ft.Alignment.CENTER,
                     )
                 )
             else:
@@ -319,7 +319,7 @@ class CredentialsView(ft.Column):
                                 height=40,
                                 bgcolor=provider["color"],
                                 border_radius=Theme.RADIUS_SM,
-                                alignment=ft.alignment.center,
+                                alignment=ft.Alignment.CENTER,
                             ),
                             ft.Column(
                                 controls=[
@@ -416,7 +416,7 @@ class CredentialsView(ft.Column):
                         height=36,
                         bgcolor=Theme.PRIMARY if is_oauth else Theme.SECONDARY,
                         border_radius=Theme.RADIUS_SM,
-                        alignment=ft.alignment.center,
+                        alignment=ft.Alignment.CENTER,
                     ),
                     ft.Column(
                         controls=[

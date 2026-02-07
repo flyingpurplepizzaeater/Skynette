@@ -102,7 +102,7 @@ class DiffPreview(ft.Column):
                 ft.Container(
                     content=ft.Text("No changes detected", color=self.CONTEXT_TEXT),
                     padding=20,
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment.CENTER,
                 )
             ]
             return

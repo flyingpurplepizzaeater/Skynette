@@ -31,10 +31,14 @@ class TestCSVExport:
         assert inspect.iscoroutinefunction(dashboard._build_csv_content)
 
     def test_save_csv_file_method_exists(self):
-        """_save_csv_file method should exist."""
+        """_save_csv_file method should exist and be async."""
+        import inspect
+        
         dashboard = UsageDashboardView()
         assert hasattr(dashboard, '_save_csv_file')
-        assert callable(dashboard._on_csv_save_result)
+        assert callable(dashboard._save_csv_file)
+        # Should be async
+        assert inspect.iscoroutinefunction(dashboard._save_csv_file)
 
     @pytest.mark.asyncio
     async def test_build_csv_content_structure(self):

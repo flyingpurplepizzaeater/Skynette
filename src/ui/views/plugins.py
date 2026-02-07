@@ -212,7 +212,7 @@ class PluginsView(ft.Column):
                         padding=Theme.SPACING_XL,
                         border_radius=Theme.RADIUS_MD,
                         border=ft.Border.all(2, Theme.BORDER),
-                        alignment=ft.alignment.Alignment(0, 0),
+                        alignment=ft.Alignment.CENTER,
                     ),
                     ft.Container(height=Theme.SPACING_LG),
                     ft.Text("Documentation", size=16, weight=ft.FontWeight.W_600),

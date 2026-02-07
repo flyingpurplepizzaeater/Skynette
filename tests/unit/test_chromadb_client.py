@@ -88,7 +88,8 @@ class TestChromaDBClient:
         for result in results:
             assert "chunk" in result
             assert "similarity" in result
-            assert 0 <= result["similarity"] <= 1
+            # Allow small floating point error (1e-10)
+            assert -1e-10 <= result["similarity"] <= 1 + 1e-10
 
     @pytest.mark.asyncio
     async def test_delete_collection(self, client):

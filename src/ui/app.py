@@ -85,7 +85,7 @@ class SkynetteApp:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            alignment=ft.alignment.Alignment(0, 0),
+            alignment=ft.Alignment.CENTER,
             bgcolor=SkynetteTheme.BG_PRIMARY + "E6",  # Semi-transparent
             visible=False,
             expand=True,
@@ -782,7 +782,7 @@ class SkynetteApp:
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
                 expand=True,
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment.CENTER,
             )
 
         return ft.Container(
@@ -2125,7 +2125,7 @@ class SkynetteApp:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=4,
                 ),
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment.CENTER,
                 expand=True,
             )
             all_elements.append(empty_state)
