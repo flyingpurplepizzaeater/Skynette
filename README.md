@@ -82,6 +82,8 @@ See [pyproject.toml](pyproject.toml) for complete list.
 
 ## Installation
 
+> **📚 For detailed installation instructions, troubleshooting, and platform-specific guides, see [INSTALLATION.md](INSTALLATION.md)**
+
 ### Method 1: From Source (Recommended for Development)
 
 ```bash
@@ -326,6 +328,10 @@ cloud:
 See [docs/plans/](docs/plans/) for detailed implementation plans.
 
 ## Documentation
+
+### Getting Started
+- **[Installation Guide](INSTALLATION.md)**: Complete installation instructions, troubleshooting, and platform-specific guides
+- **[Quick Start Guide](QUICKSTART.md)**: Get up and running in 5 minutes
 
 ### User Guides
 - **[Knowledge Bases User Guide](docs/user-guide/knowledge-bases.md)**: Creating collections, uploading documents, semantic search

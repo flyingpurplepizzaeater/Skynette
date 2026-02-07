@@ -31,6 +31,8 @@ This project adheres to a Code of Conduct. By participating, you are expected to
 
 ## Development Setup
 
+> **📚 For detailed installation instructions, see [INSTALLATION.md](INSTALLATION.md)**
+
 ### Prerequisites
 - Python 3.11 or higher
 - Git

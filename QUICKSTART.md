@@ -2,6 +2,8 @@
 
 Get Skynette running in 5 minutes!
 
+> **📚 Need more help?** See [INSTALLATION.md](INSTALLATION.md) for detailed installation instructions, troubleshooting, and platform-specific guides.
+
 ## For Users
 
 ### Download Pre-built Executable (Easiest)
