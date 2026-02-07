@@ -10,7 +10,7 @@ from collections.abc import Callable
 
 import flet as ft
 
-from src.services.diff import DiffService, DiffHunk, DiffLine
+from src.services.diff import DiffHunk, DiffLine, DiffService
 from src.ui.theme import SkynetteTheme
 
 
@@ -172,12 +172,8 @@ class DiffPreview(ft.Column):
 
     def _build_stats(self) -> ft.Control:
         """Build statistics row showing change counts."""
-        additions = sum(
-            1 for h in self._hunks for line in h.lines if line.line_type == "add"
-        )
-        deletions = sum(
-            1 for h in self._hunks for line in h.lines if line.line_type == "remove"
-        )
+        additions = sum(1 for h in self._hunks for line in h.lines if line.line_type == "add")
+        deletions = sum(1 for h in self._hunks for line in h.lines if line.line_type == "remove")
 
         return ft.Row(
             [
@@ -203,9 +199,7 @@ class DiffPreview(ft.Column):
 
         # Visual indicator for accepted state
         status_icon = (
-            ft.Icon(ft.Icons.CHECK_CIRCLE, color=self.ADDED_TEXT, size=16)
-            if is_accepted
-            else None
+            ft.Icon(ft.Icons.CHECK_CIRCLE, color=self.ADDED_TEXT, size=16) if is_accepted else None
         )
 
         hunk_header = ft.Container(

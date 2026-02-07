@@ -8,14 +8,15 @@ Provides a single interface for all AI operations with:
 - Usage tracking
 """
 
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import AsyncIterator, Optional
-import asyncio
+from typing import Optional
 
 
 class AICapability(str, Enum):
     """AI capabilities that providers can support."""
+
     TEXT_GENERATION = "text_generation"
     CHAT = "chat"
     EMBEDDINGS = "embeddings"
@@ -28,9 +29,10 @@ class AICapability(str, Enum):
 @dataclass
 class AIMessage:
     """A message in a conversation."""
+
     role: str  # "system", "user", "assistant"
     content: str
-    name: Optional[str] = None
+    name: str | None = None
 
     def to_dict(self) -> dict:
         d = {"role": self.role, "content": self.content}
@@ -42,17 +44,19 @@ class AIMessage:
 @dataclass
 class AIResponse:
     """Response from an AI provider."""
+
     content: str
     provider: str
     model: str
     usage: dict = field(default_factory=dict)
-    finish_reason: Optional[str] = None
-    raw_response: Optional[dict] = None
+    finish_reason: str | None = None
+    raw_response: dict | None = None
 
 
 @dataclass
 class RateLimitInfo:
     """Rate limit information from provider response headers."""
+
     limit_requests: int = 0  # Max requests per window
     remaining_requests: int = 0  # Requests remaining
     reset_time: float | None = None  # Unix timestamp when limit resets
@@ -77,11 +81,13 @@ class RateLimitInfo:
         if self.reset_time is None:
             return None
         import time
+
         return max(0, self.reset_time - time.time())
 
 
 class StreamInterruptedError(Exception):
     """Raised when a stream is interrupted mid-response."""
+
     def __init__(self, partial_content: str, cause: Exception):
         self.partial_content = partial_content
         self.cause = cause
@@ -91,16 +97,18 @@ class StreamInterruptedError(Exception):
 @dataclass
 class AIStreamChunk:
     """A chunk from a streaming response."""
+
     content: str
     is_final: bool = False
-    usage: Optional[dict] = None
-    error: Optional[dict] = None  # Error info if stream interrupted
+    usage: dict | None = None
+    error: dict | None = None  # Error info if stream interrupted
     rate_limit: Optional["RateLimitInfo"] = None  # Rate limit info from response
 
 
 @dataclass
 class GenerationConfig:
     """Configuration for text generation."""
+
     max_tokens: int = 2048
     temperature: float = 0.7
     top_p: float = 0.9
@@ -121,9 +129,9 @@ class AIGateway:
     """
 
     def __init__(self):
-        self.providers: dict[str, "BaseProvider"] = {}
+        self.providers: dict[str, BaseProvider] = {}
         self.provider_priority: list[str] = []
-        self.default_provider: Optional[str] = None
+        self.default_provider: str | None = None
         self.auto_fallback: bool = True
         self._usage_log: list[dict] = []
 
@@ -163,8 +171,8 @@ class AIGateway:
     async def generate(
         self,
         prompt: str,
-        config: Optional[GenerationConfig] = None,
-        provider: Optional[str] = None,
+        config: GenerationConfig | None = None,
+        provider: str | None = None,
     ) -> AIResponse:
         """
         Generate text from a prompt.
@@ -205,8 +213,8 @@ class AIGateway:
     async def chat(
         self,
         messages: list[AIMessage],
-        config: Optional[GenerationConfig] = None,
-        provider: Optional[str] = None,
+        config: GenerationConfig | None = None,
+        provider: str | None = None,
     ) -> AIResponse:
         """
         Generate a chat response.
@@ -246,8 +254,8 @@ class AIGateway:
     async def chat_stream(
         self,
         messages: list[AIMessage],
-        config: Optional[GenerationConfig] = None,
-        provider: Optional[str] = None,
+        config: GenerationConfig | None = None,
+        provider: str | None = None,
     ) -> AsyncIterator[AIStreamChunk]:
         """
         Stream a chat response.
@@ -279,7 +287,7 @@ class AIGateway:
     async def embed(
         self,
         texts: list[str],
-        provider: Optional[str] = None,
+        provider: str | None = None,
     ) -> list[list[float]]:
         """
         Generate embeddings for texts.
@@ -315,11 +323,13 @@ class AIGateway:
 
     def _log_usage(self, provider: str, operation: str, usage: dict):
         """Log usage for tracking."""
-        self._usage_log.append({
-            "provider": provider,
-            "operation": operation,
-            "usage": usage,
-        })
+        self._usage_log.append(
+            {
+                "provider": provider,
+                "operation": operation,
+                "usage": usage,
+            }
+        )
 
     def get_usage_summary(self) -> dict:
         """Get usage summary by provider."""
@@ -335,7 +345,7 @@ class AIGateway:
 
 
 # Singleton gateway instance
-_gateway: Optional[AIGateway] = None
+_gateway: AIGateway | None = None
 
 
 def get_gateway() -> AIGateway:

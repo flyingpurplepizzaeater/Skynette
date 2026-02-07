@@ -420,7 +420,9 @@ class SimpleModeView(ft.Column):
                             ),
                             ft.Container(height=8),
                             *property_fields,
-                        ] if property_fields else [
+                        ]
+                        if property_fields
+                        else [
                             ft.Text(
                                 node_def.description,
                                 size=12,
@@ -454,11 +456,15 @@ class SimpleModeView(ft.Column):
             color=Theme.TEXT_PRIMARY,
         )
 
-        description = ft.Text(
-            field.description,
-            size=11,
-            color=Theme.TEXT_SECONDARY,
-        ) if field.description else None
+        description = (
+            ft.Text(
+                field.description,
+                size=11,
+                color=Theme.TEXT_SECONDARY,
+            )
+            if field.description
+            else None
+        )
 
         # Create appropriate input based on field type
         from src.core.nodes.base import FieldType
@@ -479,7 +485,9 @@ class SimpleModeView(ft.Column):
                 keyboard_type=ft.KeyboardType.NUMBER,
                 hint_text=field.placeholder,
                 border_color=Theme.BORDER,
-                on_change=lambda e, n=node, f=field.name: self._update_field(n, f, self._parse_number(e.control.value)),
+                on_change=lambda e, n=node, f=field.name: self._update_field(
+                    n, f, self._parse_number(e.control.value)
+                ),
             )
         elif field.type == FieldType.BOOLEAN:
             input_widget = ft.Switch(
@@ -491,12 +499,13 @@ class SimpleModeView(ft.Column):
             dropdown = ft.Dropdown(
                 value=str(current_value) if current_value else None,
                 options=[
-                    ft.dropdown.Option(opt.get("value"), opt.get("label"))
-                    for opt in field.options
+                    ft.dropdown.Option(opt.get("value"), opt.get("label")) for opt in field.options
                 ],
                 border_color=Theme.BORDER,
             )
-            dropdown.on_change = lambda e, n=node, f=field.name: self._update_field(n, f, e.control.value)
+            dropdown.on_change = lambda e, n=node, f=field.name: self._update_field(
+                n, f, e.control.value
+            )
             input_widget = dropdown
         elif field.type == FieldType.SECRET:
             input_widget = ft.TextField(
@@ -616,7 +625,7 @@ class SimpleModeView(ft.Column):
                 )
             )
 
-        if hasattr(self, 'page') and self.page:
+        if hasattr(self, "page") and self.page:
             self._current_dialog = ft.AlertDialog(
                 title=ft.Text("Choose a Trigger"),
                 content=ft.Container(
@@ -680,7 +689,7 @@ class SimpleModeView(ft.Column):
                 )
             )
 
-        if hasattr(self, 'page') and self.page:
+        if hasattr(self, "page") and self.page:
             # Build tabs control using Flet 0.80+ pattern
             if tab_headers:
                 tab_bar = ft.TabBar(tabs=tab_headers)
@@ -716,7 +725,9 @@ class SimpleModeView(ft.Column):
         if old_trigger:
             self.workflow.nodes = [n for n in self.workflow.nodes if n.id != old_trigger.id]
             # Remove connections from old trigger
-            self.workflow.connections = [c for c in self.workflow.connections if c.source_node_id != old_trigger.id]
+            self.workflow.connections = [
+                c for c in self.workflow.connections if c.source_node_id != old_trigger.id
+            ]
 
         # Add new trigger
         new_trigger = WorkflowNode(
@@ -724,20 +735,26 @@ class SimpleModeView(ft.Column):
             type=trigger_type,
             name=node_def.name if node_def else trigger_type,
             position={"x": 100, "y": 100},
-            config={field.name: field.default for field in node_def.inputs if field.default is not None} if node_def else {},
+            config={
+                field.name: field.default for field in node_def.inputs if field.default is not None
+            }
+            if node_def
+            else {},
         )
         self.workflow.nodes.insert(0, new_trigger)
 
         # Connect trigger to first step if exists
         steps = self._get_ordered_steps()
         if steps:
-            self.workflow.connections.append(WorkflowConnection(
-                source_node_id=new_trigger.id,
-                target_node_id=steps[0].id,
-            ))
+            self.workflow.connections.append(
+                WorkflowConnection(
+                    source_node_id=new_trigger.id,
+                    target_node_id=steps[0].id,
+                )
+            )
 
         # Close dialog and refresh
-        if hasattr(self, 'page') and self.page and self._current_dialog:
+        if hasattr(self, "page") and self.page and self._current_dialog:
             self.page.close(self._current_dialog)
             self._current_dialog = None
 
@@ -770,28 +787,36 @@ class SimpleModeView(ft.Column):
             type=step_type,
             name=node_def.name if node_def else step_type,
             position={"x": 100, "y": max_y + 120},
-            config={field.name: field.default for field in node_def.inputs if field.default is not None} if node_def else {},
+            config={
+                field.name: field.default for field in node_def.inputs if field.default is not None
+            }
+            if node_def
+            else {},
         )
         self.workflow.nodes.append(new_node)
 
         # Connect to previous node (or trigger if no previous steps)
         if prev_node:
             # Connect from previous step to new step
-            self.workflow.connections.append(WorkflowConnection(
-                source_node_id=prev_node.id,
-                target_node_id=new_node.id,
-            ))
+            self.workflow.connections.append(
+                WorkflowConnection(
+                    source_node_id=prev_node.id,
+                    target_node_id=new_node.id,
+                )
+            )
         else:
             # Connect from trigger (first step after trigger)
             trigger = self._get_trigger()
             if trigger:
-                self.workflow.connections.append(WorkflowConnection(
-                    source_node_id=trigger.id,
-                    target_node_id=new_node.id,
-                ))
+                self.workflow.connections.append(
+                    WorkflowConnection(
+                        source_node_id=trigger.id,
+                        target_node_id=new_node.id,
+                    )
+                )
 
         # Close dialog and refresh
-        if hasattr(self, 'page') and self.page and self._current_dialog:
+        if hasattr(self, "page") and self.page and self._current_dialog:
             self.page.close(self._current_dialog)
             self._current_dialog = None
 
@@ -828,16 +853,19 @@ class SimpleModeView(ft.Column):
 
             # Remove connections involving this node
             self.workflow.connections = [
-                c for c in self.workflow.connections
+                c
+                for c in self.workflow.connections
                 if c.source_node_id != node.id and c.target_node_id != node.id
             ]
 
             # Add new connection if needed
             if prev_node and next_node:
-                self.workflow.connections.append(WorkflowConnection(
-                    source_node_id=prev_node.id,
-                    target_node_id=next_node.id,
-                ))
+                self.workflow.connections.append(
+                    WorkflowConnection(
+                        source_node_id=prev_node.id,
+                        target_node_id=next_node.id,
+                    )
+                )
 
             if self.selected_step_index == index:
                 self.selected_step_index = None
@@ -898,5 +926,5 @@ class SimpleModeView(ft.Column):
             self._steps_column.controls = self._build_steps_list()
         if self._properties_container:
             self._properties_container.content = self._build_step_properties()
-        if hasattr(self, 'page') and self.page:
+        if hasattr(self, "page") and self.page:
             self.page.update()

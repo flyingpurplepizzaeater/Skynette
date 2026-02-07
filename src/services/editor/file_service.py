@@ -1,9 +1,10 @@
 # src/services/editor/file_service.py
 """Async file operations service for the code editor."""
 
-import aiofiles
 from dataclasses import dataclass
 from pathlib import Path
+
+import aiofiles
 
 
 @dataclass
@@ -68,7 +69,7 @@ class FileService:
                 f"Maximum supported size is {self.MAX_FILE_SIZE:,} bytes."
             )
 
-        async with aiofiles.open(path, mode="r", encoding="utf-8") as f:
+        async with aiofiles.open(path, encoding="utf-8") as f:
             return await f.read()
 
     async def write_file(self, path: str, content: str) -> None:

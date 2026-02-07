@@ -4,15 +4,13 @@ Ollama model source.
 Connects to a local Ollama instance for model management.
 """
 
-import asyncio
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 import httpx
 
-from ..hub import ModelInfo, DownloadProgress
+from ..hub import DownloadProgress, ModelInfo
 from . import ModelSource, SearchResult
-
 
 # Popular Ollama models with metadata
 OLLAMA_LIBRARY = [
@@ -84,7 +82,7 @@ class OllamaSource(ModelSource):
 
     DEFAULT_HOST = "http://localhost:11434"
 
-    def __init__(self, host: Optional[str] = None):
+    def __init__(self, host: str | None = None):
         self.host = host or self.DEFAULT_HOST
 
     @property
@@ -118,21 +116,23 @@ class OllamaSource(ModelSource):
                 size = item.get("size", 0)
                 details = item.get("details", {})
 
-                models.append(ModelInfo(
-                    id=f"ollama-{name.replace(':', '-')}",
-                    name=name,
-                    description=f"Ollama model: {name}",
-                    size_bytes=size,
-                    quantization=details.get("quantization_level", ""),
-                    source="ollama",
-                    source_url=name,
-                    is_downloaded=True,
-                    metadata={
-                        "family": details.get("family", ""),
-                        "parameter_size": details.get("parameter_size", ""),
-                        "modified_at": item.get("modified_at", ""),
-                    },
-                ))
+                models.append(
+                    ModelInfo(
+                        id=f"ollama-{name.replace(':', '-')}",
+                        name=name,
+                        description=f"Ollama model: {name}",
+                        size_bytes=size,
+                        quantization=details.get("quantization_level", ""),
+                        source="ollama",
+                        source_url=name,
+                        is_downloaded=True,
+                        metadata={
+                            "family": details.get("family", ""),
+                            "parameter_size": details.get("parameter_size", ""),
+                            "modified_at": item.get("modified_at", ""),
+                        },
+                    )
+                )
 
             return models
 
@@ -151,20 +151,22 @@ class OllamaSource(ModelSource):
             default_size = item["sizes"][0] if item["sizes"] else ""
             full_name = f"{name}:{default_size}" if default_size and default_size != name else name
 
-            models.append(ModelInfo(
-                id=f"ollama-{name}",
-                name=item["name"],
-                description=item["description"],
-                size_bytes=0,  # Unknown until pulled
-                quantization="",
-                source="ollama",
-                source_url=full_name,
-                is_downloaded=full_name in installed_names or name in installed_names,
-                metadata={
-                    "sizes": item["sizes"],
-                    "tags": item["tags"],
-                },
-            ))
+            models.append(
+                ModelInfo(
+                    id=f"ollama-{name}",
+                    name=item["name"],
+                    description=item["description"],
+                    size_bytes=0,  # Unknown until pulled
+                    quantization="",
+                    source="ollama",
+                    source_url=full_name,
+                    is_downloaded=full_name in installed_names or name in installed_names,
+                    metadata={
+                        "sizes": item["sizes"],
+                        "tags": item["tags"],
+                    },
+                )
+            )
 
         return models
 
@@ -191,7 +193,7 @@ class OllamaSource(ModelSource):
         self,
         model: ModelInfo,
         dest_dir: Path,
-        progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
     ) -> Path:
         """
         Pull a model from Ollama library.
@@ -269,7 +271,7 @@ class OllamaSource(ModelSource):
         except Exception:
             return False
 
-    async def get_model_info(self, model_name: str) -> Optional[dict]:
+    async def get_model_info(self, model_name: str) -> dict | None:
         """Get detailed info about a model."""
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:

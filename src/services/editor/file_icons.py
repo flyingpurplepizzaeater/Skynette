@@ -1,8 +1,9 @@
 # src/services/editor/file_icons.py
 """File extension to icon mapping for the file tree."""
 
-import flet as ft
 from pathlib import Path
+
+import flet as ft
 
 # Map file extensions to Flet icons
 # Organized by category for maintainability
@@ -161,9 +162,7 @@ FOLDER_ICON = ft.Icons.FOLDER
 FOLDER_OPEN_ICON = ft.Icons.FOLDER_OPEN
 
 
-def get_file_icon(
-    filename: str, is_dir: bool = False, is_expanded: bool = False
-) -> str:
+def get_file_icon(filename: str, is_dir: bool = False, is_expanded: bool = False) -> str:
     """Get appropriate icon for file or folder.
 
     Args:

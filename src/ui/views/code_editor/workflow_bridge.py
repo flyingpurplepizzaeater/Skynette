@@ -4,14 +4,15 @@
 Enables bidirectional sync between code representation and workflow models.
 """
 
-from enum import Enum
-from typing import Callable
 import json
 import logging
+from collections.abc import Callable
+from enum import Enum
+
 import yaml
 
-from src.core.workflow.models import Workflow, WorkflowNode, WorkflowConnection
 from src.core.nodes.registry import NodeRegistry
+from src.core.workflow.models import Workflow
 from src.data.storage import get_storage
 
 logger = logging.getLogger(__name__)
@@ -300,13 +301,9 @@ class WorkflowBridge:
         # Validate connections reference existing nodes
         for conn in workflow.connections:
             if conn.source_node_id not in seen_ids:
-                errors.append(
-                    f"Connection references unknown source node: '{conn.source_node_id}'"
-                )
+                errors.append(f"Connection references unknown source node: '{conn.source_node_id}'")
             if conn.target_node_id not in seen_ids:
-                errors.append(
-                    f"Connection references unknown target node: '{conn.target_node_id}'"
-                )
+                errors.append(f"Connection references unknown target node: '{conn.target_node_id}'")
 
         return errors
 
@@ -328,8 +325,7 @@ class WorkflowBridge:
 
         # Check for blocking errors
         blocking_errors = [
-            e for e in errors
-            if "Unknown node type" in e or "Duplicate node ID" in e
+            e for e in errors if "Unknown node type" in e or "Duplicate node ID" in e
         ]
 
         if blocking_errors:

@@ -1,12 +1,14 @@
 # src/ui/views/code_editor/file_tree.py
 """File tree navigator for the code editor."""
 
-import flet as ft
-from pathlib import Path
 from collections.abc import Callable
 from dataclasses import dataclass
-from src.ui.theme import SkynetteTheme
+from pathlib import Path
+
+import flet as ft
+
 from src.services.editor import FileService, get_file_icon
+from src.ui.theme import SkynetteTheme
 
 
 @dataclass

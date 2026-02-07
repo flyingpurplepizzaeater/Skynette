@@ -2,9 +2,7 @@
 Google Sheets Integration Nodes - Read and write spreadsheet data.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class GoogleSheetsReadNode(BaseNode):
@@ -126,10 +124,14 @@ class GoogleSheetsReadNode(BaseNode):
         sheet = service.spreadsheets()
 
         # Fetch data
-        result = sheet.values().get(
-            spreadsheetId=spreadsheet_id,
-            range=range_name,
-        ).execute()
+        result = (
+            sheet.values()
+            .get(
+                spreadsheetId=spreadsheet_id,
+                range=range_name,
+            )
+            .execute()
+        )
 
         values = result.get("values", [])
 
@@ -326,13 +328,17 @@ class GoogleSheetsWriteNode(BaseNode):
         body = {"values": values}
 
         if operation == "append":
-            result = sheet.values().append(
-                spreadsheetId=spreadsheet_id,
-                range=range_name,
-                valueInputOption="USER_ENTERED",
-                insertDataOption="INSERT_ROWS",
-                body=body,
-            ).execute()
+            result = (
+                sheet.values()
+                .append(
+                    spreadsheetId=spreadsheet_id,
+                    range=range_name,
+                    valueInputOption="USER_ENTERED",
+                    insertDataOption="INSERT_ROWS",
+                    body=body,
+                )
+                .execute()
+            )
 
             return {
                 "success": True,
@@ -341,12 +347,16 @@ class GoogleSheetsWriteNode(BaseNode):
             }
 
         elif operation == "update":
-            result = sheet.values().update(
-                spreadsheetId=spreadsheet_id,
-                range=range_name,
-                valueInputOption="USER_ENTERED",
-                body=body,
-            ).execute()
+            result = (
+                sheet.values()
+                .update(
+                    spreadsheetId=spreadsheet_id,
+                    range=range_name,
+                    valueInputOption="USER_ENTERED",
+                    body=body,
+                )
+                .execute()
+            )
 
             return {
                 "success": True,
@@ -362,12 +372,16 @@ class GoogleSheetsWriteNode(BaseNode):
             ).execute()
 
             # Then write
-            result = sheet.values().update(
-                spreadsheetId=spreadsheet_id,
-                range=range_name,
-                valueInputOption="USER_ENTERED",
-                body=body,
-            ).execute()
+            result = (
+                sheet.values()
+                .update(
+                    spreadsheetId=spreadsheet_id,
+                    range=range_name,
+                    valueInputOption="USER_ENTERED",
+                    body=body,
+                )
+                .execute()
+            )
 
             return {
                 "success": True,

@@ -70,8 +70,7 @@ class RAGContextProvider:
             stats = await self._indexer.index_project(project_root)
             self._indexed_projects.add(project_root)
             logger.info(
-                f"Project indexed: {stats['indexed']} files, "
-                f"{stats['total_chunks']} chunks"
+                f"Project indexed: {stats['indexed']} files, {stats['total_chunks']} chunks"
             )
             return stats
         except Exception as e:
@@ -106,9 +105,7 @@ class RAGContextProvider:
 
         # Query for relevant chunks
         try:
-            results = await self._indexer.query_context(
-                query, project_root, top_k=top_k
-            )
+            results = await self._indexer.query_context(query, project_root, top_k=top_k)
         except Exception as e:
             logger.warning(f"RAG query failed: {e}")
             return ("", [])
@@ -133,12 +130,14 @@ class RAGContextProvider:
             context_parts.append("```\n")
 
             # Track source for UI display
-            sources.append({
-                "path": source_path,
-                "snippet": content[:200] + ("..." if len(content) > 200 else ""),
-                "language": language,
-                "similarity": similarity,
-            })
+            sources.append(
+                {
+                    "path": source_path,
+                    "snippet": content[:200] + ("..." if len(content) > 200 else ""),
+                    "language": language,
+                    "similarity": similarity,
+                }
+            )
 
         context_string = "\n".join(context_parts)
         return (context_string, sources)

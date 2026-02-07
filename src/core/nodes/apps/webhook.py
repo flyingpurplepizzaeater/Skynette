@@ -2,9 +2,7 @@
 Webhook Nodes - Trigger workflows via HTTP and make webhook calls.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class WebhookTriggerNode(BaseNode):
@@ -339,8 +337,9 @@ class WebhookCallNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Make HTTP request to webhook."""
-        import httpx
         import json
+
+        import httpx
 
         url = config.get("url", "")
         method = config.get("method", "POST")

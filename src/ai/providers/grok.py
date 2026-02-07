@@ -168,9 +168,7 @@ class GrokProvider(BaseProvider):
             return
 
         try:
-            async for chunk in self._stream_with_recovery(
-                self._raw_chat_stream(messages, config)
-            ):
+            async for chunk in self._stream_with_recovery(self._raw_chat_stream(messages, config)):
                 yield chunk
         except StreamInterruptedError:
             # Error already yielded as final chunk, just return

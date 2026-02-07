@@ -92,9 +92,7 @@ class GhostTextOverlay(ft.Container):
             # Invisible prefix (same as typed text)
             ft.TextSpan(prefix_text, style=ft.TextStyle(color="transparent")),
             # Visible ghost suggestion
-            ft.TextSpan(
-                suggestion.text, style=ft.TextStyle(color=self.GHOST_COLOR)
-            ),
+            ft.TextSpan(suggestion.text, style=ft.TextStyle(color=self.GHOST_COLOR)),
         ]
 
         self.visible = True

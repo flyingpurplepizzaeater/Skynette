@@ -1,13 +1,14 @@
 """Upload dialog for adding documents to RAG collections."""
 
-import flet as ft
 import asyncio
-from pathlib import Path
-from typing import Optional, Callable, Awaitable
-from src.ui.theme import Theme
+from collections.abc import Awaitable, Callable
+
+import flet as ft
+
 from src.rag.service import RAGService
 from src.ui.components.progress_tracker import ProgressTracker
-from src.ui.models.knowledge_bases import UploadProgress, UploadError
+from src.ui.models.knowledge_bases import UploadError, UploadProgress
+from src.ui.theme import Theme
 
 
 class UploadDialog(ft.AlertDialog):
@@ -18,7 +19,7 @@ class UploadDialog(ft.AlertDialog):
         rag_service: RAGService,
         collection_id: str,
         page: ft.Page,
-        on_complete: Optional[Callable[[], Awaitable[None]]] = None,
+        on_complete: Callable[[], Awaitable[None]] | None = None,
     ):
         super().__init__()
         self.rag_service = rag_service
@@ -111,18 +112,20 @@ class UploadDialog(ft.AlertDialog):
             allow_multiple=True,
             dialog_title="Select Documents",
         )
-        
+
         # Handle file picker result
         if files:
             # Add selected files
             for file in files:
                 file_path = file.path
                 if file_path not in [f["path"] for f in self.selected_files]:
-                    self.selected_files.append({
-                        "path": file_path,
-                        "name": file.name,
-                        "size": file.size,
-                    })
+                    self.selected_files.append(
+                        {
+                            "path": file_path,
+                            "name": file.name,
+                            "size": file.size,
+                        }
+                    )
 
             # Update UI
             self._update_files_list()
@@ -147,9 +150,7 @@ class UploadDialog(ft.AlertDialog):
             )
         else:
             for idx, file_info in enumerate(self.selected_files):
-                self.files_list.controls.append(
-                    self._build_file_item(idx, file_info)
-                )
+                self.files_list.controls.append(self._build_file_item(idx, file_info))
 
         if self._page_ref:
             self._page_ref.update()

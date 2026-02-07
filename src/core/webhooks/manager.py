@@ -5,25 +5,26 @@ Provides a lightweight HTTP server for receiving webhooks that trigger workflows
 Supports multiple authentication methods and secure endpoint management.
 """
 
-import asyncio
 import hashlib
 import hmac
 import json
 import logging
 import secrets
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional
-from urllib.parse import parse_qs, urlparse
+from typing import Any
+from urllib.parse import parse_qs
 
 logger = logging.getLogger(__name__)
 
 
 class AuthMethod(str, Enum):
     """Webhook authentication methods."""
+
     NONE = "none"
     BASIC = "basic"
     BEARER = "bearer"
@@ -34,6 +35,7 @@ class AuthMethod(str, Enum):
 @dataclass
 class WebhookConfig:
     """Configuration for a webhook endpoint."""
+
     id: str
     path: str
     workflow_id: str
@@ -44,7 +46,7 @@ class WebhookConfig:
     allowed_methods: list[str] = field(default_factory=lambda: ["POST"])
     enabled: bool = True
     created_at: str = ""
-    last_triggered: Optional[str] = None
+    last_triggered: str | None = None
     trigger_count: int = 0
 
     def to_dict(self) -> dict:
@@ -84,6 +86,7 @@ class WebhookConfig:
 @dataclass
 class WebhookRequest:
     """Incoming webhook request data."""
+
     method: str
     path: str
     headers: dict[str, str]
@@ -93,10 +96,10 @@ class WebhookRequest:
     timestamp: str = ""
 
     @property
-    def json(self) -> Optional[dict]:
+    def json(self) -> dict | None:
         """Parse body as JSON."""
         try:
-            return json.loads(self.body.decode('utf-8'))
+            return json.loads(self.body.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
             return None
 
@@ -104,9 +107,9 @@ class WebhookRequest:
     def text(self) -> str:
         """Get body as text."""
         try:
-            return self.body.decode('utf-8')
+            return self.body.decode("utf-8")
         except UnicodeDecodeError:
-            return self.body.decode('latin-1')
+            return self.body.decode("latin-1")
 
     def to_trigger_data(self) -> dict:
         """Convert to trigger data for workflow execution."""
@@ -124,6 +127,7 @@ class WebhookRequest:
 @dataclass
 class WebhookResponse:
     """Response to send back to webhook caller."""
+
     status: int = 200
     headers: dict[str, str] = field(default_factory=dict)
     body: Any = None
@@ -135,14 +139,14 @@ class WebhookResponse:
         if isinstance(self.body, bytes):
             return self.body
         if isinstance(self.body, str):
-            return self.body.encode('utf-8')
-        return json.dumps(self.body).encode('utf-8')
+            return self.body.encode("utf-8")
+        return json.dumps(self.body).encode("utf-8")
 
 
 class WebhookStore:
     """Persistent storage for webhook configurations."""
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Path | None = None):
         if db_path:
             self.db_path = Path(db_path)
         else:
@@ -191,30 +195,33 @@ class WebhookStore:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO webhooks
             (id, path, workflow_id, name, description, auth_method, auth_value,
              allowed_methods, enabled, created_at, last_triggered, trigger_count)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            webhook.id,
-            webhook.path,
-            webhook.workflow_id,
-            webhook.name,
-            webhook.description,
-            webhook.auth_method.value,
-            webhook.auth_value,
-            json.dumps(webhook.allowed_methods),
-            1 if webhook.enabled else 0,
-            webhook.created_at,
-            webhook.last_triggered,
-            webhook.trigger_count,
-        ))
+        """,
+            (
+                webhook.id,
+                webhook.path,
+                webhook.workflow_id,
+                webhook.name,
+                webhook.description,
+                webhook.auth_method.value,
+                webhook.auth_value,
+                json.dumps(webhook.allowed_methods),
+                1 if webhook.enabled else 0,
+                webhook.created_at,
+                webhook.last_triggered,
+                webhook.trigger_count,
+            ),
+        )
 
         conn.commit()
         conn.close()
 
-    def get_by_id(self, webhook_id: str) -> Optional[WebhookConfig]:
+    def get_by_id(self, webhook_id: str) -> WebhookConfig | None:
         """Get webhook by ID."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
@@ -229,7 +236,7 @@ class WebhookStore:
 
         return self._row_to_webhook(row)
 
-    def get_by_path(self, path: str) -> Optional[WebhookConfig]:
+    def get_by_path(self, path: str) -> WebhookConfig | None:
         """Get webhook by path."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
@@ -251,8 +258,7 @@ class WebhookStore:
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT * FROM webhooks WHERE workflow_id = ? ORDER BY created_at DESC",
-            (workflow_id,)
+            "SELECT * FROM webhooks WHERE workflow_id = ? ORDER BY created_at DESC", (workflow_id,)
         )
         rows = cursor.fetchall()
         conn.close()
@@ -290,11 +296,14 @@ class WebhookStore:
         cursor = conn.cursor()
 
         now = datetime.now(UTC).isoformat()
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE webhooks
             SET last_triggered = ?, trigger_count = trigger_count + 1
             WHERE id = ?
-        """, (now, webhook_id))
+        """,
+            (now, webhook_id),
+        )
 
         conn.commit()
         conn.close()
@@ -327,7 +336,7 @@ class WebhookManager:
 
     def __init__(
         self,
-        store: Optional[WebhookStore] = None,
+        store: WebhookStore | None = None,
         base_url: str = "http://localhost:5678",
     ):
         """
@@ -341,7 +350,7 @@ class WebhookManager:
         self.base_url = base_url.rstrip("/")
 
         # Callback for triggering workflows
-        self._trigger_callback: Optional[Callable] = None
+        self._trigger_callback: Callable | None = None
 
         # In-memory cache for fast path lookups
         self._path_cache: dict[str, WebhookConfig] = {}
@@ -364,11 +373,11 @@ class WebhookManager:
     def register_webhook(
         self,
         workflow_id: str,
-        path: Optional[str] = None,
+        path: str | None = None,
         name: str = "",
         description: str = "",
         auth_method: AuthMethod = AuthMethod.NONE,
-        auth_value: Optional[str] = None,
+        auth_value: str | None = None,
         allowed_methods: list[str] = None,
     ) -> WebhookConfig:
         """
@@ -454,7 +463,7 @@ class WebhookManager:
 
         return deleted
 
-    def get_webhook(self, webhook_id: str) -> Optional[WebhookConfig]:
+    def get_webhook(self, webhook_id: str) -> WebhookConfig | None:
         """Get webhook by ID."""
         return self.store.get_by_id(webhook_id)
 
@@ -462,7 +471,7 @@ class WebhookManager:
         """Get the full URL for a webhook."""
         return f"{self.base_url}{webhook.path}"
 
-    def list_webhooks(self, workflow_id: Optional[str] = None) -> list[WebhookConfig]:
+    def list_webhooks(self, workflow_id: str | None = None) -> list[WebhookConfig]:
         """
         List webhooks, optionally filtered by workflow.
 
@@ -517,23 +526,16 @@ class WebhookManager:
         webhook = self._path_cache.get(request.path)
         if not webhook:
             logger.warning(f"Webhook not found: {request.path}")
-            return WebhookResponse(
-                status=404,
-                body={"error": "Webhook not found"}
-            )
+            return WebhookResponse(status=404, body={"error": "Webhook not found"})
 
         # Check if enabled
         if not webhook.enabled:
-            return WebhookResponse(
-                status=404,
-                body={"error": "Webhook not found"}
-            )
+            return WebhookResponse(status=404, body={"error": "Webhook not found"})
 
         # Check HTTP method
         if request.method not in webhook.allowed_methods:
             return WebhookResponse(
-                status=405,
-                body={"error": f"Method {request.method} not allowed"}
+                status=405, body={"error": f"Method {request.method} not allowed"}
             )
 
         # Authenticate request
@@ -543,7 +545,7 @@ class WebhookManager:
             return WebhookResponse(
                 status=401,
                 headers={"WWW-Authenticate": self._get_auth_header(webhook)},
-                body={"error": "Unauthorized"}
+                body={"error": "Unauthorized"},
             )
 
         # Update trigger stats
@@ -561,14 +563,11 @@ class WebhookManager:
                         "success": True,
                         "workflow_id": webhook.workflow_id,
                         "execution": result,
-                    }
+                    },
                 )
             except Exception as e:
                 logger.exception(f"Webhook trigger failed: {e}")
-                return WebhookResponse(
-                    status=500,
-                    body={"error": str(e)}
-                )
+                return WebhookResponse(status=500, body={"error": str(e)})
         else:
             logger.warning("No trigger callback configured")
             return WebhookResponse(
@@ -576,7 +575,7 @@ class WebhookManager:
                 body={
                     "success": True,
                     "message": "Webhook received (no trigger configured)",
-                }
+                },
             )
 
     def _authenticate(self, request: WebhookRequest, webhook: WebhookConfig) -> bool:
@@ -595,8 +594,9 @@ class WebhookManager:
                 return False
 
             import base64
+
             try:
-                decoded = base64.b64decode(auth_header[6:]).decode('utf-8')
+                decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
                 return decoded == webhook.auth_value
             except Exception:
                 return False
@@ -629,9 +629,7 @@ class WebhookManager:
                 signature_header = signature_header[7:]
 
             expected = hmac.new(
-                webhook.auth_value.encode('utf-8'),
-                request.body,
-                hashlib.sha256
+                webhook.auth_value.encode("utf-8"), request.body, hashlib.sha256
             ).hexdigest()
 
             return hmac.compare_digest(signature_header, expected)
@@ -650,6 +648,7 @@ class WebhookManager:
 # =============================================================================
 # HTTP SERVER INTEGRATION
 # =============================================================================
+
 
 class WebhookServer:
     """
@@ -733,8 +732,8 @@ class WebhookServer:
 # SINGLETON ACCESS
 # =============================================================================
 
-_manager: Optional[WebhookManager] = None
-_server: Optional[WebhookServer] = None
+_manager: WebhookManager | None = None
+_server: WebhookServer | None = None
 
 
 def get_webhook_manager() -> WebhookManager:

@@ -73,9 +73,7 @@ class CompletionService:
         prompt = self._build_completion_prompt(request)
 
         # Check token limit
-        if not self.token_counter.is_within_limit(
-            prompt, 4000, request.provider or "openai"
-        ):
+        if not self.token_counter.is_within_limit(prompt, 4000, request.provider or "openai"):
             # Truncate context if too large
             prompt = self._truncate_prompt(prompt, 3000)
 
@@ -133,9 +131,7 @@ Continue from where the code ends. Output only the next few tokens/lines that wo
         """Create cache key from request."""
         # Use last 100 chars of code_before for cache key
         context = (
-            request.code_before[-100:]
-            if len(request.code_before) > 100
-            else request.code_before
+            request.code_before[-100:] if len(request.code_before) > 100 else request.code_before
         )
         return f"{request.language}:{hash(context)}"
 

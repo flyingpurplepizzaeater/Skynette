@@ -4,8 +4,9 @@ Ingest Document Node
 Workflow node for ingesting documents into RAG collections.
 """
 
-from typing import Any, Dict
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from typing import Any
+
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class IngestDocumentNode(BaseNode):
@@ -28,14 +29,14 @@ class IngestDocumentNode(BaseNode):
             label="File Path",
             type=FieldType.FILE,
             required=True,
-            description="Path to document to ingest (markdown, text)"
+            description="Path to document to ingest (markdown, text)",
         ),
         NodeField(
             name="collection_id",
             label="Collection ID",
             type=FieldType.STRING,
             required=True,
-            description="Target collection ID"
+            description="Target collection ID",
         ),
     ]
 
@@ -44,25 +45,25 @@ class IngestDocumentNode(BaseNode):
             name="document_id",
             label="Document ID",
             type=FieldType.STRING,
-            description="ID of ingested document"
+            description="ID of ingested document",
         ),
         NodeField(
             name="chunks_created",
             label="Chunks Created",
             type=FieldType.NUMBER,
-            description="Number of chunks created"
+            description="Number of chunks created",
         ),
         NodeField(
             name="status",
             label="Status",
             type=FieldType.STRING,
-            description="Ingestion status (success/error)"
+            description="Ingestion status (success/error)",
         ),
         NodeField(
             name="error",
             label="Error",
             type=FieldType.STRING,
-            description="Error message if failed"
+            description="Error message if failed",
         ),
     ]
 
@@ -71,7 +72,7 @@ class IngestDocumentNode(BaseNode):
         super().__init__(**kwargs)
         self.rag_service = rag_service
 
-    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Execute document ingestion."""
         try:
             file_path = inputs["file_path"]
@@ -79,8 +80,7 @@ class IngestDocumentNode(BaseNode):
 
             # Ingest document
             result = await self.rag_service.ingest_document(
-                file_path=file_path,
-                collection_id=collection_id
+                file_path=file_path, collection_id=collection_id
             )
 
             if result["status"] == "success":
@@ -88,20 +88,15 @@ class IngestDocumentNode(BaseNode):
                     "document_id": result["document_id"],
                     "chunks_created": result["chunks_created"],
                     "status": "success",
-                    "error": None
+                    "error": None,
                 }
             else:
                 return {
                     "document_id": None,
                     "chunks_created": 0,
                     "status": "error",
-                    "error": result.get("error", "Unknown error")
+                    "error": result.get("error", "Unknown error"),
                 }
 
         except Exception as e:
-            return {
-                "document_id": None,
-                "chunks_created": 0,
-                "status": "error",
-                "error": str(e)
-            }
+            return {"document_id": None, "chunks_created": 0, "status": "error", "error": str(e)}

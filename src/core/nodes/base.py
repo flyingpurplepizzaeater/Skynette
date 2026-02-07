@@ -6,7 +6,8 @@ Abstract base class and utilities for node implementations.
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -37,10 +38,10 @@ class NodeField(BaseModel):
     default: Any = None
     placeholder: str = ""
     options: list[dict] = []  # For select fields: [{"label": "...", "value": "..."}]
-    min_value: Optional[float] = None
-    max_value: Optional[float] = None
-    validation_pattern: Optional[str] = None
-    credential_service: Optional[str] = None  # For CREDENTIAL fields: filter by service
+    min_value: float | None = None
+    max_value: float | None = None
+    validation_pattern: str | None = None
+    credential_service: str | None = None  # For CREDENTIAL fields: filter by service
 
 
 class NodeOutput(BaseModel):

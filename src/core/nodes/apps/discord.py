@@ -2,9 +2,7 @@
 Discord Integration Node - Send messages and interact with Discord.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class DiscordWebhookNode(BaseNode):

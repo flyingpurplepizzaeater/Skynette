@@ -1,8 +1,10 @@
 # src/ui/components/code_editor/resizable_panel.py
 """Resizable two-panel layout component for the code editor."""
 
-import flet as ft
 from collections.abc import Callable
+
+import flet as ft
+
 from src.ui.theme import SkynetteTheme
 
 

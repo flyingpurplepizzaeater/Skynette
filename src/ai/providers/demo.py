@@ -7,7 +7,7 @@ pattern matching and templates.
 
 import asyncio
 import random
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from src.ai.gateway import (
     AICapability,
@@ -44,7 +44,6 @@ class DemoProvider(BaseProvider):
 3. **Handle the result** - Store it, send a notification, or pass it to another step
 
 Would you like me to generate the specific nodes for this? Just describe what you want in more detail.""",
-
         "api": """To call an API in Skynette:
 
 1. Add an **HTTP Request** node
@@ -54,7 +53,6 @@ Would you like me to generate the specific nodes for this? Just describe what yo
 5. For POST/PUT, add the **Body** content
 
 The response will be available for the next node as `{{$prev.data}}`.""",
-
         "email": """For email workflows, you have a few options:
 
 1. **SMTP Email** node - Send emails directly via your email server
@@ -62,7 +60,6 @@ The response will be available for the next node as `{{$prev.data}}`.""",
 3. **Gmail/Outlook** plugins - Full integration with those services
 
 Do you want to send emails, or trigger workflows based on incoming emails?""",
-
         "schedule": """To run a workflow on a schedule:
 
 1. Use the **Schedule Trigger** node as your first node
@@ -73,7 +70,6 @@ Do you want to send emails, or trigger workflows based on incoming emails?""",
    - `0 0 * * 1` - Every Monday at midnight
 
 Your workflow will run automatically at the specified times.""",
-
         "ai": """Skynette has several AI nodes:
 
 1. **Text Generation** - Generate text from a prompt
@@ -83,7 +79,6 @@ Your workflow will run automatically at the specified times.""",
 5. **Classify** - Categorize inputs
 
 You can use local models (free) or cloud APIs (OpenAI, Claude, etc.).""",
-
         "file": """For file operations:
 
 1. **Read File** - Load a file's contents
@@ -91,7 +86,6 @@ You can use local models (free) or cloud APIs (OpenAI, Claude, etc.).""",
 3. **File Watcher** trigger - React to new/changed files
 
 Files are stored locally. Use `{{$prev.data}}` to pass file contents between nodes.""",
-
         "help": """I'm Skynet, your AI assistant! I can help you:
 
 - **Build workflows** from natural language descriptions
@@ -100,7 +94,6 @@ Files are stored locally. Use `{{$prev.data}}` to pass file contents between nod
 - **Debug errors** when things go wrong
 
 Just describe what you want to automate, and I'll suggest the best approach!""",
-
         "default": """I'd be happy to help with that! Here are some things I can assist with:
 
 - Creating new workflows
@@ -143,7 +136,9 @@ Could you tell me more about what you're trying to accomplish?""",
             return self.RESPONSES["api"]
         elif any(w in user_message for w in ["email", "mail", "smtp", "gmail"]):
             return self.RESPONSES["email"]
-        elif any(w in user_message for w in ["schedule", "cron", "time", "every", "daily", "hourly"]):
+        elif any(
+            w in user_message for w in ["schedule", "cron", "time", "every", "daily", "hourly"]
+        ):
             return self.RESPONSES["schedule"]
         elif any(w in user_message for w in ["ai", "gpt", "llm", "model", "generate", "summarize"]):
             return self.RESPONSES["ai"]
@@ -167,7 +162,11 @@ Could you tell me more about what you're trying to accomplish?""",
             content=self._get_response([AIMessage(role="user", content=prompt)]),
             provider=self.name,
             model="demo-v1",
-            usage={"prompt_tokens": len(prompt.split()), "completion_tokens": 50, "total_tokens": 50 + len(prompt.split())},
+            usage={
+                "prompt_tokens": len(prompt.split()),
+                "completion_tokens": 50,
+                "total_tokens": 50 + len(prompt.split()),
+            },
             finish_reason="stop",
         )
 
@@ -184,7 +183,11 @@ Could you tell me more about what you're trying to accomplish?""",
             content=self._get_response(messages),
             provider=self.name,
             model="demo-v1",
-            usage={"prompt_tokens": sum(len(m.content.split()) for m in messages), "completion_tokens": 80, "total_tokens": 100},
+            usage={
+                "prompt_tokens": sum(len(m.content.split()) for m in messages),
+                "completion_tokens": 80,
+                "total_tokens": 100,
+            },
             finish_reason="stop",
         )
 

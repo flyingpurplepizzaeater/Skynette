@@ -4,11 +4,11 @@ Write File Node
 Writes content to local files.
 """
 
+import json
 from pathlib import Path
 from typing import Any
-import json
 
-from src.core.nodes.base import DataNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import DataNode, FieldType, NodeField, NodeOutput
 
 
 class WriteFileNode(DataNode):

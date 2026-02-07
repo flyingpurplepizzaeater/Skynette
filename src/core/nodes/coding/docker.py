@@ -4,10 +4,8 @@ Docker Integration Nodes - Container management for development workflows.
 
 import asyncio
 import subprocess
-import json
-from typing import Any, Optional
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class DockerBuildNode(BaseNode):
@@ -21,16 +19,44 @@ class DockerBuildNode(BaseNode):
     color = "#2496ED"  # Docker blue
 
     inputs = [
-        NodeField(name="context_path", label="Build Context", type=FieldType.STRING, required=True,
-                  description="Path to build context (usually project root)."),
-        NodeField(name="dockerfile", label="Dockerfile", type=FieldType.STRING, required=False, default="Dockerfile"),
-        NodeField(name="tag", label="Image Tag", type=FieldType.STRING, required=True,
-                  description="Tag for the built image (e.g., myapp:latest)."),
-        NodeField(name="build_args", label="Build Args", type=FieldType.JSON, required=False,
-                  description="Build arguments as JSON object."),
-        NodeField(name="no_cache", label="No Cache", type=FieldType.BOOLEAN, required=False, default=False),
-        NodeField(name="platform", label="Platform", type=FieldType.STRING, required=False,
-                  description="Target platform (e.g., linux/amd64)."),
+        NodeField(
+            name="context_path",
+            label="Build Context",
+            type=FieldType.STRING,
+            required=True,
+            description="Path to build context (usually project root).",
+        ),
+        NodeField(
+            name="dockerfile",
+            label="Dockerfile",
+            type=FieldType.STRING,
+            required=False,
+            default="Dockerfile",
+        ),
+        NodeField(
+            name="tag",
+            label="Image Tag",
+            type=FieldType.STRING,
+            required=True,
+            description="Tag for the built image (e.g., myapp:latest).",
+        ),
+        NodeField(
+            name="build_args",
+            label="Build Args",
+            type=FieldType.JSON,
+            required=False,
+            description="Build arguments as JSON object.",
+        ),
+        NodeField(
+            name="no_cache", label="No Cache", type=FieldType.BOOLEAN, required=False, default=False
+        ),
+        NodeField(
+            name="platform",
+            label="Platform",
+            type=FieldType.STRING,
+            required=False,
+            description="Target platform (e.g., linux/amd64).",
+        ),
     ]
 
     outputs = [
@@ -69,10 +95,12 @@ class DockerBuildNode(BaseNode):
             if result.returncode == 0:
                 # Get image ID
                 inspect_result = await loop.run_in_executor(
-                    None, lambda: subprocess.run(
+                    None,
+                    lambda: subprocess.run(
                         ["docker", "inspect", "--format={{.Id}}", tag],
-                        capture_output=True, text=True
-                    )
+                        capture_output=True,
+                        text=True,
+                    ),
                 )
                 image_id = inspect_result.stdout.strip()[:12]
 
@@ -115,13 +143,37 @@ class DockerRunNode(BaseNode):
         NodeField(name="image", label="Image", type=FieldType.STRING, required=True),
         NodeField(name="name", label="Container Name", type=FieldType.STRING, required=False),
         NodeField(name="command", label="Command", type=FieldType.STRING, required=False),
-        NodeField(name="ports", label="Port Mappings", type=FieldType.STRING, required=False,
-                  description="Port mappings (e.g., 8080:80,3000:3000)."),
-        NodeField(name="volumes", label="Volume Mounts", type=FieldType.STRING, required=False,
-                  description="Volume mounts (e.g., ./data:/app/data)."),
-        NodeField(name="env_vars", label="Environment Variables", type=FieldType.JSON, required=False),
-        NodeField(name="detach", label="Run Detached", type=FieldType.BOOLEAN, required=False, default=True),
-        NodeField(name="remove", label="Auto Remove", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="ports",
+            label="Port Mappings",
+            type=FieldType.STRING,
+            required=False,
+            description="Port mappings (e.g., 8080:80,3000:3000).",
+        ),
+        NodeField(
+            name="volumes",
+            label="Volume Mounts",
+            type=FieldType.STRING,
+            required=False,
+            description="Volume mounts (e.g., ./data:/app/data).",
+        ),
+        NodeField(
+            name="env_vars", label="Environment Variables", type=FieldType.JSON, required=False
+        ),
+        NodeField(
+            name="detach",
+            label="Run Detached",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=True,
+        ),
+        NodeField(
+            name="remove",
+            label="Auto Remove",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=False,
+        ),
         NodeField(name="network", label="Network", type=FieldType.STRING, required=False),
     ]
 
@@ -210,8 +262,13 @@ class DockerComposeNode(BaseNode):
 
     inputs = [
         NodeField(name="project_path", label="Project Path", type=FieldType.STRING, required=True),
-        NodeField(name="compose_file", label="Compose File", type=FieldType.STRING, required=False,
-                  default="docker-compose.yml"),
+        NodeField(
+            name="compose_file",
+            label="Compose File",
+            type=FieldType.STRING,
+            required=False,
+            default="docker-compose.yml",
+        ),
         NodeField(
             name="action",
             label="Action",
@@ -227,8 +284,20 @@ class DockerComposeNode(BaseNode):
                 {"value": "ps", "label": "List Containers"},
             ],
         ),
-        NodeField(name="detach", label="Detached Mode", type=FieldType.BOOLEAN, required=False, default=True),
-        NodeField(name="build_on_up", label="Build on Up", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="detach",
+            label="Detached Mode",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=True,
+        ),
+        NodeField(
+            name="build_on_up",
+            label="Build on Up",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=False,
+        ),
         NodeField(name="service", label="Specific Service", type=FieldType.STRING, required=False),
     ]
 
@@ -272,7 +341,10 @@ class DockerComposeNode(BaseNode):
         loop = asyncio.get_event_loop()
         try:
             result = await loop.run_in_executor(
-                None, lambda: subprocess.run(cmd, capture_output=True, text=True, cwd=project_path, timeout=300)
+                None,
+                lambda: subprocess.run(
+                    cmd, capture_output=True, text=True, cwd=project_path, timeout=300
+                ),
             )
 
             containers = []
@@ -282,10 +354,12 @@ class DockerComposeNode(BaseNode):
                 for line in lines:
                     parts = line.split()
                     if len(parts) >= 4:
-                        containers.append({
-                            "name": parts[0],
-                            "status": parts[3] if len(parts) > 3 else "unknown",
-                        })
+                        containers.append(
+                            {
+                                "name": parts[0],
+                                "status": parts[3] if len(parts) > 3 else "unknown",
+                            }
+                        )
 
             return {
                 "success": result.returncode == 0,
@@ -308,11 +382,15 @@ class DockerExecNode(BaseNode):
     color = "#2496ED"
 
     inputs = [
-        NodeField(name="container", label="Container ID/Name", type=FieldType.STRING, required=True),
+        NodeField(
+            name="container", label="Container ID/Name", type=FieldType.STRING, required=True
+        ),
         NodeField(name="command", label="Command", type=FieldType.STRING, required=True),
         NodeField(name="workdir", label="Working Directory", type=FieldType.STRING, required=False),
         NodeField(name="user", label="User", type=FieldType.STRING, required=False),
-        NodeField(name="env_vars", label="Environment Variables", type=FieldType.JSON, required=False),
+        NodeField(
+            name="env_vars", label="Environment Variables", type=FieldType.JSON, required=False
+        ),
     ]
 
     outputs = [
@@ -368,11 +446,26 @@ class DockerLogsNode(BaseNode):
     color = "#2496ED"
 
     inputs = [
-        NodeField(name="container", label="Container ID/Name", type=FieldType.STRING, required=True),
-        NodeField(name="tail", label="Tail Lines", type=FieldType.NUMBER, required=False, default=100),
-        NodeField(name="since", label="Since", type=FieldType.STRING, required=False,
-                  description="Show logs since (e.g., 10m, 1h, 2023-01-01)."),
-        NodeField(name="timestamps", label="Show Timestamps", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="container", label="Container ID/Name", type=FieldType.STRING, required=True
+        ),
+        NodeField(
+            name="tail", label="Tail Lines", type=FieldType.NUMBER, required=False, default=100
+        ),
+        NodeField(
+            name="since",
+            label="Since",
+            type=FieldType.STRING,
+            required=False,
+            description="Show logs since (e.g., 10m, 1h, 2023-01-01).",
+        ),
+        NodeField(
+            name="timestamps",
+            label="Show Timestamps",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=False,
+        ),
     ]
 
     outputs = [
@@ -421,8 +514,13 @@ class DockerPushNode(BaseNode):
     color = "#2496ED"
 
     inputs = [
-        NodeField(name="image", label="Image Tag", type=FieldType.STRING, required=True,
-                  description="Full image tag (e.g., registry.io/image:tag)."),
+        NodeField(
+            name="image",
+            label="Image Tag",
+            type=FieldType.STRING,
+            required=True,
+            description="Full image tag (e.g., registry.io/image:tag).",
+        ),
         NodeField(name="registry", label="Registry URL", type=FieldType.STRING, required=False),
         NodeField(name="username", label="Username", type=FieldType.STRING, required=False),
         NodeField(name="password", label="Password", type=FieldType.SECRET, required=False),
@@ -448,21 +546,24 @@ class DockerPushNode(BaseNode):
             if username and password and registry:
                 login_cmd = ["docker", "login", registry, "-u", username, "--password-stdin"]
                 await loop.run_in_executor(
-                    None, lambda: subprocess.run(
+                    None,
+                    lambda: subprocess.run(
                         login_cmd, input=password, capture_output=True, text=True
-                    )
+                    ),
                 )
 
             # Push
             result = await loop.run_in_executor(
-                None, lambda: subprocess.run(
+                None,
+                lambda: subprocess.run(
                     ["docker", "push", image], capture_output=True, text=True, timeout=600
-                )
+                ),
             )
 
             if result.returncode == 0:
                 # Extract digest
                 import re
+
                 digest_match = re.search(r"digest: (sha256:\w+)", result.stdout)
                 digest = digest_match.group(1) if digest_match else ""
 

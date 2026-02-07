@@ -4,9 +4,10 @@ RAG Data Models
 Pydantic models for RAG collections, documents, and chunks.
 """
 
-from datetime import datetime, timezone
-from typing import Dict, Any, Optional, Literal
+from datetime import UTC, datetime
+from typing import Any, Literal
 from uuid import uuid4
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
@@ -20,24 +21,24 @@ class Collection(BaseModel):
     chunk_size: int = 1024  # Target tokens per chunk
     chunk_overlap: int = 128  # Overlap tokens
     max_chunk_size: int = 2048  # Maximum tokens
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
-    @field_validator('chunk_size')
+    @field_validator("chunk_size")
     @classmethod
     def validate_chunk_size(cls, v):
         if not (256 <= v <= 4096):
             raise ValueError("chunk_size must be between 256 and 4096")
         return v
 
-    @field_validator('chunk_overlap')
+    @field_validator("chunk_overlap")
     @classmethod
     def validate_chunk_overlap(cls, v):
         if v < 0:
             raise ValueError("chunk_overlap must be non-negative")
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_chunk_sizes(self):
         if self.chunk_overlap >= self.chunk_size:
             raise ValueError("chunk_overlap must be less than chunk_size")
@@ -56,10 +57,10 @@ class Document(BaseModel):
     file_hash: str = Field(..., min_length=1)
     file_size: int = 0
     chunk_count: int = 0
-    indexed_at: Optional[datetime] = None
-    last_updated: Optional[datetime] = None
+    indexed_at: datetime | None = None
+    last_updated: datetime | None = None
     status: Literal["queued", "processing", "indexed", "failed"] = "queued"
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class Chunk(BaseModel):
@@ -69,6 +70,6 @@ class Chunk(BaseModel):
     document_id: str
     chunk_index: int = Field(..., ge=0)
     content: str
-    embedding_hash: Optional[str] = None  # For cache lookup
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    embedding_hash: str | None = None  # For cache lookup
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

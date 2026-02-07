@@ -3,9 +3,8 @@ Data Transform Utility Nodes - Transform and manipulate data.
 """
 
 import json
-from typing import Any
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class JSONParseNode(BaseNode):
@@ -266,6 +265,7 @@ class TextReplaceNode(BaseNode):
 
         if use_regex:
             import re
+
             result, count = re.subn(find, replace, text)
         else:
             count = text.count(find)

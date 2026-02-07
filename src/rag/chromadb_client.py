@@ -6,36 +6,42 @@ Wrapper for ChromaDB vector database operations.
 Uses in-memory implementation for MVP testing.
 """
 
-import numpy as np
-from typing import List, Dict, Any
 from pathlib import Path
+from typing import Any
 
-from src.rag.models import Chunk
+import numpy as np
+
 from src.rag.dimension_validator import DimensionValidator
+from src.rag.models import Chunk
 
 
 class InMemoryVectorStore:
     """In-memory vector store for testing."""
 
-    def __init__(self, name: str, metadata: Dict[str, Any]):
+    def __init__(self, name: str, metadata: dict[str, Any]):
         self.name = name
         self.metadata = metadata
         self.vectors = {}  # id -> embedding
         self.documents = {}  # id -> document text
         self.metadatas = {}  # id -> metadata
 
-    def add(self, ids: List[str], embeddings: List[List[float]],
-            documents: List[str], metadatas: List[Dict[str, Any]]):
+    def add(
+        self,
+        ids: list[str],
+        embeddings: list[list[float]],
+        documents: list[str],
+        metadatas: list[dict[str, Any]],
+    ):
         """Add vectors to store."""
         for i, id_ in enumerate(ids):
             self.vectors[id_] = np.array(embeddings[i])
             self.documents[id_] = documents[i]
             self.metadatas[id_] = metadatas[i]
 
-    def query(self, query_embeddings: List[List[float]], n_results: int):
+    def query(self, query_embeddings: list[list[float]], n_results: int):
         """Query for similar vectors using cosine similarity."""
         if not self.vectors:
-            return {'ids': [[]], 'distances': [[]], 'documents': [[]], 'metadatas': [[]]}
+            return {"ids": [[]], "distances": [[]], "documents": [[]], "metadatas": [[]]}
 
         query_vec = np.array(query_embeddings[0])
 
@@ -68,13 +74,13 @@ class InMemoryVectorStore:
         metadatas = [self.metadatas[id_] for id_ in ids]
 
         return {
-            'ids': [ids],
-            'distances': [distances],
-            'documents': [documents],
-            'metadatas': [metadatas]
+            "ids": [ids],
+            "distances": [distances],
+            "documents": [documents],
+            "metadatas": [metadatas],
         }
 
-    def get(self, where: Dict[str, Any]):
+    def get(self, where: dict[str, Any]):
         """Get items matching metadata filter."""
         matching_ids = []
         for id_, metadata in self.metadatas.items():
@@ -83,9 +89,9 @@ class InMemoryVectorStore:
             if match:
                 matching_ids.append(id_)
 
-        return {'ids': matching_ids}
+        return {"ids": matching_ids}
 
-    def delete(self, ids: List[str]):
+    def delete(self, ids: list[str]):
         """Delete items by ID."""
         for id_ in ids:
             self.vectors.pop(id_, None)
@@ -103,7 +109,7 @@ class InMemoryClient:
     def __init__(self):
         self.collections = {}
 
-    def get_or_create_collection(self, name: str, metadata: Dict[str, Any] = None):
+    def get_or_create_collection(self, name: str, metadata: dict[str, Any] = None):
         """Get or create collection."""
         if name not in self.collections:
             self.collections[name] = InMemoryVectorStore(name, metadata or {})
@@ -158,8 +164,7 @@ class ChromaDBClient:
 
         # Create or get collection with model metadata
         collection = self.client.get_or_create_collection(
-            name=collection_id,
-            metadata={"embedding_dim": embedding_dim, "model_name": model_name}
+            name=collection_id, metadata={"embedding_dim": embedding_dim, "model_name": model_name}
         )
 
         self.collections[collection_id] = collection
@@ -188,8 +193,8 @@ class ChromaDBClient:
     async def add_chunks(
         self,
         collection_id: str,
-        chunks: List[Chunk],
-        embeddings: List[List[float]],
+        chunks: list[Chunk],
+        embeddings: list[list[float]],
         model_name: str = "all-MiniLM-L6-v2",
     ):
         """Add chunks with embeddings to collection.
@@ -205,9 +210,7 @@ class ChromaDBClient:
         """
         # Validate dimensions before write
         validator = DimensionValidator()
-        await validator.validate_before_write(
-            collection_id, embeddings, self, model_name
-        )
+        await validator.validate_before_write(collection_id, embeddings, self, model_name)
 
         if collection_id not in self.collections:
             collection = self.client.get_collection(collection_id)
@@ -219,29 +222,20 @@ class ChromaDBClient:
         ids = [chunk.id for chunk in chunks]
         documents = [chunk.content for chunk in chunks]
         metadatas = [
-            {
-                "document_id": chunk.document_id,
-                "chunk_index": chunk.chunk_index,
-                **chunk.metadata
-            }
+            {"document_id": chunk.document_id, "chunk_index": chunk.chunk_index, **chunk.metadata}
             for chunk in chunks
         ]
 
         # Add to collection
-        collection.add(
-            ids=ids,
-            embeddings=embeddings,
-            documents=documents,
-            metadatas=metadatas
-        )
+        collection.add(ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas)
 
     async def query(
         self,
         collection_id: str,
-        query_embedding: List[float],
+        query_embedding: list[float],
         top_k: int = 5,
-        min_similarity: float = 0.0
-    ) -> List[Dict[str, Any]]:
+        min_similarity: float = 0.0,
+    ) -> list[dict[str, Any]]:
         """
         Query for similar chunks.
 
@@ -255,17 +249,14 @@ class ChromaDBClient:
             collection = self.collections[collection_id]
 
         # Query collection
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k
-        )
+        results = collection.query(query_embeddings=[query_embedding], n_results=top_k)
 
         # Parse results
         output = []
-        if results and results['ids'] and results['ids'][0]:
-            for i, chunk_id in enumerate(results['ids'][0]):
+        if results and results["ids"] and results["ids"][0]:
+            for i, chunk_id in enumerate(results["ids"][0]):
                 # Calculate similarity from distance
-                distance = results['distances'][0][i]
+                distance = results["distances"][0][i]
                 similarity = 1 - distance  # Distance is already 1-cosine_sim
 
                 # Filter by min_similarity
@@ -275,16 +266,13 @@ class ChromaDBClient:
                 # Reconstruct chunk
                 chunk = Chunk(
                     id=chunk_id,
-                    document_id=results['metadatas'][0][i]['document_id'],
-                    chunk_index=results['metadatas'][0][i]['chunk_index'],
-                    content=results['documents'][0][i],
-                    metadata=results['metadatas'][0][i]
+                    document_id=results["metadatas"][0][i]["document_id"],
+                    chunk_index=results["metadatas"][0][i]["chunk_index"],
+                    content=results["documents"][0][i],
+                    metadata=results["metadatas"][0][i],
                 )
 
-                output.append({
-                    "chunk": chunk,
-                    "similarity": similarity
-                })
+                output.append({"chunk": chunk, "similarity": similarity})
 
         return output
 
@@ -298,11 +286,7 @@ class ChromaDBClient:
 
         return collection.count()
 
-    async def delete_chunks_by_document(
-        self,
-        collection_id: str,
-        document_id: str
-    ):
+    async def delete_chunks_by_document(self, collection_id: str, document_id: str):
         """Delete all chunks for a document."""
         if collection_id not in self.collections:
             collection = self.client.get_collection(collection_id)
@@ -311,10 +295,8 @@ class ChromaDBClient:
             collection = self.collections[collection_id]
 
         # Query for all chunks from this document
-        results = collection.get(
-            where={"document_id": document_id}
-        )
+        results = collection.get(where={"document_id": document_id})
 
-        if results and results['ids']:
+        if results and results["ids"]:
             # Delete by IDs
-            collection.delete(ids=results['ids'])
+            collection.delete(ids=results["ids"])

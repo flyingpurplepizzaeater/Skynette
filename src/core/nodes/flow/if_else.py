@@ -6,7 +6,7 @@ Conditional branching based on expressions.
 
 from typing import Any
 
-from src.core.nodes.base import FlowNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import FieldType, FlowNode, NodeField, NodeOutput
 
 
 class IfElseNode(FlowNode):

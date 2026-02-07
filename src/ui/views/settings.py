@@ -1,6 +1,7 @@
 """Settings view - Application configuration."""
 
 import flet as ft
+
 from src.ui.theme import Theme
 
 
@@ -123,10 +124,18 @@ class SettingsView(ft.Column):
                                     border_radius=14,
                                     border=ft.Border.all(2, Theme.TEXT_PRIMARY),
                                 ),
-                                ft.Container(width=24, height=24, bgcolor="#10B981", border_radius=12),
-                                ft.Container(width=24, height=24, bgcolor="#F59E0B", border_radius=12),
-                                ft.Container(width=24, height=24, bgcolor="#EF4444", border_radius=12),
-                                ft.Container(width=24, height=24, bgcolor="#8B5CF6", border_radius=12),
+                                ft.Container(
+                                    width=24, height=24, bgcolor="#10B981", border_radius=12
+                                ),
+                                ft.Container(
+                                    width=24, height=24, bgcolor="#F59E0B", border_radius=12
+                                ),
+                                ft.Container(
+                                    width=24, height=24, bgcolor="#EF4444", border_radius=12
+                                ),
+                                ft.Container(
+                                    width=24, height=24, bgcolor="#8B5CF6", border_radius=12
+                                ),
                             ],
                             spacing=8,
                         ),

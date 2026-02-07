@@ -7,8 +7,10 @@ the application, including retry logic, error logging, and user notifications.
 import asyncio
 import functools
 import logging
-from typing import Callable, Optional, Type, Tuple, Any
-from .exceptions import SkynetteError, NetworkError, AIConnectionError
+from collections.abc import Callable
+from typing import Any
+
+from .exceptions import AIConnectionError, NetworkError, SkynetteError
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ def handle_errors(
     fallback_value: Any = None,
     log_error: bool = True,
     notify_user: bool = True,
-    suppress_exceptions: Tuple[Type[Exception], ...] = ()
+    suppress_exceptions: tuple[type[Exception], ...] = (),
 ):
     """Decorator to handle errors in functions.
 
@@ -33,6 +35,7 @@ def handle_errors(
             # Function that might raise errors
             pass
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -44,14 +47,16 @@ def handle_errors(
                 return fallback_value
             except SkynetteError as e:
                 if log_error:
-                    logger.error(f"Skynette error in {func.__name__}: {e.message}", extra=e.to_dict())
+                    logger.error(
+                        f"Skynette error in {func.__name__}: {e.message}", extra=e.to_dict()
+                    )
                 if notify_user:
                     # In a real app, this would trigger a UI notification
                     pass
                 if fallback_value is not None:
                     return fallback_value
                 raise
-            except Exception as e:
+            except Exception:
                 if log_error:
                     logger.exception(f"Unexpected error in {func.__name__}")
                 if notify_user:
@@ -62,6 +67,7 @@ def handle_errors(
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -69,7 +75,7 @@ def handle_errors_async(
     fallback_value: Any = None,
     log_error: bool = True,
     notify_user: bool = True,
-    suppress_exceptions: Tuple[Type[Exception], ...] = ()
+    suppress_exceptions: tuple[type[Exception], ...] = (),
 ):
     """Async version of handle_errors decorator.
 
@@ -85,6 +91,7 @@ def handle_errors_async(
             # Async function that might raise errors
             pass
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
@@ -96,13 +103,15 @@ def handle_errors_async(
                 return fallback_value
             except SkynetteError as e:
                 if log_error:
-                    logger.error(f"Skynette error in {func.__name__}: {e.message}", extra=e.to_dict())
+                    logger.error(
+                        f"Skynette error in {func.__name__}: {e.message}", extra=e.to_dict()
+                    )
                 if notify_user:
                     pass  # Trigger UI notification
                 if fallback_value is not None:
                     return fallback_value
                 raise
-            except Exception as e:
+            except Exception:
                 if log_error:
                     logger.exception(f"Unexpected error in {func.__name__}")
                 if notify_user:
@@ -112,6 +121,7 @@ def handle_errors_async(
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -119,7 +129,7 @@ def retry_on_error(
     max_attempts: int = 3,
     delay: float = 1.0,
     backoff: float = 2.0,
-    exceptions: Tuple[Type[Exception], ...] = (NetworkError, AIConnectionError)
+    exceptions: tuple[type[Exception], ...] = (NetworkError, AIConnectionError),
 ):
     """Decorator to retry function on specific errors.
 
@@ -135,6 +145,7 @@ def retry_on_error(
             # Function that might fail temporarily
             pass
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -152,6 +163,7 @@ def retry_on_error(
                             f"Retrying in {current_delay}s..."
                         )
                         import time
+
                         time.sleep(current_delay)
                         current_delay *= backoff
                     else:
@@ -161,6 +173,7 @@ def retry_on_error(
             raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -168,7 +181,7 @@ def retry_on_error_async(
     max_attempts: int = 3,
     delay: float = 1.0,
     backoff: float = 2.0,
-    exceptions: Tuple[Type[Exception], ...] = (NetworkError, AIConnectionError)
+    exceptions: tuple[type[Exception], ...] = (NetworkError, AIConnectionError),
 ):
     """Async version of retry_on_error decorator.
 
@@ -184,6 +197,7 @@ def retry_on_error_async(
             # Async function that might fail temporarily
             pass
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
@@ -209,6 +223,7 @@ def retry_on_error_async(
             raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -225,7 +240,7 @@ class ErrorContext:
         operation: str,
         fallback_value: Any = None,
         log_error: bool = True,
-        notify_user: bool = True
+        notify_user: bool = True,
     ):
         """Initialize error context.
 
@@ -287,7 +302,7 @@ def safe_call(func: Callable, *args, fallback_value: Any = None, **kwargs) -> An
     """
     try:
         return func(*args, **kwargs)
-    except Exception as e:
+    except Exception:
         logger.exception(f"Error in safe_call to {func.__name__}")
         return fallback_value
 
@@ -306,6 +321,6 @@ async def safe_call_async(func: Callable, *args, fallback_value: Any = None, **k
     """
     try:
         return await func(*args, **kwargs)
-    except Exception as e:
+    except Exception:
         logger.exception(f"Error in safe_call_async to {func.__name__}")
         return fallback_value

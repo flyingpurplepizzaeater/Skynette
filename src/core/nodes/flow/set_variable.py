@@ -6,7 +6,7 @@ Sets workflow variables for use in downstream nodes.
 
 from typing import Any
 
-from src.core.nodes.base import FlowNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import FieldType, FlowNode, NodeField, NodeOutput
 
 
 class SetVariableNode(FlowNode):

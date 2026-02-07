@@ -1,15 +1,17 @@
 """Credentials view - Manage API keys and OAuth connections."""
 
-import flet as ft
+from collections.abc import Callable
 from datetime import datetime
-from typing import Optional, Callable
+
+import flet as ft
+
 from src.ui.theme import Theme
 
 
 class CredentialsView(ft.Column):
     """Manage API keys, OAuth tokens, and other credentials."""
 
-    def __init__(self, on_credential_selected: Optional[Callable] = None):
+    def __init__(self, on_credential_selected: Callable | None = None):
         super().__init__()
         self.expand = True
         self.on_credential_selected = on_credential_selected
@@ -26,6 +28,7 @@ class CredentialsView(ft.Column):
         """Initialize the credential vault."""
         try:
             from src.data.credentials import CredentialVault, OAuth2Manager
+
             self._vault = CredentialVault()
             self._oauth_manager = OAuth2Manager(vault=self._vault)
         except Exception as e:
@@ -71,9 +74,7 @@ class CredentialsView(ft.Column):
                 )
             else:
                 for cred in credentials:
-                    self._credentials_list.controls.append(
-                        self._build_credential_card(cred)
-                    )
+                    self._credentials_list.controls.append(self._build_credential_card(cred))
 
             if self.page:
                 self._credentials_list.update()
@@ -273,9 +274,7 @@ class CredentialsView(ft.Column):
         provider_cards = []
         for provider in oauth_providers:
             is_connected = self._is_oauth_connected(provider["id"])
-            provider_cards.append(
-                self._build_oauth_provider_card(provider, is_connected)
-            )
+            provider_cards.append(self._build_oauth_provider_card(provider, is_connected))
 
         return ft.Container(
             content=ft.Column(
@@ -346,14 +345,20 @@ class CredentialsView(ft.Column):
                                 content=ft.Row(
                                     controls=[
                                         ft.Icon(
-                                            ft.Icons.CHECK_CIRCLE if is_connected else ft.Icons.RADIO_BUTTON_UNCHECKED,
+                                            ft.Icons.CHECK_CIRCLE
+                                            if is_connected
+                                            else ft.Icons.RADIO_BUTTON_UNCHECKED,
                                             size=14,
-                                            color=Theme.SUCCESS if is_connected else Theme.TEXT_MUTED,
+                                            color=Theme.SUCCESS
+                                            if is_connected
+                                            else Theme.TEXT_MUTED,
                                         ),
                                         ft.Text(
                                             "Connected" if is_connected else "Not connected",
                                             size=11,
-                                            color=Theme.SUCCESS if is_connected else Theme.TEXT_MUTED,
+                                            color=Theme.SUCCESS
+                                            if is_connected
+                                            else Theme.TEXT_MUTED,
                                         ),
                                     ],
                                     spacing=4,
@@ -364,7 +369,9 @@ class CredentialsView(ft.Column):
                                 style=ft.ButtonStyle(
                                     color=Theme.ERROR if is_connected else Theme.PRIMARY,
                                 ),
-                                on_click=lambda e, p=provider["id"]: self._on_oauth_action(p, is_connected),
+                                on_click=lambda e, p=provider["id"]: self._on_oauth_action(
+                                    p, is_connected
+                                ),
                             ),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -429,7 +436,9 @@ class CredentialsView(ft.Column):
                             ft.Row(
                                 controls=[
                                     ft.Text(
-                                        service.replace("_oauth", " (OAuth)").replace("_", " ").title(),
+                                        service.replace("_oauth", " (OAuth)")
+                                        .replace("_", " ")
+                                        .title(),
                                         size=12,
                                         color=Theme.TEXT_SECONDARY,
                                     ),
@@ -520,13 +529,14 @@ class CredentialsView(ft.Column):
 
         try:
             from src.data.credentials import CredentialType
+
             self._vault.save_credential(
                 name=name,
                 service=service,
                 data={
                     "type": CredentialType.API_KEY.value,
                     "api_key": api_key,
-                }
+                },
             )
 
             # Clear form
@@ -566,6 +576,7 @@ class CredentialsView(ft.Column):
             return
 
         from src.data.credentials import OAuth2Manager
+
         config = OAuth2Manager.get_provider_config(provider)
 
         if not config:
@@ -614,7 +625,7 @@ class CredentialsView(ft.Column):
                         data={
                             "client_id": client_id,
                             "client_secret": client_secret,
-                        }
+                        },
                     )
 
                 # Show instructions
@@ -628,6 +639,7 @@ class CredentialsView(ft.Column):
                 # Open browser (in real implementation)
                 try:
                     import webbrowser
+
                     webbrowser.open(auth_url)
                 except:
                     self._show_snackbar(f"Please visit: {auth_url}", is_error=False)

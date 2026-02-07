@@ -5,17 +5,17 @@ Uses Twilio REST API with Account SID and Auth Token.
 """
 
 import base64
-from typing import Optional
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
-def _get_credential(credential_id: Optional[str]) -> Optional[dict]:
+def _get_credential(credential_id: str | None) -> dict | None:
     """Load credential from vault if ID is provided."""
     if not credential_id:
         return None
     try:
         from src.data.credentials import CredentialVault
+
         vault = CredentialVault()
         cred = vault.get_credential(credential_id)
         if cred:
@@ -294,8 +294,12 @@ class TwilioSendWhatsAppNode(BaseNode):
             raise ValueError("Message body is required")
 
         # WhatsApp uses whatsapp: prefix
-        whatsapp_from = f"whatsapp:{from_number}" if not from_number.startswith("whatsapp:") else from_number
-        whatsapp_to = f"whatsapp:{to_number}" if not to_number.startswith("whatsapp:") else to_number
+        whatsapp_from = (
+            f"whatsapp:{from_number}" if not from_number.startswith("whatsapp:") else from_number
+        )
+        whatsapp_to = (
+            f"whatsapp:{to_number}" if not to_number.startswith("whatsapp:") else to_number
+        )
 
         headers = {
             "Authorization": _make_auth_header(account_sid, auth_token),
@@ -419,7 +423,9 @@ class TwilioGetMessageNode(BaseNode):
             "Authorization": _make_auth_header(account_sid, auth_token),
         }
 
-        url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages/{message_sid}.json"
+        url = (
+            f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages/{message_sid}.json"
+        )
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers)
@@ -787,8 +793,9 @@ class TwilioLookupNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Look up phone number via Twilio."""
-        import httpx
         from urllib.parse import quote
+
+        import httpx
 
         account_sid, auth_token = _get_auth(config)
 

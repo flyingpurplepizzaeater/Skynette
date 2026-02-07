@@ -4,11 +4,11 @@ Read File Node
 Reads content from local files.
 """
 
+import json
 from pathlib import Path
 from typing import Any
-import json
 
-from src.core.nodes.base import DataNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import DataNode, FieldType, NodeField, NodeOutput
 
 
 class ReadFileNode(DataNode):
@@ -113,7 +113,7 @@ class ReadFileNode(DataNode):
 
         # Read content
         if read_as == "json":
-            with open(path, "r", encoding=encoding) as f:
+            with open(path, encoding=encoding) as f:
                 content = json.load(f)
         elif read_as == "binary":
             import base64
@@ -121,10 +121,10 @@ class ReadFileNode(DataNode):
             with open(path, "rb") as f:
                 content = base64.b64encode(f.read()).decode("ascii")
         elif read_as == "lines":
-            with open(path, "r", encoding=encoding) as f:
+            with open(path, encoding=encoding) as f:
                 content = f.read().splitlines()
         else:  # text
-            with open(path, "r", encoding=encoding) as f:
+            with open(path, encoding=encoding) as f:
                 content = f.read()
 
         return {

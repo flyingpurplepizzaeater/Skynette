@@ -3,15 +3,15 @@ Agents Module - Autonomous agent orchestration for Skynette.
 """
 
 from src.core.agents.base import (
-    BaseAgent,
-    SkynetteAgent,
     AgentFactory,
     AgentResponse,
+    BaseAgent,
+    SkynetteAgent,
 )
 from src.core.agents.supervisor import (
+    SubTask,
     Supervisor,
     SupervisorPlan,
-    SubTask,
 )
 
 __all__ = [

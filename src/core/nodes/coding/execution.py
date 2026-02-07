@@ -3,13 +3,12 @@ Code Execution Nodes - Run code in various languages with error handling.
 """
 
 import asyncio
+import os
 import subprocess
 import tempfile
-import os
-from typing import Any, Optional
 from pathlib import Path
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class RunPythonNode(BaseNode):
@@ -102,10 +101,11 @@ class RunPythonNode(BaseNode):
                 if result.returncode != 0:
                     # Parse error from stderr
                     import re
+
                     error_match = re.search(r"(\w+Error):", result.stderr)
                     if error_match:
                         error_type = error_match.group(1)
-                    line_match = re.search(r'line (\d+)', result.stderr)
+                    line_match = re.search(r"line (\d+)", result.stderr)
                     if line_match:
                         error_line = int(line_match.group(1))
 
@@ -155,8 +155,16 @@ class RunNodeJSNode(BaseNode):
 
     inputs = [
         NodeField(name="code", label="JavaScript Code", type=FieldType.TEXT, required=True),
-        NodeField(name="working_dir", label="Working Directory", type=FieldType.STRING, required=False),
-        NodeField(name="timeout", label="Timeout (seconds)", type=FieldType.NUMBER, required=False, default=30),
+        NodeField(
+            name="working_dir", label="Working Directory", type=FieldType.STRING, required=False
+        ),
+        NodeField(
+            name="timeout",
+            label="Timeout (seconds)",
+            type=FieldType.NUMBER,
+            required=False,
+            default=30,
+        ),
         NodeField(name="node_path", label="Node Path", type=FieldType.STRING, required=False),
     ]
 
@@ -193,6 +201,7 @@ class RunNodeJSNode(BaseNode):
                 error_type = ""
                 if result.returncode != 0:
                     import re
+
                     error_match = re.search(r"(\w+Error):", result.stderr)
                     if error_match:
                         error_type = error_match.group(1)
@@ -240,8 +249,16 @@ class RunShellNode(BaseNode):
 
     inputs = [
         NodeField(name="command", label="Command", type=FieldType.TEXT, required=True),
-        NodeField(name="working_dir", label="Working Directory", type=FieldType.STRING, required=False),
-        NodeField(name="timeout", label="Timeout (seconds)", type=FieldType.NUMBER, required=False, default=60),
+        NodeField(
+            name="working_dir", label="Working Directory", type=FieldType.STRING, required=False
+        ),
+        NodeField(
+            name="timeout",
+            label="Timeout (seconds)",
+            type=FieldType.NUMBER,
+            required=False,
+            default=60,
+        ),
         NodeField(
             name="shell",
             label="Shell",
@@ -273,7 +290,6 @@ class RunShellNode(BaseNode):
         loop = asyncio.get_event_loop()
 
         def run_cmd():
-            import platform
 
             if shell_type == "auto":
                 shell = True
@@ -363,9 +379,23 @@ class RunTestsNode(BaseNode):
                 {"value": "npm", "label": "npm test"},
             ],
         ),
-        NodeField(name="test_path", label="Test Path/Pattern", type=FieldType.STRING, required=False),
-        NodeField(name="verbose", label="Verbose Output", type=FieldType.BOOLEAN, required=False, default=True),
-        NodeField(name="timeout", label="Timeout (seconds)", type=FieldType.NUMBER, required=False, default=300),
+        NodeField(
+            name="test_path", label="Test Path/Pattern", type=FieldType.STRING, required=False
+        ),
+        NodeField(
+            name="verbose",
+            label="Verbose Output",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=True,
+        ),
+        NodeField(
+            name="timeout",
+            label="Timeout (seconds)",
+            type=FieldType.NUMBER,
+            required=False,
+            default=300,
+        ),
     ]
 
     outputs = [
@@ -538,7 +568,13 @@ class LintCodeNode(BaseNode):
                 {"value": "tsc", "label": "TypeScript Compiler"},
             ],
         ),
-        NodeField(name="fix", label="Auto-fix Issues", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="fix",
+            label="Auto-fix Issues",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=False,
+        ),
     ]
 
     outputs = [
@@ -600,6 +636,7 @@ class LintCodeNode(BaseNode):
 
                 # Parse issues (simplified)
                 import re
+
                 for line in output.split("\n"):
                     if re.match(r".+:\d+:\d+:", line) or re.match(r".+\(\d+,\d+\):", line):
                         issues.append(line)

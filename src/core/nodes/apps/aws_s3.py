@@ -3,10 +3,9 @@ AWS S3 Integration Nodes - Upload, download, and manage S3 objects.
 """
 
 import asyncio
-from typing import Any, Optional
 from pathlib import Path
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class S3UploadNode(BaseNode):
@@ -164,7 +163,7 @@ class S3UploadNode(BaseNode):
         try:
             result = await loop.run_in_executor(None, upload)
             return result
-        except Exception as e:
+        except Exception:
             return {
                 "success": False,
                 "url": "",
@@ -299,7 +298,7 @@ class S3DownloadNode(BaseNode):
         try:
             result = await loop.run_in_executor(None, download)
             return result
-        except Exception as e:
+        except Exception:
             return {
                 "success": False,
                 "content": "",
@@ -407,12 +406,16 @@ class S3ListObjectsNode(BaseNode):
 
             objects = []
             for obj in response.get("Contents", []):
-                objects.append({
-                    "key": obj.get("Key"),
-                    "size": obj.get("Size"),
-                    "last_modified": obj.get("LastModified").isoformat() if obj.get("LastModified") else None,
-                    "etag": obj.get("ETag", "").strip('"'),
-                })
+                objects.append(
+                    {
+                        "key": obj.get("Key"),
+                        "size": obj.get("Size"),
+                        "last_modified": obj.get("LastModified").isoformat()
+                        if obj.get("LastModified")
+                        else None,
+                        "etag": obj.get("ETag", "").strip('"'),
+                    }
+                )
 
             return objects
 
@@ -422,7 +425,7 @@ class S3ListObjectsNode(BaseNode):
                 "objects": objects,
                 "count": len(objects),
             }
-        except Exception as e:
+        except Exception:
             return {
                 "objects": [],
                 "count": 0,

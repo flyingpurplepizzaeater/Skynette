@@ -1,6 +1,7 @@
 """System information detection for AI model requirements."""
 
 import platform
+
 import psutil
 
 
@@ -8,7 +9,7 @@ def get_available_ram_gb() -> float:
     """Get available RAM in gigabytes."""
     try:
         mem = psutil.virtual_memory()
-        return mem.total / (1024 ** 3)
+        return mem.total / (1024**3)
     except Exception:
         return 0.0
 
@@ -17,6 +18,7 @@ def has_cuda() -> bool:
     """Check if CUDA GPU is available."""
     try:
         import torch
+
         return torch.cuda.is_available()
     except ImportError:
         return False

@@ -4,10 +4,8 @@ Git Operations Nodes - Version control workflow automation.
 
 import asyncio
 import subprocess
-from typing import Any, Optional
-from pathlib import Path
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class GitCloneNode(BaseNode):
@@ -73,8 +71,7 @@ class GitCloneNode(BaseNode):
         loop = asyncio.get_event_loop()
         try:
             result = await loop.run_in_executor(
-                None,
-                lambda: subprocess.run(cmd, capture_output=True, text=True)
+                None, lambda: subprocess.run(cmd, capture_output=True, text=True)
             )
             if result.returncode == 0:
                 return {"success": True, "path": destination, "error": ""}
@@ -140,9 +137,7 @@ class GitCommitNode(BaseNode):
         try:
             # Stage files
             add_cmd = ["git", "-C", repo_path, "add"] + files.split()
-            await loop.run_in_executor(
-                None, lambda: subprocess.run(add_cmd, capture_output=True)
-            )
+            await loop.run_in_executor(None, lambda: subprocess.run(add_cmd, capture_output=True))
 
             # Commit
             commit_cmd = ["git", "-C", repo_path, "commit", "-m", message]
@@ -180,10 +175,20 @@ class GitPushNode(BaseNode):
 
     inputs = [
         NodeField(name="repo_path", label="Repository Path", type=FieldType.STRING, required=True),
-        NodeField(name="remote", label="Remote", type=FieldType.STRING, required=False, default="origin"),
+        NodeField(
+            name="remote", label="Remote", type=FieldType.STRING, required=False, default="origin"
+        ),
         NodeField(name="branch", label="Branch", type=FieldType.STRING, required=False),
-        NodeField(name="force", label="Force Push", type=FieldType.BOOLEAN, required=False, default=False),
-        NodeField(name="set_upstream", label="Set Upstream", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="force", label="Force Push", type=FieldType.BOOLEAN, required=False, default=False
+        ),
+        NodeField(
+            name="set_upstream",
+            label="Set Upstream",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=False,
+        ),
     ]
 
     outputs = [
@@ -231,9 +236,13 @@ class GitPullNode(BaseNode):
 
     inputs = [
         NodeField(name="repo_path", label="Repository Path", type=FieldType.STRING, required=True),
-        NodeField(name="remote", label="Remote", type=FieldType.STRING, required=False, default="origin"),
+        NodeField(
+            name="remote", label="Remote", type=FieldType.STRING, required=False, default="origin"
+        ),
         NodeField(name="branch", label="Branch", type=FieldType.STRING, required=False),
-        NodeField(name="rebase", label="Rebase", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="rebase", label="Rebase", type=FieldType.BOOLEAN, required=False, default=False
+        ),
     ]
 
     outputs = [
@@ -327,7 +336,7 @@ class GitBranchNode(BaseNode):
                     "success": True,
                     "branches": branches,
                     "current": current_result.stdout.strip(),
-                    "error": ""
+                    "error": "",
                 }
 
             elif action == "create":
@@ -341,7 +350,7 @@ class GitBranchNode(BaseNode):
                     "success": result.returncode == 0,
                     "branches": [],
                     "current": branch_name if result.returncode == 0 else "",
-                    "error": result.stderr
+                    "error": result.stderr,
                 }
 
             elif action == "switch":
@@ -353,7 +362,7 @@ class GitBranchNode(BaseNode):
                     "success": result.returncode == 0,
                     "branches": [],
                     "current": branch_name if result.returncode == 0 else "",
-                    "error": result.stderr
+                    "error": result.stderr,
                 }
 
             elif action == "delete":
@@ -365,7 +374,7 @@ class GitBranchNode(BaseNode):
                     "success": result.returncode == 0,
                     "branches": [],
                     "current": "",
-                    "error": result.stderr
+                    "error": result.stderr,
                 }
 
         except Exception as e:
@@ -438,7 +447,7 @@ class GitStatusNode(BaseNode):
                 "staged": staged,
             }
 
-        except Exception as e:
+        except Exception:
             return {
                 "clean": False,
                 "branch": "",
@@ -461,7 +470,13 @@ class GitDiffNode(BaseNode):
     inputs = [
         NodeField(name="repo_path", label="Repository Path", type=FieldType.STRING, required=True),
         NodeField(name="file", label="File Path", type=FieldType.STRING, required=False),
-        NodeField(name="staged", label="Staged Changes Only", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="staged",
+            label="Staged Changes Only",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=False,
+        ),
         NodeField(name="commit", label="Compare to Commit", type=FieldType.STRING, required=False),
     ]
 
@@ -508,6 +523,7 @@ class GitDiffNode(BaseNode):
                 if lines:
                     last_line = lines[-1]
                     import re
+
                     match = re.search(r"(\d+) files? changed", last_line)
                     if match:
                         files_changed = int(match.group(1))
@@ -525,5 +541,5 @@ class GitDiffNode(BaseNode):
                 "deletions": deletions,
             }
 
-        except Exception as e:
+        except Exception:
             return {"diff": "", "files_changed": 0, "insertions": 0, "deletions": 0}

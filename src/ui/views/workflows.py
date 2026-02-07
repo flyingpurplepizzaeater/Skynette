@@ -1,6 +1,7 @@
 """Workflows list view - Dashboard showing all workflows."""
 
 import flet as ft
+
 from src.ui.theme import Theme
 
 

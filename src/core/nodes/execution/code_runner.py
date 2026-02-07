@@ -6,13 +6,13 @@ Unified code execution node supporting multiple languages with timeout protectio
 
 import asyncio
 import json
+import os
 import subprocess
 import tempfile
-import os
 from pathlib import Path
 from typing import Any
 
-from src.core.nodes.base import BaseNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField, NodeOutput
 
 
 class CodeExecutionNode(BaseNode):
@@ -105,12 +105,12 @@ class CodeExecutionNode(BaseNode):
 
         if language == "python":
             # Python: direct assignment with repr for proper escaping
-            var_lines = [f'{k} = {repr(v)}' for k, v in variables.items()]
+            var_lines = [f"{k} = {repr(v)}" for k, v in variables.items()]
             return "\n".join(var_lines) + "\n\n" + code
 
         elif language == "javascript":
             # JavaScript: const declarations with JSON for proper escaping
-            var_lines = [f'const {k} = {json.dumps(v)};' for k, v in variables.items()]
+            var_lines = [f"const {k} = {json.dumps(v)};" for k, v in variables.items()]
             return "\n".join(var_lines) + "\n\n" + code
 
         elif language == "bash":
@@ -139,7 +139,10 @@ class CodeExecutionNode(BaseNode):
 
         language = config.get("language", "python")
         if language not in self.SUPPORTED_LANGUAGES:
-            return False, f"Unsupported language: {language}. Supported: {', '.join(self.SUPPORTED_LANGUAGES)}"
+            return (
+                False,
+                f"Unsupported language: {language}. Supported: {', '.join(self.SUPPORTED_LANGUAGES)}",
+            )
 
         timeout = config.get("timeout", 30)
         if not isinstance(timeout, (int, float)) or timeout <= 0:
@@ -184,10 +187,7 @@ class CodeExecutionNode(BaseNode):
         def run_code():
             # Write code to temp file
             with tempfile.NamedTemporaryFile(
-                mode='w',
-                suffix=suffix_map.get(language, ".txt"),
-                delete=False,
-                encoding='utf-8'
+                mode="w", suffix=suffix_map.get(language, ".txt"), delete=False, encoding="utf-8"
             ) as f:
                 f.write(code)
                 temp_path = f.name
@@ -225,7 +225,7 @@ class CodeExecutionNode(BaseNode):
                     "return_code": -1,
                     "success": False,
                 }
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 interpreter = cmd[0] if cmd else "interpreter"
                 return {
                     "stdout": "",

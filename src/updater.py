@@ -5,15 +5,13 @@ Checks for updates from GitHub releases and applies them.
 """
 
 import asyncio
-import json
-import os
-import sys
 import shutil
+import sys
 import tempfile
 import zipfile
-from pathlib import Path
-from typing import Optional, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 import httpx
 
@@ -21,6 +19,7 @@ import httpx
 @dataclass
 class UpdateInfo:
     """Information about an available update."""
+
     version: str
     current_version: str
     download_url: str
@@ -39,7 +38,7 @@ class Updater:
     CURRENT_VERSION = "1.0.0"
     RELEASES_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
-    def __init__(self, on_progress: Optional[Callable[[str, float], None]] = None):
+    def __init__(self, on_progress: Callable[[str, float], None] | None = None):
         """
         Initialize updater.
 
@@ -47,7 +46,7 @@ class Updater:
             on_progress: Callback for progress updates (message, percent)
         """
         self.on_progress = on_progress or (lambda msg, pct: None)
-        self._update_info: Optional[UpdateInfo] = None
+        self._update_info: UpdateInfo | None = None
 
     def _report_progress(self, message: str, percent: float = 0):
         """Report progress to callback."""
@@ -57,12 +56,12 @@ class Updater:
     def _parse_version(version: str) -> tuple:
         """Parse version string into comparable tuple."""
         # Remove 'v' prefix if present
-        version = version.lstrip('v')
-        parts = version.split('.')
+        version = version.lstrip("v")
+        parts = version.split(".")
         result = []
         for part in parts:
             # Handle versions like 1.0.0-beta
-            num = ''.join(c for c in part if c.isdigit())
+            num = "".join(c for c in part if c.isdigit())
             result.append(int(num) if num else 0)
         return tuple(result)
 
@@ -75,7 +74,7 @@ class Updater:
         except Exception:
             return False
 
-    async def check_for_updates(self) -> Optional[UpdateInfo]:
+    async def check_for_updates(self) -> UpdateInfo | None:
         """
         Check GitHub for available updates.
 
@@ -87,9 +86,7 @@ class Updater:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    self.RELEASES_URL,
-                    headers={"Accept": "application/vnd.github+json"},
-                    timeout=30
+                    self.RELEASES_URL, headers={"Accept": "application/vnd.github+json"}, timeout=30
                 )
 
                 if response.status_code != 200:
@@ -98,7 +95,7 @@ class Updater:
 
                 data = response.json()
 
-                version = data.get("tag_name", "").lstrip('v')
+                version = data.get("tag_name", "").lstrip("v")
                 is_newer = self._is_newer_version(version)
 
                 # Find appropriate asset for this platform
@@ -146,7 +143,7 @@ class Updater:
         else:
             return "linux"
 
-    async def download_update(self, url: Optional[str] = None) -> Optional[Path]:
+    async def download_update(self, url: str | None = None) -> Path | None:
         """
         Download update package.
 
@@ -183,7 +180,7 @@ class Updater:
                                 percent = (downloaded / total_size) * 100
                                 self._report_progress(
                                     f"Downloading: {downloaded // 1024 // 1024}MB / {total_size // 1024 // 1024}MB",
-                                    percent
+                                    percent,
                                 )
 
             self._report_progress("Download complete!", 100)
@@ -207,7 +204,7 @@ class Updater:
 
         try:
             # Get application directory
-            if getattr(sys, 'frozen', False):
+            if getattr(sys, "frozen", False):
                 # Running as compiled executable
                 app_dir = Path(sys.executable).parent
             else:
@@ -222,7 +219,7 @@ class Updater:
                 shutil.rmtree(backup_dir)
 
             # Don't backup in development mode
-            if getattr(sys, 'frozen', False):
+            if getattr(sys, "frozen", False):
                 shutil.copytree(app_dir, backup_dir)
 
             # Extract update
@@ -230,7 +227,7 @@ class Updater:
             extract_dir = update_path.parent / "extracted"
             extract_dir.mkdir(exist_ok=True)
 
-            with zipfile.ZipFile(update_path, 'r') as zip_ref:
+            with zipfile.ZipFile(update_path, "r") as zip_ref:
                 zip_ref.extractall(extract_dir)
 
             # Find the actual content directory (GitHub zips have a root folder)
@@ -305,15 +302,14 @@ class UpdateDialog:
 
     def __init__(self, page):
         import flet as ft
+
         self.page = page
         self.ft = ft
         self.updater = Updater(on_progress=self._on_progress)
         self.progress_text = ft.Text("", size=14)
         self.progress_bar = ft.ProgressBar(width=400, value=0)
         self.update_button = ft.Button(
-            "Check for Updates",
-            icon=ft.Icons.REFRESH,
-            on_click=self._check_updates
+            "Check for Updates", icon=ft.Icons.REFRESH, on_click=self._check_updates
         )
         self.download_button = ft.Button(
             "Download & Install",
@@ -339,7 +335,9 @@ class UpdateDialog:
 
         if self._update_info and self._update_info.is_newer:
             self.download_button.visible = True
-            self.release_notes.value = f"Version {self._update_info.version}\n\n{self._update_info.release_notes[:500]}..."
+            self.release_notes.value = (
+                f"Version {self._update_info.version}\n\n{self._update_info.release_notes[:500]}..."
+            )
         else:
             self.release_notes.value = "You're running the latest version!"
 
@@ -358,6 +356,7 @@ class UpdateDialog:
             # Show restart dialog
             def restart_app(e):
                 import subprocess
+
                 subprocess.Popen([sys.executable] + sys.argv)
                 self.page.window.close()
 
@@ -387,10 +386,12 @@ class UpdateDialog:
             [
                 self.ft.Text("Software Updates", size=20, weight=self.ft.FontWeight.BOLD),
                 self.ft.Divider(),
-                self.ft.Row([
-                    self.update_button,
-                    self.download_button,
-                ]),
+                self.ft.Row(
+                    [
+                        self.update_button,
+                        self.download_button,
+                    ]
+                ),
                 self.progress_bar,
                 self.progress_text,
                 self.ft.Container(height=20),
@@ -404,6 +405,7 @@ class UpdateDialog:
 # CLI interface for updates
 async def main():
     """CLI update check."""
+
     def progress(msg, pct):
         print(f"[{pct:3.0f}%] {msg}")
 
@@ -418,7 +420,7 @@ async def main():
         print(f"\nRelease notes:\n{update_info.release_notes[:500]}")
 
         response = input("\nDownload and install? (y/n): ")
-        if response.lower() == 'y':
+        if response.lower() == "y":
             success = await updater.update()
             if success:
                 print("\nUpdate complete! Please restart the application.")

@@ -4,10 +4,10 @@ Manual Trigger Node
 Triggers a workflow when manually clicked.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
-from src.core.nodes.base import TriggerNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import FieldType, NodeField, NodeOutput, TriggerNode
 
 
 class ManualTriggerNode(TriggerNode):

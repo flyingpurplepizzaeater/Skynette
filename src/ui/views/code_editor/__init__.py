@@ -297,10 +297,7 @@ class CodeEditorView(ft.Column):
         file = self.state.open_files[index]
 
         # Check if closing a workflow file
-        is_workflow_file = (
-            self._current_workflow_id
-            and file.path.startswith("workflows/")
-        )
+        is_workflow_file = self._current_workflow_id and file.path.startswith("workflows/")
 
         if file.is_dirty:
             self._show_save_dialog(index)
@@ -544,14 +541,10 @@ class CodeEditorView(ft.Column):
             self._workflow_format = new_format
 
             # Update file extension in path
-            name = self._workflow_bridge.get_workflow_name(
-                self._current_workflow_id
-            ) or "workflow"
+            name = self._workflow_bridge.get_workflow_name(self._current_workflow_id) or "workflow"
             ext = {"yaml": "yaml", "json": "json", "python": "py"}[new_format.value]
             new_path = f"workflows/{name}.{ext}"
-            language = {"yaml": "yaml", "json": "json", "python": "python"}[
-                new_format.value
-            ]
+            language = {"yaml": "yaml", "json": "json", "python": "python"}[new_format.value]
 
             # Update the file in state
             if self.state.active_file_index >= 0:
@@ -585,9 +578,7 @@ class CodeEditorView(ft.Column):
             self._validation_task.cancel()
 
         # Schedule new validation after 500ms
-        self._validation_task = asyncio.create_task(
-            self._validate_after_delay(content, 0.5)
-        )
+        self._validation_task = asyncio.create_task(self._validate_after_delay(content, 0.5))
 
     async def _validate_after_delay(self, content: str, delay: float) -> None:
         """Validate workflow content after delay.

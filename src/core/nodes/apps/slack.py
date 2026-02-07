@@ -2,17 +2,16 @@
 Slack Integration Node - Send messages and interact with Slack.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
-def _get_credential(credential_id: Optional[str]) -> Optional[dict]:
+def _get_credential(credential_id: str | None) -> dict | None:
     """Load credential from vault if ID is provided."""
     if not credential_id:
         return None
     try:
         from src.data.credentials import CredentialVault
+
         vault = CredentialVault()
         cred = vault.get_credential(credential_id)
         if cred:
@@ -123,7 +122,6 @@ class SlackSendMessageNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Send message to Slack."""
-        import httpx
 
         # Check for saved credential first
         credential_id = config.get("credential")
@@ -145,9 +143,7 @@ class SlackSendMessageNode(BaseNode):
 
         if webhook_url:
             # Use incoming webhook
-            return await self._send_via_webhook(
-                webhook_url, message, username, icon_emoji
-            )
+            return await self._send_via_webhook(webhook_url, message, username, icon_emoji)
         elif bot_token:
             # Use Bot API
             return await self._send_via_bot(
@@ -160,8 +156,8 @@ class SlackSendMessageNode(BaseNode):
         self,
         webhook_url: str,
         message: str,
-        username: Optional[str],
-        icon_emoji: Optional[str],
+        username: str | None,
+        icon_emoji: str | None,
     ) -> dict:
         """Send message via incoming webhook."""
         import httpx
@@ -187,9 +183,9 @@ class SlackSendMessageNode(BaseNode):
         bot_token: str,
         channel: str,
         message: str,
-        username: Optional[str],
-        icon_emoji: Optional[str],
-        thread_ts: Optional[str],
+        username: str | None,
+        icon_emoji: str | None,
+        thread_ts: str | None,
     ) -> dict:
         """Send message via Slack Bot API."""
         import httpx

@@ -4,17 +4,16 @@ Trello Integration Nodes - Manage boards, lists, and cards.
 Uses Trello REST API with API key + token authentication.
 """
 
-from typing import Any, Optional
-
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
-def _get_credential(credential_id: Optional[str]) -> Optional[dict]:
+def _get_credential(credential_id: str | None) -> dict | None:
     """Load credential from vault if ID is provided."""
     if not credential_id:
         return None
     try:
         from src.data.credentials import CredentialVault
+
         vault = CredentialVault()
         cred = vault.get_credential(credential_id)
         if cred:

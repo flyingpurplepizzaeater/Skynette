@@ -6,13 +6,12 @@ SQLite-based storage for RAG metadata (collections, documents, chunks).
 ChromaDB handles vector embeddings separately.
 """
 
-import sqlite3
 import json
-from pathlib import Path
-from typing import List, Optional
+import sqlite3
 from datetime import datetime
+from pathlib import Path
 
-from src.rag.models import Collection, Document, Chunk
+from src.rag.models import Chunk, Collection, Document
 
 
 class RAGStorage:
@@ -50,7 +49,7 @@ class RAGStorage:
         """Initialize database schema."""
         schema_path = Path(__file__).parent / "schema.sql"
         try:
-            with open(schema_path, 'r') as f:
+            with open(schema_path) as f:
                 schema = f.read()
         except FileNotFoundError:
             raise RuntimeError(
@@ -74,29 +73,35 @@ class RAGStorage:
             cursor = conn.cursor()
 
             # Check for duplicate name with different ID
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id FROM rag_collections WHERE name = ?
-            """, (collection.name,))
+            """,
+                (collection.name,),
+            )
             existing = cursor.fetchone()
             if existing and existing[0] != collection.id:
                 raise ValueError(f"Collection name '{collection.name}' already exists")
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO rag_collections
                 (id, name, description, embedding_model, chunk_size, chunk_overlap,
                  max_chunk_size, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                collection.id,
-                collection.name,
-                collection.description,
-                collection.embedding_model,
-                collection.chunk_size,
-                collection.chunk_overlap,
-                collection.max_chunk_size,
-                collection.created_at.isoformat(),
-                collection.updated_at.isoformat()
-            ))
+            """,
+                (
+                    collection.id,
+                    collection.name,
+                    collection.description,
+                    collection.embedding_model,
+                    collection.chunk_size,
+                    collection.chunk_overlap,
+                    collection.max_chunk_size,
+                    collection.created_at.isoformat(),
+                    collection.updated_at.isoformat(),
+                ),
+            )
 
             conn.commit()
         except sqlite3.IntegrityError as e:
@@ -106,17 +111,20 @@ class RAGStorage:
             conn.rollback()
             raise RuntimeError(f"Failed to save collection: {e}")
 
-    def get_collection(self, collection_id: str) -> Optional[Collection]:
+    def get_collection(self, collection_id: str) -> Collection | None:
         """Get collection by ID."""
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, name, description, embedding_model, chunk_size, chunk_overlap,
                    max_chunk_size, created_at, updated_at
             FROM rag_collections
             WHERE id = ?
-        """, (collection_id,))
+        """,
+            (collection_id,),
+        )
 
         row = cursor.fetchone()
 
@@ -132,10 +140,10 @@ class RAGStorage:
             chunk_overlap=row[5],
             max_chunk_size=row[6],
             created_at=datetime.fromisoformat(row[7]),
-            updated_at=datetime.fromisoformat(row[8])
+            updated_at=datetime.fromisoformat(row[8]),
         )
 
-    def list_collections(self) -> List[Collection]:
+    def list_collections(self) -> list[Collection]:
         """List all collections."""
         conn = self._get_connection()
         cursor = conn.cursor()
@@ -159,7 +167,7 @@ class RAGStorage:
                 chunk_overlap=row[5],
                 max_chunk_size=row[6],
                 created_at=datetime.fromisoformat(row[7]),
-                updated_at=datetime.fromisoformat(row[8])
+                updated_at=datetime.fromisoformat(row[8]),
             )
             for row in rows
         ]
@@ -173,17 +181,20 @@ class RAGStorage:
 
     # Document methods
 
-    def get_collection_documents(self, collection_id: str) -> List[Document]:
+    def get_collection_documents(self, collection_id: str) -> list[Document]:
         """Get all documents in a collection."""
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, collection_id, source_path, file_type, file_hash, file_size,
                    chunk_count, indexed_at, last_updated, status, error
             FROM rag_documents
             WHERE collection_id = ?
-        """, (collection_id,))
+        """,
+            (collection_id,),
+        )
 
         rows = cursor.fetchall()
 
@@ -210,7 +221,8 @@ class RAGStorage:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO rag_documents
                 (id, collection_id, source_path, file_type, file_hash, file_size,
                  chunk_count, indexed_at, last_updated, status, error)
@@ -220,19 +232,21 @@ class RAGStorage:
                     error = excluded.error,
                     chunk_count = excluded.chunk_count,
                     last_updated = excluded.last_updated
-            """, (
-                document.id,
-                document.collection_id,
-                document.source_path,
-                document.file_type,
-                document.file_hash,
-                document.file_size,
-                document.chunk_count,
-                document.indexed_at.isoformat() if document.indexed_at else None,
-                document.last_updated.isoformat() if document.last_updated else None,
-                document.status,
-                document.error
-            ))
+            """,
+                (
+                    document.id,
+                    document.collection_id,
+                    document.source_path,
+                    document.file_type,
+                    document.file_hash,
+                    document.file_size,
+                    document.chunk_count,
+                    document.indexed_at.isoformat() if document.indexed_at else None,
+                    document.last_updated.isoformat() if document.last_updated else None,
+                    document.status,
+                    document.error,
+                ),
+            )
 
             conn.commit()
         except sqlite3.IntegrityError as e:
@@ -244,17 +258,20 @@ class RAGStorage:
             conn.rollback()
             raise RuntimeError(f"Failed to save document: {e}")
 
-    def get_document(self, document_id: str) -> Optional[Document]:
+    def get_document(self, document_id: str) -> Document | None:
         """Get document by ID."""
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, collection_id, source_path, file_type, file_hash, file_size,
                    chunk_count, indexed_at, last_updated, status, error
             FROM rag_documents
             WHERE id = ?
-        """, (document_id,))
+        """,
+            (document_id,),
+        )
 
         row = cursor.fetchone()
 
@@ -272,7 +289,7 @@ class RAGStorage:
             indexed_at=datetime.fromisoformat(row[7]) if row[7] else None,
             last_updated=datetime.fromisoformat(row[8]) if row[8] else None,
             status=row[9],
-            error=row[10]
+            error=row[10],
         )
 
     # Chunk methods
@@ -283,19 +300,22 @@ class RAGStorage:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO rag_chunks
                 (id, document_id, chunk_index, content, embedding_hash, metadata, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                chunk.id,
-                chunk.document_id,
-                chunk.chunk_index,
-                chunk.content,
-                chunk.embedding_hash,
-                json.dumps(chunk.metadata) if chunk.metadata else None,
-                chunk.created_at.isoformat()
-            ))
+            """,
+                (
+                    chunk.id,
+                    chunk.document_id,
+                    chunk.chunk_index,
+                    chunk.content,
+                    chunk.embedding_hash,
+                    json.dumps(chunk.metadata) if chunk.metadata else None,
+                    chunk.created_at.isoformat(),
+                ),
+            )
 
             conn.commit()
         except sqlite3.IntegrityError as e:
@@ -307,16 +327,19 @@ class RAGStorage:
             conn.rollback()
             raise RuntimeError(f"Failed to save chunk: {e}")
 
-    def get_chunk(self, chunk_id: str) -> Optional[Chunk]:
+    def get_chunk(self, chunk_id: str) -> Chunk | None:
         """Get chunk by ID."""
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, document_id, chunk_index, content, embedding_hash, metadata, created_at
             FROM rag_chunks
             WHERE id = ?
-        """, (chunk_id,))
+        """,
+            (chunk_id,),
+        )
 
         row = cursor.fetchone()
 
@@ -330,20 +353,23 @@ class RAGStorage:
             content=row[3],
             embedding_hash=row[4],
             metadata=json.loads(row[5]) if row[5] else {},
-            created_at=datetime.fromisoformat(row[6])
+            created_at=datetime.fromisoformat(row[6]),
         )
 
-    def get_document_chunks(self, document_id: str) -> List[Chunk]:
+    def get_document_chunks(self, document_id: str) -> list[Chunk]:
         """Get all chunks for a document."""
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, document_id, chunk_index, content, embedding_hash, metadata, created_at
             FROM rag_chunks
             WHERE document_id = ?
             ORDER BY chunk_index
-        """, (document_id,))
+        """,
+            (document_id,),
+        )
 
         rows = cursor.fetchall()
 
@@ -355,7 +381,7 @@ class RAGStorage:
                 content=row[3],
                 embedding_hash=row[4],
                 metadata=json.loads(row[5]) if row[5] else {},
-                created_at=datetime.fromisoformat(row[6])
+                created_at=datetime.fromisoformat(row[6]),
             )
             for row in rows
         ]

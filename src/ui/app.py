@@ -4,24 +4,27 @@ Skynette Main Application
 The main Flet application shell with navigation and layout.
 """
 
-import flet as ft
 import asyncio
-from src.ui.theme import SkynetteTheme
-from src.updater import Updater, UpdateInfo
-from src.data.storage import WorkflowStorage
-from src.core.workflow.models import Workflow, WorkflowNode
-from src.core.workflow.executor import WorkflowExecutor
-from src.core.nodes.registry import NodeRegistry
-from src.ai.assistant import get_assistant, ChatMessage
+
+import flet as ft
+
+from src.ai.assistant import ChatMessage, get_assistant
 from src.ai.providers import initialize_default_providers
-from src.ui.views.simple_mode import SimpleModeView
+from src.core.nodes.registry import NodeRegistry
+from src.core.workflow.executor import WorkflowExecutor
+from src.core.workflow.models import Workflow, WorkflowNode
+from src.data.storage import WorkflowStorage
+from src.ui.theme import SkynetteTheme
 from src.ui.views.agents import AgentsView
-from src.ui.views.devtools import DevToolsView
 from src.ui.views.code_editor import CodeEditorView
+from src.ui.views.devtools import DevToolsView
+from src.ui.views.simple_mode import SimpleModeView
+from src.updater import UpdateInfo, Updater
 
 
 class WorkflowExecutionError(Exception):
     """Exception raised when workflow execution fails."""
+
     pass
 
 
@@ -408,9 +411,7 @@ class SkynetteApp:
                             ],
                         ),
                         padding=ft.Padding.all(12),
-                        border=ft.Border.only(
-                            bottom=ft.BorderSide(1, SkynetteTheme.BORDER)
-                        ),
+                        border=ft.Border.only(bottom=ft.BorderSide(1, SkynetteTheme.BORDER)),
                     ),
                     # Chat Messages Area
                     ft.Container(
@@ -433,9 +434,7 @@ class SkynetteApp:
                             spacing=8,
                         ),
                         padding=ft.Padding.all(12),
-                        border=ft.Border.only(
-                            top=ft.BorderSide(1, SkynetteTheme.BORDER)
-                        ),
+                        border=ft.Border.only(top=ft.BorderSide(1, SkynetteTheme.BORDER)),
                     ),
                 ],
                 spacing=0,
@@ -477,15 +476,9 @@ class SkynetteApp:
                         size=SkynetteTheme.FONT_SM,
                         color=SkynetteTheme.TEXT_MUTED,
                     ),
-                    self._build_example_prompt(
-                        "Create a workflow that monitors a folder"
-                    ),
-                    self._build_example_prompt(
-                        "Build an email summarizer"
-                    ),
-                    self._build_example_prompt(
-                        "How do I call an API?"
-                    ),
+                    self._build_example_prompt("Create a workflow that monitors a folder"),
+                    self._build_example_prompt("Build an email summarizer"),
+                    self._build_example_prompt("How do I call an API?"),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=8,
@@ -505,7 +498,9 @@ class SkynetteApp:
                             ft.Icon(
                                 ft.Icons.PERSON if is_user else ft.Icons.SMART_TOY_ROUNDED,
                                 size=16,
-                                color=SkynetteTheme.TEXT_SECONDARY if is_user else SkynetteTheme.PRIMARY,
+                                color=SkynetteTheme.TEXT_SECONDARY
+                                if is_user
+                                else SkynetteTheme.PRIMARY,
                             ),
                             ft.Text(
                                 "You" if is_user else "Skynet",
@@ -525,7 +520,9 @@ class SkynetteApp:
                             code_style_sheet=ft.MarkdownStyleSheet(
                                 code_text_style=ft.TextStyle(size=12),
                             ),
-                        ) if not is_user else ft.Text(
+                        )
+                        if not is_user
+                        else ft.Text(
                             message.content,
                             size=SkynetteTheme.FONT_SM,
                             color=SkynetteTheme.TEXT_PRIMARY,
@@ -608,14 +605,12 @@ class SkynetteApp:
                 if self.chat_messages_column.controls:
                     # Find and remove our temp user message
                     for ctrl in self.chat_messages_column.controls[:]:
-                        if hasattr(ctrl, '_temp_user'):
+                        if hasattr(ctrl, "_temp_user"):
                             self.chat_messages_column.controls.remove(ctrl)
 
                 # Add messages from assistant's conversation
                 # The assistant already has the user message, just add the response
-                self.chat_messages_column.controls.append(
-                    self._build_chat_message(response)
-                )
+                self.chat_messages_column.controls.append(self._build_chat_message(response))
 
                 self.chat_is_loading = False
                 self.page.update()
@@ -631,11 +626,9 @@ class SkynetteApp:
                     id="error",
                     role="assistant",
                     content=f"Sorry, I encountered an error: {str(ex)}\n\n"
-                            "Make sure you have an AI provider configured in Settings.",
+                    "Make sure you have an AI provider configured in Settings.",
                 )
-                self.chat_messages_column.controls.append(
-                    self._build_chat_message(error_msg)
-                )
+                self.chat_messages_column.controls.append(self._build_chat_message(error_msg))
                 self.chat_is_loading = False
                 self.page.update()
 
@@ -767,12 +760,15 @@ class SkynetteApp:
                         ),
                         ft.Container(height=16),
                         ft.Container(
-                            content=ft.Column([
-                                ft.Text("💡 Quick Tips:", size=12, weight=ft.FontWeight.W_600),
-                                ft.Text("• Use Simple Mode for step-by-step creation", size=11),
-                                ft.Text("• Use Advanced Mode for visual editing", size=11),
-                                ft.Text("• All workflows are saved automatically", size=11),
-                            ], spacing=4),
+                            content=ft.Column(
+                                [
+                                    ft.Text("💡 Quick Tips:", size=12, weight=ft.FontWeight.W_600),
+                                    ft.Text("• Use Simple Mode for step-by-step creation", size=11),
+                                    ft.Text("• Use Advanced Mode for visual editing", size=11),
+                                    ft.Text("• All workflows are saved automatically", size=11),
+                                ],
+                                spacing=4,
+                            ),
                             padding=12,
                             bgcolor=SkynetteTheme.BG_SECONDARY,
                             border_radius=SkynetteTheme.RADIUS_MD,
@@ -877,11 +873,10 @@ class SkynetteApp:
     def _build_ai_hub_view(self) -> ft.Control:
         """Build the AI Model Hub view."""
         from src.ui.views.ai_hub import AIHubView
+
         return AIHubView(page=self.page).build()
 
-    def _build_model_category_card(
-        self, title: str, icon: str, subtitle: str
-    ) -> ft.Container:
+    def _build_model_category_card(self, title: str, icon: str, subtitle: str) -> ft.Container:
         """Build a model category card."""
         return ft.Container(
             content=ft.Column(
@@ -935,6 +930,7 @@ class SkynetteApp:
     def _build_credentials_view(self) -> ft.Control:
         """Build the credentials management view."""
         from src.ui.views.credentials import CredentialsView
+
         return ft.Container(
             content=CredentialsView(),
             padding=ft.Padding.all(24),
@@ -1317,18 +1313,22 @@ class SkynetteApp:
         ]
 
         if details:
-            controls.extend([
-                ft.Container(height=12),
-                ft.Container(
-                    content=ft.Column([
-                        ft.Text("Details:", size=12, weight=ft.FontWeight.W_600),
-                        ft.Text(details, size=11, color=SkynetteTheme.TEXT_SECONDARY),
-                    ]),
-                    padding=12,
-                    bgcolor=SkynetteTheme.BG_TERTIARY,
-                    border_radius=SkynetteTheme.RADIUS_MD,
-                ),
-            ])
+            controls.extend(
+                [
+                    ft.Container(height=12),
+                    ft.Container(
+                        content=ft.Column(
+                            [
+                                ft.Text("Details:", size=12, weight=ft.FontWeight.W_600),
+                                ft.Text(details, size=11, color=SkynetteTheme.TEXT_SECONDARY),
+                            ]
+                        ),
+                        padding=12,
+                        bgcolor=SkynetteTheme.BG_TERTIARY,
+                        border_radius=SkynetteTheme.RADIUS_MD,
+                    ),
+                ]
+            )
 
         dialog = ft.AlertDialog(
             title=ft.Text(title, color=SkynetteTheme.ERROR),
@@ -1342,8 +1342,16 @@ class SkynetteApp:
         dialog.open = True
         self.page.update()
 
-    def _show_confirm_dialog(self, title: str, message: str, on_confirm, confirm_text: str = "Confirm", is_destructive: bool = False):
+    def _show_confirm_dialog(
+        self,
+        title: str,
+        message: str,
+        on_confirm,
+        confirm_text: str = "Confirm",
+        is_destructive: bool = False,
+    ):
         """Show a confirmation dialog."""
+
         def handle_confirm(e):
             self.page.close(dialog)
             on_confirm()
@@ -1352,7 +1360,9 @@ class SkynetteApp:
             self.page.close(dialog)
 
         dialog = ft.AlertDialog(
-            title=ft.Text(title, color=SkynetteTheme.ERROR if is_destructive else SkynetteTheme.TEXT_PRIMARY),
+            title=ft.Text(
+                title, color=SkynetteTheme.ERROR if is_destructive else SkynetteTheme.TEXT_PRIMARY
+            ),
             content=ft.Text(message, size=14),
             actions=[
                 ft.TextButton("Cancel", on_click=handle_cancel),
@@ -1466,7 +1476,7 @@ class SkynetteApp:
     def _update_content(self):
         """Update the main content area based on current view."""
         # Dispose previous view if it has a dispose method
-        if hasattr(self.content_area.content, 'dispose'):
+        if hasattr(self.content_area.content, "dispose"):
             self.content_area.content.dispose()
 
         if self.current_view == "workflows":
@@ -1525,16 +1535,32 @@ class SkynetteApp:
                                 content=ft.Row(
                                     controls=[
                                         ft.Container(
-                                            content=ft.Text("Simple", size=12, color=SkynetteTheme.TEXT_PRIMARY if self.simple_mode else SkynetteTheme.TEXT_MUTED),
+                                            content=ft.Text(
+                                                "Simple",
+                                                size=12,
+                                                color=SkynetteTheme.TEXT_PRIMARY
+                                                if self.simple_mode
+                                                else SkynetteTheme.TEXT_MUTED,
+                                            ),
                                             padding=ft.Padding.symmetric(horizontal=12, vertical=6),
-                                            bgcolor=SkynetteTheme.PRIMARY if self.simple_mode else "transparent",
+                                            bgcolor=SkynetteTheme.PRIMARY
+                                            if self.simple_mode
+                                            else "transparent",
                                             border_radius=4,
                                             on_click=lambda e: self._set_editor_mode(simple=True),
                                         ),
                                         ft.Container(
-                                            content=ft.Text("Advanced", size=12, color=SkynetteTheme.TEXT_PRIMARY if not self.simple_mode else SkynetteTheme.TEXT_MUTED),
+                                            content=ft.Text(
+                                                "Advanced",
+                                                size=12,
+                                                color=SkynetteTheme.TEXT_PRIMARY
+                                                if not self.simple_mode
+                                                else SkynetteTheme.TEXT_MUTED,
+                                            ),
                                             padding=ft.Padding.symmetric(horizontal=12, vertical=6),
-                                            bgcolor=SkynetteTheme.PRIMARY if not self.simple_mode else "transparent",
+                                            bgcolor=SkynetteTheme.PRIMARY
+                                            if not self.simple_mode
+                                            else "transparent",
                                             border_radius=4,
                                             on_click=lambda e: self._set_editor_mode(simple=False),
                                         ),
@@ -1568,7 +1594,9 @@ class SkynetteApp:
                     border=ft.Border.only(bottom=ft.BorderSide(1, SkynetteTheme.BORDER)),
                 ),
                 # Editor area - Simple or Advanced based on mode
-                self._build_simple_editor_content() if self.simple_mode else self._build_advanced_editor_content(),
+                self._build_simple_editor_content()
+                if self.simple_mode
+                else self._build_advanced_editor_content(),
             ],
             expand=True,
             spacing=0,
@@ -1728,7 +1756,7 @@ class SkynetteApp:
 
             dx = x2 - x1
             dy = y2 - y1
-            length = math.sqrt(dx*dx + dy*dy)
+            length = math.sqrt(dx * dx + dy * dy)
             angle = math.atan2(dy, dx)
 
             line = ft.Container(
@@ -1768,22 +1796,25 @@ class SkynetteApp:
                 controls=[
                     # Header
                     ft.Container(
-                        content=ft.Column([
-                            ft.Text(
-                                node_def.name if node_def else node.type,
-                                size=14,
-                                weight=ft.FontWeight.W_600,
-                            ),
-                            ft.Text(
-                                node_def.description if node_def else "",
-                                size=11,
-                                color=Theme.TEXT_SECONDARY,
-                            ) if node_def and node_def.description else ft.Container(),
-                        ]),
+                        content=ft.Column(
+                            [
+                                ft.Text(
+                                    node_def.name if node_def else node.type,
+                                    size=14,
+                                    weight=ft.FontWeight.W_600,
+                                ),
+                                ft.Text(
+                                    node_def.description if node_def else "",
+                                    size=11,
+                                    color=Theme.TEXT_SECONDARY,
+                                )
+                                if node_def and node_def.description
+                                else ft.Container(),
+                            ]
+                        ),
                         padding=16,
                         bgcolor=Theme.BG_SECONDARY,
                     ),
-
                     # Configuration fields
                     ft.Container(
                         content=ft.Column(
@@ -1794,7 +1825,6 @@ class SkynetteApp:
                         padding=16,
                         expand=True,
                     ),
-
                     # Connection selector
                     ft.Container(
                         content=self._build_connection_selector(node),
@@ -1844,7 +1874,7 @@ class SkynetteApp:
             current_value = node.config.get(field.name, field.default)
 
             # Create appropriate input widget based on field type
-            field_type = field.type.value if hasattr(field.type, 'value') else str(field.type)
+            field_type = field.type.value if hasattr(field.type, "value") else str(field.type)
 
             if field_type in ["string", "text"]:
                 widget = ft.TextField(
@@ -1853,7 +1883,9 @@ class SkynetteApp:
                     hint_text=field.description or field.placeholder,
                     multiline=field_type == "text",
                     min_lines=3 if field_type == "text" else 1,
-                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, e.control.value),
+                    on_change=lambda e, f=field: self._update_node_config(
+                        node.id, f.name, e.control.value
+                    ),
                 )
             elif field_type == "number":
                 widget = ft.TextField(
@@ -1861,20 +1893,35 @@ class SkynetteApp:
                     value=str(current_value) if current_value is not None else "",
                     hint_text=field.description,
                     keyboard_type=ft.KeyboardType.NUMBER,
-                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, float(e.control.value) if e.control.value and '.' in e.control.value else int(e.control.value) if e.control.value else 0),
+                    on_change=lambda e, f=field: self._update_node_config(
+                        node.id,
+                        f.name,
+                        float(e.control.value)
+                        if e.control.value and "." in e.control.value
+                        else int(e.control.value)
+                        if e.control.value
+                        else 0,
+                    ),
                 )
             elif field_type == "boolean":
                 widget = ft.Checkbox(
                     label=field.label or field.name,
                     value=bool(current_value) if current_value is not None else False,
-                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, e.control.value),
+                    on_change=lambda e, f=field: self._update_node_config(
+                        node.id, f.name, e.control.value
+                    ),
                 )
             elif field_type == "select":
                 widget = ft.Dropdown(
                     label=field.label or field.name,
                     value=current_value,
-                    options=[ft.dropdown.Option(key=opt.get("value", opt), text=opt.get("label", opt)) for opt in (field.options or [])],
-                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, e.control.value),
+                    options=[
+                        ft.dropdown.Option(key=opt.get("value", opt), text=opt.get("label", opt))
+                        for opt in (field.options or [])
+                    ],
+                    on_change=lambda e, f=field: self._update_node_config(
+                        node.id, f.name, e.control.value
+                    ),
                 )
             else:
                 # Default to text field, handle code/expression/json types
@@ -1885,7 +1932,9 @@ class SkynetteApp:
                     multiline=is_code,
                     min_lines=3 if is_code else 1,
                     hint_text=field.description or field.placeholder,
-                    on_change=lambda e, f=field: self._update_node_config(node.id, f.name, e.control.value),
+                    on_change=lambda e, f=field: self._update_node_config(
+                        node.id, f.name, e.control.value
+                    ),
                 )
 
             fields.append(widget)
@@ -1927,7 +1976,8 @@ class SkynetteApp:
 
         # Remove any connections involving this node
         self.current_workflow.connections = [
-            c for c in self.current_workflow.connections
+            c
+            for c in self.current_workflow.connections
             if c.source_node_id != node_id and c.target_node_id != node_id
         ]
 
@@ -1943,10 +1993,7 @@ class SkynetteApp:
         from src.ui.theme import Theme
 
         # Get available target nodes (all except current and already connected)
-        available_targets = [
-            n for n in self.current_workflow.nodes
-            if n.id != node.id
-        ]
+        available_targets = [n for n in self.current_workflow.nodes if n.id != node.id]
 
         # Find current connections from this node
         current_targets = [
@@ -1982,7 +2029,9 @@ class SkynetteApp:
                         ft.dropdown.Option(key=n.id, text=n.name or n.type)
                         for n in available_targets
                     ],
-                    on_change=lambda e: add_connection_to(e.control.value) if e.control.value else None,
+                    on_change=lambda e: (
+                        add_connection_to(e.control.value) if e.control.value else None
+                    ),
                 ),
                 # Show current connections
                 *[
@@ -1992,7 +2041,7 @@ class SkynetteApp:
                         color=Theme.TEXT_SECONDARY,
                     )
                     for target_id in current_targets
-                ]
+                ],
             ],
             spacing=8,
         )
@@ -2230,7 +2279,9 @@ class SkynetteApp:
             type=node_def.type,
             name=node_def.name,
             position={"x": max_x + 220, "y": 100},
-            config={field.name: field.default for field in node_def.inputs if field.default is not None},
+            config={
+                field.name: field.default for field in node_def.inputs if field.default is not None
+            },
         )
         self.current_workflow.nodes.append(new_node)
 
@@ -2253,7 +2304,7 @@ class SkynetteApp:
                 self._show_error_dialog(
                     "Save Failed",
                     f"Could not save workflow '{self.current_workflow.name}'.",
-                    f"Error: {str(e)}\n\nCheck file permissions and disk space."
+                    f"Error: {str(e)}\n\nCheck file permissions and disk space.",
                 )
 
     def _run_current_workflow(self):
@@ -2276,7 +2327,9 @@ class SkynetteApp:
                 # Show result
                 if execution.status == "completed":
                     self.page.snack_bar = ft.SnackBar(
-                        content=ft.Text(f"Workflow '{self.current_workflow.name}' completed successfully"),
+                        content=ft.Text(
+                            f"Workflow '{self.current_workflow.name}' completed successfully"
+                        ),
                         bgcolor=SkynetteTheme.SUCCESS,
                     )
                 else:
@@ -2291,13 +2344,13 @@ class SkynetteApp:
                 self._show_error_dialog(
                     "Workflow Execution Failed",
                     f"The workflow '{self.current_workflow.name}' failed during execution.",
-                    f"Error: {str(e)}\n\nCheck node configurations and connections."
+                    f"Error: {str(e)}\n\nCheck node configurations and connections.",
                 )
             except Exception as e:
                 self._show_error_dialog(
                     "Unexpected Error",
                     "An unexpected error occurred during workflow execution.",
-                    f"Error: {str(e)}\n\nPlease check logs for more details."
+                    f"Error: {str(e)}\n\nPlease check logs for more details.",
                 )
             finally:
                 self._hide_loading()
@@ -2361,7 +2414,7 @@ class SkynetteApp:
                 self._show_error_dialog(
                     "Delete Failed",
                     f"Could not delete workflow '{workflow_name}'.",
-                    f"Error: {str(e)}\n\nWorkflow may be in use or database may be locked."
+                    f"Error: {str(e)}\n\nWorkflow may be in use or database may be locked.",
                 )
 
         self._show_confirm_dialog(
@@ -2382,16 +2435,12 @@ class SkynetteApp:
 
     def _on_nav_hover(self, e):
         """Handle navigation item hover."""
-        e.control.bgcolor = (
-            SkynetteTheme.BG_TERTIARY if e.data == "true" else "transparent"
-        )
+        e.control.bgcolor = SkynetteTheme.BG_TERTIARY if e.data == "true" else "transparent"
         e.control.update()
 
     def _on_example_hover(self, e):
         """Handle example prompt hover."""
-        e.control.bgcolor = (
-            SkynetteTheme.BORDER if e.data == "true" else SkynetteTheme.BG_TERTIARY
-        )
+        e.control.bgcolor = SkynetteTheme.BORDER if e.data == "true" else SkynetteTheme.BG_TERTIARY
         e.control.update()
 
     def _on_resize(self, e):

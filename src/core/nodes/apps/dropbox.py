@@ -4,18 +4,18 @@ Dropbox Integration Nodes - Upload, download, and manage files.
 Uses Dropbox API v2 for file operations.
 """
 
-from typing import Any, Optional
 import base64
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
-def _get_credential(credential_id: Optional[str]) -> Optional[dict]:
+def _get_credential(credential_id: str | None) -> dict | None:
     """Load credential from vault if ID is provided."""
     if not credential_id:
         return None
     try:
         from src.data.credentials import CredentialVault
+
         vault = CredentialVault()
         cred = vault.get_credential(credential_id)
         if cred:
@@ -153,14 +153,16 @@ class DropboxListNode(BaseNode):
                 # Simplify entry data
                 simplified = []
                 for entry in entries:
-                    simplified.append({
-                        "name": entry.get("name"),
-                        "path": entry.get("path_display"),
-                        "type": entry.get(".tag"),
-                        "size": entry.get("size", 0),
-                        "modified": entry.get("client_modified", ""),
-                        "id": entry.get("id"),
-                    })
+                    simplified.append(
+                        {
+                            "name": entry.get("name"),
+                            "path": entry.get("path_display"),
+                            "type": entry.get(".tag"),
+                            "size": entry.get("size", 0),
+                            "modified": entry.get("client_modified", ""),
+                            "id": entry.get("id"),
+                        }
+                    )
 
                 return {
                     "entries": simplified,
@@ -241,8 +243,9 @@ class DropboxDownloadNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Download file from Dropbox."""
-        import httpx
         import json
+
+        import httpx
 
         access_token = _get_access_token(config)
         if not access_token:
@@ -376,8 +379,9 @@ class DropboxUploadNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Upload file to Dropbox."""
-        import httpx
         import json
+
+        import httpx
 
         access_token = _get_access_token(config)
         if not access_token:
@@ -400,12 +404,14 @@ class DropboxUploadNode(BaseNode):
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/octet-stream",
-            "Dropbox-API-Arg": json.dumps({
-                "path": path,
-                "mode": mode,
-                "autorename": False,
-                "mute": False,
-            }),
+            "Dropbox-API-Arg": json.dumps(
+                {
+                    "path": path,
+                    "mode": mode,
+                    "autorename": False,
+                    "mute": False,
+                }
+            ),
         }
 
         async with httpx.AsyncClient() as client:

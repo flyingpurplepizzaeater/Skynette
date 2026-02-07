@@ -4,7 +4,7 @@ This module defines all custom exceptions used throughout the application,
 providing structured error handling with user-friendly messages.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 
 
 class SkynetteError(Exception):
@@ -15,10 +15,7 @@ class SkynetteError(Exception):
     """
 
     def __init__(
-        self,
-        message: str,
-        details: Optional[Dict[str, Any]] = None,
-        user_message: Optional[str] = None
+        self, message: str, details: dict[str, Any] | None = None, user_message: str | None = None
     ):
         """Initialize the error.
 
@@ -36,17 +33,18 @@ class SkynetteError(Exception):
         """Generate default user-friendly message."""
         return "An error occurred. Please try again or contact support."
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert exception to dictionary for logging/serialization."""
         return {
             "type": self.__class__.__name__,
             "message": self.message,
             "user_message": self.user_message,
-            "details": self.details
+            "details": self.details,
         }
 
 
 # AI Provider Errors
+
 
 class AIProviderError(SkynetteError):
     """Base class for AI provider errors."""
@@ -92,6 +90,7 @@ class AIGenerationError(AIProviderError):
 
 # Workflow Errors
 
+
 class WorkflowError(SkynetteError):
     """Base class for workflow-related errors."""
 
@@ -129,6 +128,7 @@ class NodeExecutionError(WorkflowError):
 
 # Storage Errors
 
+
 class StorageError(SkynetteError):
     """Base class for storage/database errors."""
 
@@ -158,6 +158,7 @@ class DataValidationError(StorageError):
 
 
 # File System Errors
+
 
 class FileSystemError(SkynetteError):
     """Base class for file system errors."""
@@ -196,6 +197,7 @@ class FileWriteError(FileSystemError):
 
 # Network Errors
 
+
 class NetworkError(SkynetteError):
     """Base class for network-related errors."""
 
@@ -218,6 +220,7 @@ class APIError(NetworkError):
 
 
 # Plugin Errors
+
 
 class PluginError(SkynetteError):
     """Base class for plugin-related errors."""
@@ -249,6 +252,7 @@ class PluginExecutionError(PluginError):
 
 # Configuration Errors
 
+
 class ConfigurationError(SkynetteError):
     """Base class for configuration errors."""
 
@@ -271,6 +275,7 @@ class MissingConfigError(ConfigurationError):
 
 
 # Validation Errors
+
 
 class ValidationError(SkynetteError):
     """Base class for validation errors."""

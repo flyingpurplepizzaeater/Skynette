@@ -1,9 +1,10 @@
 """Workflow editor view - Visual node canvas editor."""
 
 import flet as ft
+
+from src.core.workflow.models import Workflow
 from src.ui.theme import Theme
 from src.ui.views.simple_mode import SimpleModeView
-from src.core.workflow.models import Workflow
 
 
 class WorkflowEditorView(ft.Column):
@@ -23,7 +24,9 @@ class WorkflowEditorView(ft.Column):
     def build(self):
         # Content area switches between simple and advanced
         self._content_area = ft.Container(
-            content=self._build_simple_content() if self.simple_mode else self._build_advanced_content(),
+            content=self._build_simple_content()
+            if self.simple_mode
+            else self._build_advanced_content(),
             expand=True,
         )
 
@@ -88,14 +91,18 @@ class WorkflowEditorView(ft.Column):
                                 ft.TextButton(
                                     "Simple",
                                     style=ft.ButtonStyle(
-                                        color=Theme.PRIMARY if self.simple_mode else Theme.TEXT_SECONDARY,
+                                        color=Theme.PRIMARY
+                                        if self.simple_mode
+                                        else Theme.TEXT_SECONDARY,
                                     ),
                                     on_click=lambda e: self._toggle_mode(True),
                                 ),
                                 ft.TextButton(
                                     "Advanced",
                                     style=ft.ButtonStyle(
-                                        color=Theme.PRIMARY if not self.simple_mode else Theme.TEXT_SECONDARY,
+                                        color=Theme.PRIMARY
+                                        if not self.simple_mode
+                                        else Theme.TEXT_SECONDARY,
                                     ),
                                     on_click=lambda e: self._toggle_mode(False),
                                 ),

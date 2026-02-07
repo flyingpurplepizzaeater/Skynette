@@ -4,12 +4,12 @@ Log/Debug Node
 Logs data for debugging purposes.
 """
 
-from datetime import datetime, UTC
-from typing import Any
-import logging
 import json
+import logging
+from datetime import UTC, datetime
+from typing import Any
 
-from src.core.nodes.base import UtilityNode, NodeField, NodeOutput, FieldType
+from src.core.nodes.base import FieldType, NodeField, NodeOutput, UtilityNode
 
 logger = logging.getLogger(__name__)
 

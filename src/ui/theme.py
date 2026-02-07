@@ -11,27 +11,27 @@ class ThemeMeta(type):
     """Metaclass to handle dynamic theme properties."""
 
     _dynamic_attrs = {
-        'BG_PRIMARY': ('DARK_BG_PRIMARY', 'LIGHT_BG_PRIMARY'),
-        'BG_SECONDARY': ('DARK_BG_SECONDARY', 'LIGHT_BG_SECONDARY'),
-        'BG_TERTIARY': ('DARK_BG_TERTIARY', 'LIGHT_BG_TERTIARY'),
-        'BG_ELEVATED': ('DARK_BG_SECONDARY', 'LIGHT_BG_SECONDARY'),
-        'SURFACE': ('DARK_BG_SECONDARY', 'LIGHT_BG_SECONDARY'),
-        'TEXT_PRIMARY': ('DARK_TEXT_PRIMARY', 'LIGHT_TEXT_PRIMARY'),
-        'TEXT_SECONDARY': ('DARK_TEXT_SECONDARY', 'LIGHT_TEXT_SECONDARY'),
-        'TEXT_MUTED': ('DARK_TEXT_MUTED', 'LIGHT_TEXT_MUTED'),
-        'BORDER': ('DARK_BORDER', 'LIGHT_BORDER'),
-        'BORDER_LIGHT': ('DARK_BORDER_LIGHT', 'LIGHT_BORDER_LIGHT'),
+        "BG_PRIMARY": ("DARK_BG_PRIMARY", "LIGHT_BG_PRIMARY"),
+        "BG_SECONDARY": ("DARK_BG_SECONDARY", "LIGHT_BG_SECONDARY"),
+        "BG_TERTIARY": ("DARK_BG_TERTIARY", "LIGHT_BG_TERTIARY"),
+        "BG_ELEVATED": ("DARK_BG_SECONDARY", "LIGHT_BG_SECONDARY"),
+        "SURFACE": ("DARK_BG_SECONDARY", "LIGHT_BG_SECONDARY"),
+        "TEXT_PRIMARY": ("DARK_TEXT_PRIMARY", "LIGHT_TEXT_PRIMARY"),
+        "TEXT_SECONDARY": ("DARK_TEXT_SECONDARY", "LIGHT_TEXT_SECONDARY"),
+        "TEXT_MUTED": ("DARK_TEXT_MUTED", "LIGHT_TEXT_MUTED"),
+        "BORDER": ("DARK_BORDER", "LIGHT_BORDER"),
+        "BORDER_LIGHT": ("DARK_BORDER_LIGHT", "LIGHT_BORDER_LIGHT"),
     }
 
     def __getattribute__(cls, name):
         """Override attribute access to provide dynamic theme colors."""
         # Get _dynamic_attrs dict without triggering recursion
-        dynamic_attrs = object.__getattribute__(cls, '_dynamic_attrs')
+        dynamic_attrs = object.__getattribute__(cls, "_dynamic_attrs")
 
         if name in dynamic_attrs:
             dark_attr, light_attr = dynamic_attrs[name]
-            current_mode = type.__getattribute__(cls, '_current_mode')
-            attr_name = dark_attr if current_mode == 'dark' else light_attr
+            current_mode = type.__getattribute__(cls, "_current_mode")
+            attr_name = dark_attr if current_mode == "dark" else light_attr
             return type.__getattribute__(cls, attr_name)
 
         return type.__getattribute__(cls, name)

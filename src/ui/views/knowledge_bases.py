@@ -1,21 +1,22 @@
 """Knowledge Bases view for RAG collection management."""
 
 import asyncio
+from datetime import UTC, datetime
+
 import flet as ft
-from typing import List, Optional
-from datetime import datetime, timezone, timedelta
-from src.ui.theme import Theme
-from src.ui.models.knowledge_bases import CollectionCardData
+
+from src.rag.service import RAGService
 from src.ui.components.collection_card import CollectionCard
 from src.ui.dialogs.collection_dialog import CollectionDialog
 from src.ui.dialogs.query_dialog import QueryDialog
-from src.rag.service import RAGService
+from src.ui.models.knowledge_bases import CollectionCardData
+from src.ui.theme import Theme
 
 
 class KnowledgeBasesView(ft.Column):
     """Main view for Knowledge Bases tab in AI Hub."""
 
-    def __init__(self, page: ft.Page = None, rag_service: Optional[RAGService] = None):
+    def __init__(self, page: ft.Page = None, rag_service: RAGService | None = None):
         super().__init__()
         self._page = page
         self.expand = True
@@ -23,11 +24,11 @@ class KnowledgeBasesView(ft.Column):
 
         # State
         self.rag_service = rag_service
-        self.collections: List[CollectionCardData] = []
+        self.collections: list[CollectionCardData] = []
 
         # Cache
-        self.collections_cache: Optional[List[CollectionCardData]] = None
-        self.cache_timestamp: Optional[datetime] = None
+        self.collections_cache: list[CollectionCardData] | None = None
+        self.cache_timestamp: datetime | None = None
         self.cache_ttl_seconds = 60  # 1 minute cache
 
     def build(self):
@@ -74,7 +75,7 @@ class KnowledgeBasesView(ft.Column):
         # Grid: 3 cards per row
         rows = []
         for i in range(0, len(self.collections), 3):
-            row_collections = self.collections[i:i+3]
+            row_collections = self.collections[i : i + 3]
             rows.append(
                 ft.Row(
                     controls=[
@@ -176,7 +177,7 @@ class KnowledgeBasesView(ft.Column):
         """Load collections from backend with caching and error handling."""
         # Check cache
         if self.collections_cache is not None and self.cache_timestamp:
-            age = (datetime.now(timezone.utc) - self.cache_timestamp).total_seconds()
+            age = (datetime.now(UTC) - self.cache_timestamp).total_seconds()
             if age < self.cache_ttl_seconds:
                 # Use cache
                 self.collections = self.collections_cache
@@ -198,7 +199,7 @@ class KnowledgeBasesView(ft.Column):
                     description=collection.description or "",
                     document_count=stats.get("document_count", 0),
                     chunk_count=stats.get("chunk_count", 0),
-                    last_updated=stats.get("last_updated", datetime.now(timezone.utc)),
+                    last_updated=stats.get("last_updated", datetime.now(UTC)),
                     storage_size_bytes=stats.get("storage_size_bytes", 0),
                     embedding_model=collection.embedding_model,
                 )
@@ -206,7 +207,7 @@ class KnowledgeBasesView(ft.Column):
 
             # Update cache
             self.collections_cache = self.collections
-            self.cache_timestamp = datetime.now(timezone.utc)
+            self.cache_timestamp = datetime.now(UTC)
 
             # Rebuild UI
             self._rebuild_ui()

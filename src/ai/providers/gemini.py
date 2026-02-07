@@ -129,10 +129,7 @@ class GeminiProvider(BaseProvider):
                 else:
                     # Map role to Gemini format (user/model)
                     role = "model" if msg.role == "assistant" else "user"
-                    contents.append(types.Content(
-                        role=role,
-                        parts=[types.Part(text=msg.content)]
-                    ))
+                    contents.append(types.Content(role=role, parts=[types.Part(text=msg.content)]))
 
             # Build generation config
             gen_config = types.GenerateContentConfig(
@@ -199,9 +196,7 @@ class GeminiProvider(BaseProvider):
             return
 
         try:
-            async for chunk in self._stream_with_recovery(
-                self._raw_chat_stream(messages, config)
-            ):
+            async for chunk in self._stream_with_recovery(self._raw_chat_stream(messages, config)):
                 yield chunk
         except StreamInterruptedError:
             # Error already yielded as final chunk, just return
@@ -224,10 +219,7 @@ class GeminiProvider(BaseProvider):
                 system_instruction = msg.content
             else:
                 role = "model" if msg.role == "assistant" else "user"
-                contents.append(types.Content(
-                    role=role,
-                    parts=[types.Part(text=msg.content)]
-                ))
+                contents.append(types.Content(role=role, parts=[types.Part(text=msg.content)]))
 
         # Build generation config
         gen_config = types.GenerateContentConfig(

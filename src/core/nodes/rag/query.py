@@ -4,8 +4,9 @@ Query Knowledge Node
 Workflow node for semantic search in RAG collections.
 """
 
-from typing import Any, Dict
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from typing import Any
+
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class QueryKnowledgeNode(BaseNode):
@@ -28,14 +29,14 @@ class QueryKnowledgeNode(BaseNode):
             label="Query",
             type=FieldType.TEXT,
             required=True,
-            description="Search query"
+            description="Search query",
         ),
         NodeField(
             name="collection_id",
             label="Collection ID",
             type=FieldType.STRING,
             required=True,
-            description="Collection to search"
+            description="Collection to search",
         ),
         NodeField(
             name="top_k",
@@ -43,7 +44,7 @@ class QueryKnowledgeNode(BaseNode):
             type=FieldType.NUMBER,
             required=False,
             default=5,
-            description="Number of results to return"
+            description="Number of results to return",
         ),
         NodeField(
             name="min_similarity",
@@ -51,7 +52,7 @@ class QueryKnowledgeNode(BaseNode):
             type=FieldType.NUMBER,
             required=False,
             default=0.0,
-            description="Minimum similarity threshold (0-1)"
+            description="Minimum similarity threshold (0-1)",
         ),
     ]
 
@@ -60,19 +61,19 @@ class QueryKnowledgeNode(BaseNode):
             name="results",
             label="Results",
             type=FieldType.JSON,
-            description="List of matching chunks with similarity scores"
+            description="List of matching chunks with similarity scores",
         ),
         NodeField(
             name="context",
             label="Context",
             type=FieldType.TEXT,
-            description="Concatenated text from results (ready for AI prompts)"
+            description="Concatenated text from results (ready for AI prompts)",
         ),
         NodeField(
             name="error",
             label="Error",
             type=FieldType.STRING,
-            description="Error message if failed"
+            description="Error message if failed",
         ),
     ]
 
@@ -81,7 +82,7 @@ class QueryKnowledgeNode(BaseNode):
         super().__init__(**kwargs)
         self.rag_service = rag_service
 
-    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Execute semantic search."""
         try:
             query = inputs["query"]
@@ -91,27 +92,13 @@ class QueryKnowledgeNode(BaseNode):
 
             # Query collection
             results = await self.rag_service.query(
-                query=query,
-                collection_id=collection_id,
-                top_k=top_k,
-                min_similarity=min_similarity
+                query=query, collection_id=collection_id, top_k=top_k, min_similarity=min_similarity
             )
 
             # Build context (concatenated chunks)
-            context = "\n\n".join([
-                result["content"]
-                for result in results
-            ])
+            context = "\n\n".join([result["content"] for result in results])
 
-            return {
-                "results": results,
-                "context": context,
-                "error": None
-            }
+            return {"results": results, "context": context, "error": None}
 
         except Exception as e:
-            return {
-                "results": [],
-                "context": "",
-                "error": str(e)
-            }
+            return {"results": [], "context": "", "error": str(e)}

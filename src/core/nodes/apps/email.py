@@ -3,13 +3,10 @@ Email Integration Nodes - Send and receive emails.
 """
 
 import asyncio
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
-from typing import Any, Optional
+from email.mime.text import MIMEText
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class EmailSendNode(BaseNode):
@@ -323,8 +320,8 @@ class EmailReadNode(BaseNode):
 
     async def execute(self, config: dict, context: dict) -> dict:
         """Read emails via IMAP."""
-        import imaplib
         import email
+        import imaplib
         from email.header import decode_header
 
         imap_host = config.get("imap_host", "imap.gmail.com")
@@ -385,14 +382,16 @@ class EmailReadNode(BaseNode):
                     else:
                         body = msg.get_payload(decode=True).decode()
 
-                    emails.append({
-                        "id": msg_id.decode(),
-                        "subject": subject,
-                        "from": from_addr,
-                        "to": msg["To"],
-                        "date": msg["Date"],
-                        "body": body[:5000],  # Limit body length
-                    })
+                    emails.append(
+                        {
+                            "id": msg_id.decode(),
+                            "subject": subject,
+                            "from": from_addr,
+                            "to": msg["To"],
+                            "date": msg["Date"],
+                            "body": body[:5000],  # Limit body length
+                        }
+                    )
 
                     # Mark as read if requested
                     if mark_as_read:

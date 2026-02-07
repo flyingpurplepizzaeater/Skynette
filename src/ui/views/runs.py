@@ -1,6 +1,7 @@
 """Runs view - Workflow execution history."""
 
 import flet as ft
+
 from src.ui.theme import Theme
 
 

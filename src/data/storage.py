@@ -4,14 +4,11 @@ Workflow Storage Service
 Handles persistence of workflows to YAML files and execution history to SQLite.
 """
 
-import os
-import yaml
-import sqlite3
-from datetime import datetime, UTC
-from pathlib import Path
-from typing import Optional
-import logging
 import json
+import logging
+import sqlite3
+from datetime import UTC, datetime
+from pathlib import Path
 
 from src.core.workflow.models import Workflow, WorkflowExecution
 
@@ -21,7 +18,7 @@ logger = logging.getLogger(__name__)
 class WorkflowStorage:
     """Manages workflow storage in YAML files and SQLite database."""
 
-    def __init__(self, data_dir: Optional[str] = None):
+    def __init__(self, data_dir: str | None = None):
         """Initialize storage with data directory."""
         if data_dir:
             self.data_dir = Path(data_dir)
@@ -195,20 +192,23 @@ class WorkflowStorage:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO workflows
             (id, name, description, version, tags, created_at, updated_at, file_path)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            workflow.id,
-            workflow.name,
-            workflow.description,
-            workflow.version,
-            json.dumps(workflow.tags),
-            workflow.created_at.isoformat(),
-            workflow.updated_at.isoformat(),
-            str(file_path),
-        ))
+        """,
+            (
+                workflow.id,
+                workflow.name,
+                workflow.description,
+                workflow.version,
+                json.dumps(workflow.tags),
+                workflow.created_at.isoformat(),
+                workflow.updated_at.isoformat(),
+                str(file_path),
+            ),
+        )
 
         conn.commit()
         conn.close()
@@ -216,7 +216,7 @@ class WorkflowStorage:
         logger.info(f"Saved workflow '{workflow.name}' to {file_path}")
         return str(file_path)
 
-    def load_workflow(self, workflow_id: str) -> Optional[Workflow]:
+    def load_workflow(self, workflow_id: str) -> Workflow | None:
         """Load a workflow by ID."""
         # Get file path from database
         conn = sqlite3.connect(self.db_path)
@@ -235,7 +235,7 @@ class WorkflowStorage:
             return None
 
         # Load from YAML
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             return Workflow.from_yaml(f.read())
 
     def delete_workflow(self, workflow_id: str) -> bool:
@@ -276,15 +276,17 @@ class WorkflowStorage:
 
         workflows = []
         for row in cursor.fetchall():
-            workflows.append({
-                "id": row["id"],
-                "name": row["name"],
-                "description": row["description"],
-                "version": row["version"],
-                "tags": json.loads(row["tags"]) if row["tags"] else [],
-                "created_at": row["created_at"],
-                "updated_at": row["updated_at"],
-            })
+            workflows.append(
+                {
+                    "id": row["id"],
+                    "name": row["name"],
+                    "description": row["description"],
+                    "version": row["version"],
+                    "tags": json.loads(row["tags"]) if row["tags"] else [],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                }
+            )
 
         conn.close()
         return workflows
@@ -295,24 +297,29 @@ class WorkflowStorage:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, name, description, version, tags, created_at, updated_at
             FROM workflows
             WHERE name LIKE ? OR description LIKE ?
             ORDER BY updated_at DESC
-        """, (f"%{query}%", f"%{query}%"))
+        """,
+            (f"%{query}%", f"%{query}%"),
+        )
 
         workflows = []
         for row in cursor.fetchall():
-            workflows.append({
-                "id": row["id"],
-                "name": row["name"],
-                "description": row["description"],
-                "version": row["version"],
-                "tags": json.loads(row["tags"]) if row["tags"] else [],
-                "created_at": row["created_at"],
-                "updated_at": row["updated_at"],
-            })
+            workflows.append(
+                {
+                    "id": row["id"],
+                    "name": row["name"],
+                    "description": row["description"],
+                    "version": row["version"],
+                    "tags": json.loads(row["tags"]) if row["tags"] else [],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                }
+            )
 
         conn.close()
         return workflows
@@ -324,74 +331,83 @@ class WorkflowStorage:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO executions
             (id, workflow_id, status, trigger_type, trigger_data, node_results,
              started_at, completed_at, error, duration_ms)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            execution.id,
-            execution.workflow_id,
-            execution.status,
-            execution.trigger_type,
-            json.dumps(execution.trigger_data),
-            json.dumps([r.model_dump() for r in execution.node_results], default=str),
-            execution.started_at.isoformat(),
-            execution.completed_at.isoformat() if execution.completed_at else None,
-            execution.error,
-            execution.duration_ms,
-        ))
+        """,
+            (
+                execution.id,
+                execution.workflow_id,
+                execution.status,
+                execution.trigger_type,
+                json.dumps(execution.trigger_data),
+                json.dumps([r.model_dump() for r in execution.node_results], default=str),
+                execution.started_at.isoformat(),
+                execution.completed_at.isoformat() if execution.completed_at else None,
+                execution.error,
+                execution.duration_ms,
+            ),
+        )
 
         conn.commit()
         conn.close()
         return execution.id
 
-    def get_executions(
-        self, workflow_id: Optional[str] = None, limit: int = 100
-    ) -> list[dict]:
+    def get_executions(self, workflow_id: str | None = None, limit: int = 100) -> list[dict]:
         """Get execution history, optionally filtered by workflow."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
         if workflow_id:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT e.*, w.name as workflow_name
                 FROM executions e
                 LEFT JOIN workflows w ON e.workflow_id = w.id
                 WHERE e.workflow_id = ?
                 ORDER BY e.started_at DESC
                 LIMIT ?
-            """, (workflow_id, limit))
+            """,
+                (workflow_id, limit),
+            )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT e.*, w.name as workflow_name
                 FROM executions e
                 LEFT JOIN workflows w ON e.workflow_id = w.id
                 ORDER BY e.started_at DESC
                 LIMIT ?
-            """, (limit,))
+            """,
+                (limit,),
+            )
 
         executions = []
         for row in cursor.fetchall():
-            executions.append({
-                "id": row["id"],
-                "workflow_id": row["workflow_id"],
-                "workflow_name": row["workflow_name"],
-                "status": row["status"],
-                "trigger_type": row["trigger_type"],
-                "started_at": row["started_at"],
-                "completed_at": row["completed_at"],
-                "error": row["error"],
-                "duration_ms": row["duration_ms"],
-            })
+            executions.append(
+                {
+                    "id": row["id"],
+                    "workflow_id": row["workflow_id"],
+                    "workflow_name": row["workflow_name"],
+                    "status": row["status"],
+                    "trigger_type": row["trigger_type"],
+                    "started_at": row["started_at"],
+                    "completed_at": row["completed_at"],
+                    "error": row["error"],
+                    "duration_ms": row["duration_ms"],
+                }
+            )
 
         conn.close()
         return executions
 
     # ==================== Settings ====================
 
-    def get_setting(self, key: str, default: str = None) -> Optional[str]:
+    def get_setting(self, key: str, default: str = None) -> str | None:
         """Get a setting value."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -404,16 +420,13 @@ class WorkflowStorage:
         """Set a setting value."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute(
-            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-            (key, value)
-        )
+        cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
         conn.commit()
         conn.close()
 
 
 # Global storage instance
-_storage: Optional[WorkflowStorage] = None
+_storage: WorkflowStorage | None = None
 
 
 def get_storage() -> WorkflowStorage:

@@ -5,9 +5,8 @@ Supports running GGUF models locally for free, private AI.
 """
 
 import asyncio
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator, Optional
-import json
 
 from src.ai.gateway import (
     AICapability,
@@ -38,10 +37,10 @@ class LocalProvider(BaseProvider):
 
     def __init__(
         self,
-        models_dir: Optional[Path] = None,
+        models_dir: Path | None = None,
         n_ctx: int = 4096,
         n_gpu_layers: int = -1,  # -1 = auto, 0 = CPU only
-        n_threads: Optional[int] = None,
+        n_threads: int | None = None,
     ):
         super().__init__()
         self.models_dir = models_dir or Path.home() / "skynette" / "models"
@@ -50,7 +49,7 @@ class LocalProvider(BaseProvider):
         self.n_threads = n_threads
 
         self._llm = None
-        self._current_model: Optional[str] = None
+        self._current_model: str | None = None
         self._available_models: list[dict] = []
 
     async def initialize(self) -> bool:
@@ -82,14 +81,16 @@ class LocalProvider(BaseProvider):
             return
 
         for model_path in self.models_dir.glob("**/*.gguf"):
-            size_gb = model_path.stat().st_size / (1024 ** 3)
-            self._available_models.append({
-                "id": model_path.stem,
-                "name": model_path.stem.replace("-", " ").replace("_", " ").title(),
-                "path": str(model_path),
-                "size_gb": round(size_gb, 2),
-                "type": "gguf",
-            })
+            size_gb = model_path.stat().st_size / (1024**3)
+            self._available_models.append(
+                {
+                    "id": model_path.stem,
+                    "name": model_path.stem.replace("-", " ").replace("_", " ").title(),
+                    "path": str(model_path),
+                    "size_gb": round(size_gb, 2),
+                    "type": "gguf",
+                }
+            )
 
     def get_models(self) -> list[dict]:
         """Get available local models."""
@@ -137,14 +138,13 @@ class LocalProvider(BaseProvider):
                     n_gpu_layers=self.n_gpu_layers,
                     n_threads=self.n_threads,
                     verbose=False,
-                )
+                ),
             )
             self._current_model = model_id
             return True
         except ImportError:
             raise RuntimeError(
-                "llama-cpp-python not installed. "
-                "Install with: pip install llama-cpp-python"
+                "llama-cpp-python not installed. Install with: pip install llama-cpp-python"
             )
         except Exception as e:
             raise RuntimeError(f"Failed to load model: {e}")
@@ -156,10 +156,7 @@ class LocalProvider(BaseProvider):
 
         models = self.get_models()
         if not models:
-            raise RuntimeError(
-                "No models available. Download a GGUF model to "
-                f"{self.models_dir}"
-            )
+            raise RuntimeError(f"No models available. Download a GGUF model to {self.models_dir}")
 
         await self.load_model(models[0]["id"])
 
@@ -182,7 +179,7 @@ class LocalProvider(BaseProvider):
                 top_p=config.top_p,
                 top_k=config.top_k,
                 stop=config.stop_sequences or None,
-            )
+            ),
         )
 
         return AIResponse(
@@ -220,7 +217,7 @@ class LocalProvider(BaseProvider):
                 top_p=config.top_p,
                 top_k=config.top_k,
                 stop=config.stop_sequences or None,
-            )
+            ),
         )
 
         return AIResponse(
@@ -277,10 +274,7 @@ class LocalProvider(BaseProvider):
 
         embeddings = []
         for text in texts:
-            result = await loop.run_in_executor(
-                None,
-                lambda t=text: self._llm.embed(t)
-            )
+            result = await loop.run_in_executor(None, lambda t=text: self._llm.embed(t))
             embeddings.append(result)
 
         return embeddings

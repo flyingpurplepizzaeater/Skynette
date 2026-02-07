@@ -82,9 +82,7 @@ class EditorToolbar(ft.Column):
                 ft.dropdown.Option("python", "Python DSL"),
             ],
             on_change=lambda e: (
-                self.on_format_change(e.control.value)
-                if self.on_format_change
-                else None
+                self.on_format_change(e.control.value) if self.on_format_change else None
             ),
             width=120,
             height=32,
@@ -98,11 +96,7 @@ class EditorToolbar(ft.Column):
                 controls=[
                     # Toggle sidebar
                     ft.IconButton(
-                        icon=(
-                            ft.Icons.MENU_OPEN
-                            if self.sidebar_visible
-                            else ft.Icons.MENU
-                        ),
+                        icon=(ft.Icons.MENU_OPEN if self.sidebar_visible else ft.Icons.MENU),
                         tooltip="Toggle Sidebar",
                         on_click=lambda e: self.on_toggle_sidebar(),
                     ),

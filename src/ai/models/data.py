@@ -3,9 +3,8 @@ Pydantic models for AI data structures.
 """
 
 # Standard library
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 from uuid import uuid4
 
 # Third-party
@@ -20,16 +19,16 @@ class ProviderConfig(BaseModel):
     enabled: bool = True
     priority: int = 0
     config: dict
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class UsageRecord(BaseModel):
     """Record of AI API usage."""
 
     id: str = Field(default_factory=lambda: str(uuid4()))
-    workflow_id: Optional[str] = None
-    node_id: Optional[str] = None
+    workflow_id: str | None = None
+    node_id: str | None = None
     provider: str
     model: str
     prompt_tokens: int = Field(ge=0)
@@ -37,9 +36,9 @@ class UsageRecord(BaseModel):
     total_tokens: int = Field(ge=0)
     cost_usd: float = Field(ge=0.0)
     latency_ms: int = Field(ge=0)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     success: bool = True
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class LocalModel(BaseModel):
@@ -51,20 +50,20 @@ class LocalModel(BaseModel):
     size_bytes: int
     quantization: str
     source: str  # 'recommended' | 'huggingface'
-    huggingface_repo: Optional[str] = None
+    huggingface_repo: str | None = None
     downloaded_at: datetime
-    last_used: Optional[datetime] = None
+    last_used: datetime | None = None
     usage_count: int = 0
 
 
 class BudgetSettings(BaseModel):
     """Budget settings for AI usage."""
 
-    id: str = 'default'
-    monthly_limit_usd: Optional[float] = None
+    id: str = "default"
+    monthly_limit_usd: float | None = None
     alert_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
     email_notifications: bool = False
-    notification_email: Optional[str] = None
+    notification_email: str | None = None
     reset_day: int = Field(default=1, ge=1, le=31)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

@@ -3,9 +3,8 @@ Deployment Platform Nodes - Deploy to cloud platforms.
 """
 
 import asyncio
-from typing import Any, Optional
 
-from src.core.nodes.base import BaseNode, NodeField, FieldType
+from src.core.nodes.base import BaseNode, FieldType, NodeField
 
 
 class VercelDeployNode(BaseNode):
@@ -22,8 +21,16 @@ class VercelDeployNode(BaseNode):
         NodeField(name="token", label="Vercel Token", type=FieldType.SECRET, required=True),
         NodeField(name="project_path", label="Project Path", type=FieldType.STRING, required=True),
         NodeField(name="project_name", label="Project Name", type=FieldType.STRING, required=False),
-        NodeField(name="production", label="Production Deploy", type=FieldType.BOOLEAN, required=False, default=False),
-        NodeField(name="env_vars", label="Environment Variables", type=FieldType.JSON, required=False),
+        NodeField(
+            name="production",
+            label="Production Deploy",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=False,
+        ),
+        NodeField(
+            name="env_vars", label="Environment Variables", type=FieldType.JSON, required=False
+        ),
         NodeField(name="team_id", label="Team ID", type=FieldType.STRING, required=False),
     ]
 
@@ -65,11 +72,7 @@ class VercelDeployNode(BaseNode):
 
             try:
                 result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    cwd=project_path,
-                    timeout=300
+                    cmd, capture_output=True, text=True, cwd=project_path, timeout=300
                 )
 
                 # Parse URL from output
@@ -120,9 +123,20 @@ class NetlifyDeployNode(BaseNode):
     inputs = [
         NodeField(name="token", label="Netlify Token", type=FieldType.SECRET, required=True),
         NodeField(name="site_id", label="Site ID", type=FieldType.STRING, required=True),
-        NodeField(name="build_dir", label="Build Directory", type=FieldType.STRING, required=True,
-                  description="Path to the built output directory."),
-        NodeField(name="production", label="Production Deploy", type=FieldType.BOOLEAN, required=False, default=False),
+        NodeField(
+            name="build_dir",
+            label="Build Directory",
+            type=FieldType.STRING,
+            required=True,
+            description="Path to the built output directory.",
+        ),
+        NodeField(
+            name="production",
+            label="Production Deploy",
+            type=FieldType.BOOLEAN,
+            required=False,
+            default=False,
+        ),
         NodeField(name="message", label="Deploy Message", type=FieldType.STRING, required=False),
     ]
 
@@ -147,10 +161,15 @@ class NetlifyDeployNode(BaseNode):
 
         def deploy():
             cmd = [
-                "npx", "netlify-cli", "deploy",
-                "--auth", token,
-                "--site", site_id,
-                "--dir", build_dir,
+                "npx",
+                "netlify-cli",
+                "deploy",
+                "--auth",
+                token,
+                "--site",
+                site_id,
+                "--dir",
+                build_dir,
             ]
 
             if production:
@@ -159,12 +178,7 @@ class NetlifyDeployNode(BaseNode):
                 cmd.extend(["--message", message])
 
             try:
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=300
-                )
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
 
                 # Parse output for URL
                 url = ""
@@ -220,7 +234,9 @@ class CloudflareDeployNode(BaseNode):
         NodeField(name="account_id", label="Account ID", type=FieldType.STRING, required=True),
         NodeField(name="project_name", label="Project Name", type=FieldType.STRING, required=True),
         NodeField(name="build_dir", label="Build Directory", type=FieldType.STRING, required=True),
-        NodeField(name="branch", label="Branch", type=FieldType.STRING, required=False, default="main"),
+        NodeField(
+            name="branch", label="Branch", type=FieldType.STRING, required=False, default="main"
+        ),
     ]
 
     outputs = [
@@ -243,9 +259,15 @@ class CloudflareDeployNode(BaseNode):
 
         def deploy():
             cmd = [
-                "npx", "wrangler", "pages", "deploy", build_dir,
-                "--project-name", project_name,
-                "--branch", branch,
+                "npx",
+                "wrangler",
+                "pages",
+                "deploy",
+                build_dir,
+                "--project-name",
+                project_name,
+                "--branch",
+                branch,
             ]
 
             env = {
@@ -259,14 +281,15 @@ class CloudflareDeployNode(BaseNode):
                     capture_output=True,
                     text=True,
                     env={**subprocess.os.environ, **env},
-                    timeout=300
+                    timeout=300,
                 )
 
                 url = ""
                 for line in result.stdout.split("\n"):
                     if ".pages.dev" in line or ".workers.dev" in line:
                         import re
-                        match = re.search(r'https://[^\s]+', line)
+
+                        match = re.search(r"https://[^\s]+", line)
                         if match:
                             url = match.group(0)
                             break
@@ -359,7 +382,7 @@ class HerokuDeployNode(BaseNode):
                     text=True,
                     cwd=project_path,
                     env={**subprocess.os.environ, **env},
-                    timeout=300
+                    timeout=300,
                 )
             else:
                 # Container deploy
@@ -381,7 +404,7 @@ class HerokuDeployNode(BaseNode):
                     capture_output=True,
                     text=True,
                     env={**subprocess.os.environ, **env},
-                    timeout=300
+                    timeout=300,
                 )
 
             return {
@@ -448,14 +471,15 @@ class RailwayDeployNode(BaseNode):
                     text=True,
                     cwd=project_path,
                     env={**subprocess.os.environ, **env},
-                    timeout=300
+                    timeout=300,
                 )
 
                 url = ""
                 for line in result.stdout.split("\n"):
                     if "railway.app" in line:
                         import re
-                        match = re.search(r'https://[^\s]+railway\.app[^\s]*', line)
+
+                        match = re.search(r"https://[^\s]+railway\.app[^\s]*", line)
                         if match:
                             url = match.group(0)
                             break
@@ -497,8 +521,12 @@ class SupabaseDeployNode(BaseNode):
 
     inputs = [
         NodeField(name="access_token", label="Access Token", type=FieldType.SECRET, required=True),
-        NodeField(name="project_ref", label="Project Reference", type=FieldType.STRING, required=True),
-        NodeField(name="function_name", label="Function Name", type=FieldType.STRING, required=True),
+        NodeField(
+            name="project_ref", label="Project Reference", type=FieldType.STRING, required=True
+        ),
+        NodeField(
+            name="function_name", label="Function Name", type=FieldType.STRING, required=True
+        ),
         NodeField(name="project_path", label="Project Path", type=FieldType.STRING, required=True),
     ]
 
@@ -521,8 +549,13 @@ class SupabaseDeployNode(BaseNode):
 
         def deploy():
             cmd = [
-                "npx", "supabase", "functions", "deploy", function_name,
-                "--project-ref", project_ref,
+                "npx",
+                "supabase",
+                "functions",
+                "deploy",
+                function_name,
+                "--project-ref",
+                project_ref,
             ]
 
             env = {"SUPABASE_ACCESS_TOKEN": access_token}
@@ -534,7 +567,7 @@ class SupabaseDeployNode(BaseNode):
                     text=True,
                     cwd=project_path,
                     env={**subprocess.os.environ, **env},
-                    timeout=120
+                    timeout=120,
                 )
 
                 url = f"https://{project_ref}.supabase.co/functions/v1/{function_name}"

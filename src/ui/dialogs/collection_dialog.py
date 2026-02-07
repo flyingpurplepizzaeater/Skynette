@@ -1,9 +1,10 @@
 """Collection creation/editing dialog."""
 
-import flet as ft
 import re
-from typing import Optional, Callable, Awaitable
-from src.ui.theme import Theme
+from collections.abc import Awaitable, Callable
+
+import flet as ft
+
 from src.rag.service import RAGService
 from src.ui.dialogs.upload_dialog import UploadDialog
 
@@ -14,9 +15,9 @@ class CollectionDialog(ft.AlertDialog):
     def __init__(
         self,
         rag_service: RAGService,
-        collection_id: Optional[str] = None,
-        on_save: Optional[Callable[[], Awaitable[None]]] = None,
-        page: Optional[ft.Page] = None,
+        collection_id: str | None = None,
+        on_save: Callable[[], Awaitable[None]] | None = None,
+        page: ft.Page | None = None,
     ):
         super().__init__()
         self.rag_service = rag_service
@@ -42,20 +43,22 @@ class CollectionDialog(ft.AlertDialog):
 
         # Embedding model selection
         self.embedding_radio = ft.RadioGroup(
-            content=ft.Column([
-                ft.Radio(
-                    value="local",
-                    label="Local (all-MiniLM-L6-v2) - Free, private",
-                ),
-                ft.Radio(
-                    value="openai",
-                    label="OpenAI (text-embedding-3-small) - Higher quality",
-                ),
-                ft.Radio(
-                    value="cohere",
-                    label="Cohere (embed-english-v3.0) - Alternative",
-                ),
-            ]),
+            content=ft.Column(
+                [
+                    ft.Radio(
+                        value="local",
+                        label="Local (all-MiniLM-L6-v2) - Free, private",
+                    ),
+                    ft.Radio(
+                        value="openai",
+                        label="OpenAI (text-embedding-3-small) - Higher quality",
+                    ),
+                    ft.Radio(
+                        value="cohere",
+                        label="Cohere (embed-english-v3.0) - Alternative",
+                    ),
+                ]
+            ),
             value="local",
         )
 
@@ -80,9 +83,7 @@ class CollectionDialog(ft.AlertDialog):
 
         # Build dialog
         self.modal = True
-        self.title = ft.Text(
-            "New Collection" if not self.is_edit else "Edit Collection"
-        )
+        self.title = ft.Text("New Collection" if not self.is_edit else "Edit Collection")
 
         self.content = ft.Column(
             controls=[
@@ -98,12 +99,16 @@ class CollectionDialog(ft.AlertDialog):
                 self.chunk_overlap_field,
                 self.max_chunk_field,
                 ft.Container(height=16),
-                ft.Text("Documents", weight=ft.FontWeight.BOLD) if self.is_edit else ft.Container(height=0),
+                ft.Text("Documents", weight=ft.FontWeight.BOLD)
+                if self.is_edit
+                else ft.Container(height=0),
                 ft.Button(
                     "Add Documents",
                     icon=ft.Icons.UPLOAD_FILE,
                     on_click=self._on_add_documents,
-                ) if self.is_edit else ft.Container(height=0),
+                )
+                if self.is_edit
+                else ft.Container(height=0),
             ],
             width=500,
             height=600,
@@ -120,10 +125,10 @@ class CollectionDialog(ft.AlertDialog):
         if not name:
             return False
         # Must have at least one letter
-        if not re.search(r'[a-zA-Z]', name):
+        if not re.search(r"[a-zA-Z]", name):
             return False
         # Only alphanumeric and underscores
-        return bool(re.match(r'^[a-zA-Z0-9_]+$', name))
+        return bool(re.match(r"^[a-zA-Z0-9_]+$", name))
 
     def _validate_chunk_size(self, size: int) -> bool:
         """Validate chunk size."""
@@ -135,35 +140,35 @@ class CollectionDialog(ft.AlertDialog):
 
         # Name validation
         if not self._validate_name(self.name_field.value):
-            errors['name'] = "Name must be alphanumeric and underscores only"
+            errors["name"] = "Name must be alphanumeric and underscores only"
 
         # Chunk size validation
         try:
             chunk_size = int(self.chunk_size_field.value)
             if not self._validate_chunk_size(chunk_size):
-                errors['chunk_size'] = "Must be 256-4096"
+                errors["chunk_size"] = "Must be 256-4096"
         except ValueError:
-            errors['chunk_size'] = "Must be a number"
+            errors["chunk_size"] = "Must be a number"
 
         # Overlap validation
         try:
             overlap = int(self.chunk_overlap_field.value)
             chunk_size = int(self.chunk_size_field.value)
             if overlap >= chunk_size:
-                errors['chunk_overlap'] = "Must be less than chunk size"
+                errors["chunk_overlap"] = "Must be less than chunk size"
             if overlap < 0:
-                errors['chunk_overlap'] = "Must be non-negative"
+                errors["chunk_overlap"] = "Must be non-negative"
         except ValueError:
-            errors['chunk_overlap'] = "Must be a number"
+            errors["chunk_overlap"] = "Must be a number"
 
         # Max chunk validation
         try:
             max_chunk = int(self.max_chunk_field.value)
             chunk_size = int(self.chunk_size_field.value)
             if max_chunk < chunk_size:
-                errors['max_chunk'] = "Must be >= chunk size"
+                errors["max_chunk"] = "Must be >= chunk size"
         except ValueError:
-            errors['max_chunk'] = "Must be a number"
+            errors["max_chunk"] = "Must be a number"
 
         return errors
 
@@ -179,10 +184,10 @@ class CollectionDialog(ft.AlertDialog):
         errors = self._validate_fields()
         if errors:
             # Show errors on fields
-            self.name_field.error_text = errors.get('name')
-            self.chunk_size_field.error_text = errors.get('chunk_size')
-            self.chunk_overlap_field.error_text = errors.get('chunk_overlap')
-            self.max_chunk_field.error_text = errors.get('max_chunk')
+            self.name_field.error_text = errors.get("name")
+            self.chunk_size_field.error_text = errors.get("chunk_size")
+            self.chunk_overlap_field.error_text = errors.get("chunk_overlap")
+            self.max_chunk_field.error_text = errors.get("max_chunk")
             if self.page:
                 self.page.update()
             return

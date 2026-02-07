@@ -87,9 +87,7 @@ class DimensionValidator:
                 )
 
         # Check against existing collection dimension
-        existing_dim = await self.get_collection_dimension(
-            chromadb_client, collection_id
-        )
+        existing_dim = await self.get_collection_dimension(chromadb_client, collection_id)
         if existing_dim is not None and actual_dim != existing_dim:
             raise DimensionMismatchError(
                 f"Embedding dimension mismatch with existing collection "
@@ -164,8 +162,7 @@ def validate_embeddings(
         expected = EXPECTED_DIMENSIONS[model_name]
         if dim != expected:
             raise DimensionMismatchError(
-                f"Dimension mismatch for model '{model_name}': "
-                f"expected {expected}, got {dim}",
+                f"Dimension mismatch for model '{model_name}': expected {expected}, got {dim}",
                 expected=expected,
                 actual=dim,
             )

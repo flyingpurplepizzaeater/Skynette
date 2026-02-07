@@ -8,11 +8,12 @@ Supports:
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
-from ..hub import ModelInfo, DownloadProgress
+from ..hub import DownloadProgress, ModelInfo
 
 
 @dataclass
@@ -22,7 +23,7 @@ class SearchResult:
     models: list[ModelInfo]
     total_count: int
     has_more: bool = False
-    next_cursor: Optional[str] = None
+    next_cursor: str | None = None
 
 
 class ModelSource(ABC):
@@ -76,7 +77,7 @@ class ModelSource(ABC):
         self,
         model: ModelInfo,
         dest_dir: Path,
-        progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
     ) -> Path:
         """
         Download a model to the destination directory.
@@ -103,7 +104,7 @@ class ModelSource(ABC):
         """
         return []
 
-    async def validate_url(self, url: str) -> Optional[ModelInfo]:
+    async def validate_url(self, url: str) -> ModelInfo | None:
         """
         Validate a URL and return model info if valid for this source.
 
@@ -118,8 +119,8 @@ class ModelSource(ABC):
 
 # Import concrete implementations for convenience
 from .huggingface import HuggingFaceSource
-from .ollama import OllamaSource
 from .local import LocalFileSource
+from .ollama import OllamaSource
 
 __all__ = [
     "ModelSource",
