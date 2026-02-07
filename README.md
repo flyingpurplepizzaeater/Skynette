@@ -109,21 +109,44 @@ python src/main.py
 flet run src/main.py
 ```
 
-### Method 2: Install from PyPI (Coming Soon)
+### Method 2: Install from PyPI
 
 ```bash
+# Install the base package
 pip install skynette
+
+# Or install with all AI features
+pip install skynette[ai]
+
+# Or install with all optional features
+pip install skynette[all]
+
+# Run the application
 skynette
+# or
+python -m src.main
 ```
 
-### Method 3: Pre-built Executables (Coming Soon)
+> **Note**: After installing from PyPI, you can run Skynette with the `skynette` command or `python -m src.main`.
 
-Download from [Releases](https://github.com/flyingpurplepizzaeater/Skynette/releases):
-- **Windows**: `Skynette-Setup.exe`
-- **macOS**: `Skynette.dmg`
-- **Linux**: `Skynette.AppImage`
+### Method 3: Pre-built Executables
 
-Double-click to install and launch.
+Download pre-built executables from [GitHub Releases](https://github.com/flyingpurplepizzaeater/Skynette/releases):
+
+| Platform | Download | Notes |
+|----------|----------|-------|
+| **Windows** | `Skynette-Windows.zip` | Extract and run `Skynette.exe` |
+| **macOS** | `Skynette-macOS.zip` or `Skynette.dmg` | Drag to Applications folder |
+| **Linux** | `Skynette.AppImage` or `Skynette-Linux.tar.gz` | Make executable with `chmod +x` |
+| **Linux (Debian/Ubuntu)** | `skynette_*.deb` | Install with `sudo dpkg -i` |
+
+**Installation instructions:**
+- **Windows**: Download the ZIP, extract, and run `Skynette.exe`
+- **macOS**: Download the DMG or ZIP, open, and drag to Applications folder
+- **Linux (AppImage)**: Download, make executable (`chmod +x Skynette-*.AppImage`), and run
+- **Linux (.deb)**: Download and install (`sudo dpkg -i skynette_*.deb`)
+
+All release artifacts include SHA256 checksums for verification.
 
 ## Documentation
 
