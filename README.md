@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Release](https://img.shields.io/github/v/release/flyingpurplepizzaeater/Skynette)](https://github.com/flyingpurplepizzaeater/Skynette/releases)
 
-An intelligent, AI-powered workflow automation platform that rivals n8n, combining visual workflow building with multi-model AI capabilities. Built with Python and Flet for cross-platform desktop and mobile deployment.
+An intelligent, AI-powered workflow automation platform that combines visual workflow building with multi-model AI capabilities. Built with Python and Flet for cross-platform desktop and mobile deployment.
 
 ## Features
 
