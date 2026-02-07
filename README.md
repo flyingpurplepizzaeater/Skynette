@@ -125,267 +125,181 @@ Download from [Releases](https://github.com/flyingpurplepizzaeater/Skynette/rele
 
 Double-click to install and launch.
 
-## Quick Start
-
-### First Time Setup
-
-1. **Launch Skynette**:
-   ```bash
-   python src/main.py
-   ```
-
-2. **Complete AI Hub Setup Wizard** (First launch):
-   - Select AI providers to configure (OpenAI, Anthropic, Google AI, Groq, Local Models)
-   - Enter API keys (securely stored in system keyring)
-   - Or skip to configure later in **AI Hub** → **My Providers**
-
-3. **Download Models** (Optional - for local AI):
-   - Navigate to **AI Hub** → **Model Library** → **Download**
-   - Choose from recommended models or enter custom URL
-   - Track download progress in real-time
-
-4. **Create Your First Workflow**:
-   - Click **New Workflow** button on the dashboard
-   - Choose between Simple Mode (wizard) or Advanced Mode (canvas)
-
-### Building a Workflow
-
-#### Option 1: Using Skynet Assistant (Easiest)
-
-1. Click the **Assistant** tab
-2. Describe your workflow in natural language:
-   ```
-   "Create a workflow that fetches weather data from an API every morning at 8 AM
-   and sends me a notification"
-   ```
-3. Review the generated workflow
-4. Click **Create Workflow** to build it automatically
-
-#### Option 2: Visual Editor
-
-1. **Add Trigger Node**:
-   - Drag **Schedule Trigger** from the node palette
-   - Configure: `0 8 * * *` (8 AM daily)
-
-2. **Add Action Nodes**:
-   - Drag **HTTP Request** node
-   - Set URL: `https://api.weather.com/...`
-   - Connect from trigger to HTTP node
-
-3. **Add Logic** (optional):
-   - Drag **If/Else** node to add conditions
-   - Example: If temperature < 10°C, add cold weather warning
-
-4. **Add Output**:
-   - Drag **Send Notification** node
-   - Configure notification settings
-
-5. **Execute**:
-   - Click **Run** to test immediately
-   - Or enable the trigger for automatic execution
-
-### Example Workflows
-
-#### 1. Email Notification Workflow
-```
-Manual Trigger → HTTP Request (fetch data) → If/Else (check condition) → Send Email
-```
-
-#### 2. Data Processing Pipeline
-```
-File Watch Trigger → Read CSV → Transform Data → AI Analysis → Write to Database → Send Slack Message
-```
-
-#### 3. Content Generation
-```
-Schedule Trigger → AI Text Generation → Format Output → Post to Blog → Tweet Summary
-```
-
-#### 4. Smart Home Automation
-```
-Webhook Trigger → Check Sensor Data → If/Else Logic → Control Smart Devices → Log Event
-```
-
-## Architecture
-
-```
-src/
-├── main.py              # Application entry point
-├── ui/
-│   ├── app.py           # Main Flet application
-│   ├── theme.py         # UI theme and styling (light/dark mode)
-│   ├── views/           # View components
-│   │   ├── ai_hub.py    # AI Hub (5 tabs: Setup, Providers, Library, Usage, Knowledge Bases)
-│   │   ├── knowledge_bases.py  # RAG collection management
-│   │   └── usage_dashboard.py  # Usage analytics and cost tracking
-│   ├── components/      # Reusable UI components
-│   ├── dialogs/         # Modal dialogs (upload, query, collection)
-│   └── models/          # UI data models
-├── core/
-│   ├── workflow/        # Workflow models and executor
-│   ├── nodes/           # Node implementations
-│   │   └── rag/         # RAG workflow nodes (ingest, query)
-│   ├── expressions/     # Expression parser ({{$prev.data}})
-│   └── errors/          # Error handling
-├── ai/
-│   ├── gateway.py       # Unified AI interface
-│   ├── providers/       # Provider adapters (OpenAI, Anthropic, etc.)
-│   ├── models/          # Local model management
-│   └── security.py      # Secure API key storage (keyring)
-├── rag/                 # RAG (Retrieval Augmented Generation)
-│   ├── service.py       # High-level RAG service
-│   ├── chromadb_client.py  # Vector database client
-│   ├── embeddings.py    # Local embedding model manager
-│   ├── processor.py     # Document processing and chunking
-│   ├── storage.py       # SQLite metadata storage
-│   └── models.py        # RAG data models
-├── plugins/             # Plugin system
-├── data/                # Database and storage
-└── tests/               # Comprehensive test suite (299 tests)
-    ├── unit/            # Unit tests (279 tests)
-    ├── integration/     # Integration tests (20 tests)
-    └── e2e/             # Playwright E2E tests
-```
-
-## Node Development
-
-Create custom nodes by extending `BaseNode`:
-
-```python
-from src.core.nodes.base import BaseNode, NodeField, FieldType
-
-class MyCustomNode(BaseNode):
-    type = "my-custom-node"
-    name = "My Custom Node"
-    category = "Custom"
-    description = "Does something custom"
-
-    inputs = [
-        NodeField(name="input_data", label="Input", type=FieldType.STRING)
-    ]
-    outputs = [
-        NodeField(name="result", label="Result", type=FieldType.JSON)
-    ]
-
-    async def execute(self, config: dict, context: dict) -> dict:
-        input_data = config.get("input_data", "")
-        # Your logic here
-        return {"result": {"processed": input_data}}
-```
-
-## Configuration
-
-Settings stored in `~/.skynette/config.yaml`:
-
-```yaml
-theme: dark  # or light
-ai:
-  default_provider: local
-  # API keys now stored securely in system keyring via AI Hub
-storage:
-  workflows_dir: ~/skynette/workflows
-  models_dir: ~/skynette/models
-  rag_storage: ~/.skynette/rag  # ChromaDB and embeddings
-rag:
-  embedding_model: all-MiniLM-L6-v2  # Local embedding model
-  chunk_size: 1000  # Characters per chunk
-  chunk_overlap: 200  # Overlap between chunks
-  max_concurrent_uploads: 5  # Parallel processing limit
-cloud:
-  enabled: false
-  sync_interval: 300
-```
-
-**Security Note**: API keys are stored in your system's secure keyring (Windows Credential Manager, macOS Keychain, Linux Secret Service), not in plain text config files.
-
-## Roadmap
-
-### Completed ✅
-- [x] **Phase 1**: Core foundation (workflow engine, basic nodes)
-- [x] **Phase 2**: Advanced workflow editor (simple/advanced modes)
-- [x] **Phase 3**: UI polish and production readiness
-- [x] **Phase 4**: AI Integration
-  - [x] Sprint 1: AI core, providers, security
-  - [x] Sprint 2: AI Hub UI, model management
-  - [x] Sprint 3: Usage dashboard and cost analytics
-- [x] **Phase 5**: RAG Integration
-  - [x] Sprint 1: RAG core (ChromaDB, embeddings, document processing)
-  - [x] Sprint 4: Knowledge Bases UI and polish
-
-### In Progress 🚧
-- [ ] **Phase 6**: App integrations and workflow nodes
-  - [ ] Email (Gmail, Outlook)
-  - [ ] Communication (Slack, Discord, Teams)
-  - [ ] File storage (Google Drive, Dropbox, OneDrive)
-  - [ ] Databases (PostgreSQL, MySQL, MongoDB)
-  - [ ] And 20+ more integrations
-
-### Planned 📋
-- [ ] **Phase 7**: Cloud features (sync, sharing, marketplace)
-- [ ] **Phase 8**: Mobile apps (iOS, Android via Flet)
-- [ ] **Phase 9**: Enterprise features (SSO, audit logs, roles)
-
-See [docs/plans/](docs/plans/) for detailed implementation plans.
-
 ## Documentation
 
-### Getting Started
-- **[Installation Guide](INSTALLATION.md)**: Complete installation instructions, troubleshooting, and platform-specific guides
-- **[Quick Start Guide](QUICKSTART.md)**: Get up and running in 5 minutes
+**📚 Complete guides to get you started:**
 
-### User Guides
-- **[Knowledge Bases User Guide](docs/user-guide/knowledge-bases.md)**: Creating collections, uploading documents, semantic search
-- **[AI Provider Setup](docs/AI_PROVIDERS.md)**: Configure OpenAI, Anthropic, Google AI, Groq, and local models
+- 🚀 **[QUICKSTART.md](QUICKSTART.md)** - Get up and running in 5 minutes
+- 📖 **[USER_GUIDE.md](docs/USER_GUIDE.md)** - Complete step-by-step usage guide
+- 💻 **[INSTALLATION.md](INSTALLATION.md)** - Detailed installation instructions
+- 📝 **[EXAMPLES.md](docs/EXAMPLES.md)** - 10 practical workflow examples
+- ❓ **[FAQ.md](docs/FAQ.md)** - Frequently asked questions
+- 🤝 **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
+- 🗺️ **[ROADMAP.md](ROADMAP.md)** - Planned features
 
-### Developer Documentation
-- **[RAG UI Architecture](docs/development/rag-ui-architecture.md)**: Component hierarchy, data flows, and testing
-- **[Contributing Guide](CONTRIBUTING.md)**: How to contribute to Skynette
-- **[Implementation Plans](docs/plans/)**: Detailed sprint plans and designs
+## Quick Start
 
-### Quick Links
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Example Workflows](#example-workflows)
-- [Configuration](#configuration)
-- [Roadmap](#roadmap)
+**New to Skynette? Follow these steps:**
+
+### 1. Install & Launch
+
+```bash
+# Clone and navigate to directory
+git clone https://github.com/flyingpurplepizzaeater/Skynette.git
+cd Skynette
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install with AI features
+pip install -e ".[ai,dev]"
+
+# Launch application
+python src/main.py
+```
+
+💡 **See [QUICKSTART.md](QUICKSTART.md) for faster methods and [INSTALLATION.md](INSTALLATION.md) for troubleshooting.**
+
+### 2. Configure AI Providers (Optional)
+
+On first launch, the **AI Hub Setup Wizard** helps you configure AI providers:
+- ✅ Select providers (OpenAI, Anthropic, Google AI, etc.)
+- ✅ Enter API keys (stored securely in system keyring)
+- ✅ Or skip and configure later
+
+**Don't have API keys?** Use **local models** (free, private, no keys needed)!
+
+### 3. Create Your First Workflow
+
+**Option A: Simple Mode (Recommended for beginners)**
+1. Click **+ New Workflow** → **Simple Mode**
+2. Follow the step-by-step wizard
+3. Add trigger (when to run)
+4. Add actions (what to do)
+5. Test and save!
+
+**Option B: Advanced Mode (For power users)**
+1. Click **+ New Workflow** → **Advanced Mode**
+2. Drag nodes from palette to canvas
+3. Connect nodes to build workflow logic
+4. Configure each node
+5. Run and debug visually
+
+💡 **See [USER_GUIDE.md](docs/USER_GUIDE.md) for detailed walkthrough with screenshots.**
+
+### 4. Explore Examples
+
+Check out [EXAMPLES.md](docs/EXAMPLES.md) for 10 ready-to-use workflows:
+- 📧 Daily weather email reports
+- 🤖 AI-powered email responder
+- 📄 Document summarizer
+- 📱 Social media content generator
+- 💾 Automated backups
+- 📚 Knowledge base Q&A bot
+- And more!
+
+## Key Features Explained
+
+### 🤖 AI Hub
+Centralized management for all AI providers and models:
+- Configure multiple providers (OpenAI, Anthropic, Google, local models)
+- Download and manage local AI models
+- Track usage, costs, and token consumption
+- Secure API key storage
+
+**Learn more:** [USER_GUIDE.md - Working with AI](docs/USER_GUIDE.md#working-with-ai)
+
+### 📚 Knowledge Bases (RAG)
+Build AI assistants that answer questions from your documents:
+- Upload markdown, text, and PDF files
+- Semantic search powered by embeddings
+- Query with natural language
+- 100% local and private by default
+
+**Learn more:** [USER_GUIDE.md - Knowledge Bases](docs/USER_GUIDE.md#knowledge-bases-rag)
+
+### 🎨 Dual-Mode Editor
+Choose the workflow builder that fits your style:
+- **Simple Mode**: Wizard for beginners
+- **Advanced Mode**: Visual canvas for power users
+- Switch between modes anytime
+
+**Learn more:** [USER_GUIDE.md - Creating Workflows](docs/USER_GUIDE.md#creating-your-first-workflow)
+
+### 🔧 50+ Built-in Nodes
+Pre-built integrations for common tasks:
+- **AI**: Text generation, classification, embeddings
+- **Data**: File operations, databases, transformations
+- **HTTP**: REST APIs, webhooks, GraphQL
+- **Apps**: Slack, GitHub, Google Drive, and more
+
+**Browse all:** [USER_GUIDE.md - Workflow Nodes](docs/USER_GUIDE.md#workflow-nodes)
+
+## Use Cases
+
+**What can you build with Skynette?**
+
+- 📧 **Email Automation**: Auto-respond to customers using AI
+- 📊 **Report Generation**: Create automated business reports
+- 📝 **Content Creation**: Generate social media posts from blogs
+- 🔍 **Data Analysis**: Analyze sentiment in customer feedback
+- 💾 **Backup Automation**: Auto-backup files to cloud storage
+- 🤖 **Custom AI Assistants**: Build Q&A bots from your docs
+- 🔄 **Data Pipelines**: Transform and move data between systems
+- ⚡ **API Integrations**: Connect and automate your tools
+
+**See real examples:** [EXAMPLES.md](docs/EXAMPLES.md)
+
+## Community & Support
+
+- 💬 **[GitHub Discussions](https://github.com/flyingpurplepizzaeater/Skynette/discussions)** - Ask questions, share workflows
+- 🐛 **[Issue Tracker](https://github.com/flyingpurplepizzaeater/Skynette/issues)** - Report bugs, request features
+- 📖 **[Documentation](docs/)** - Comprehensive guides and API docs
+- 🤝 **[Contributing](CONTRIBUTING.md)** - Help improve Skynette
+
+## Troubleshooting
+
+**Having issues? Check these resources:**
+
+1. **[FAQ.md](docs/FAQ.md)** - Common problems and solutions
+2. **[INSTALLATION.md](INSTALLATION.md)** - Detailed setup troubleshooting
+3. **[GitHub Issues](https://github.com/flyingpurplepizzaeater/Skynette/issues)** - Search existing issues
+4. **[Discussions](https://github.com/flyingpurplepizzaeater/Skynette/discussions)** - Ask the community
+
+**Quick fixes:**
+```bash
+# Reinstall dependencies
+pip install -e ".[ai,dev]" --force-reinstall
+
+# Clear cache
+rm -rf ~/.skynette/cache
+
+# Run with debug logging
+python src/main.py --debug
+```
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Code of Conduct
+- Development setup
+- Pull request process
+- Coding standards
 
-### Development Setup
+**Quick contribution:**
 ```bash
-# Clone and install
-git clone https://github.com/flyingpurplepizzaeater/Skynette.git
-cd Skynette
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -e ".[ai,dev]"
+# Fork and clone
+git clone https://github.com/YOUR_USERNAME/Skynette.git
 
-# Run tests (299 total: 279 unit + 20 integration)
-pytest --cov=src --cov-report=term-missing
+# Create branch
+git checkout -b feature/awesome-feature
 
-# Run only unit tests
-pytest tests/unit/
+# Make changes and test
+pytest
 
-# Run integration tests
-pytest tests/integration/
-
-# Run E2E tests (requires Playwright)
-playwright install --with-deps chromium
-pytest tests/e2e/
-
-# Run linting
-ruff check src/
-ruff format --check src/
+# Submit PR
 ```
-
-### Test Coverage
-- **Unit Tests**: 279 tests covering individual components
-- **Integration Tests**: 20 tests for multi-component workflows
-- **E2E Tests**: Playwright-based browser automation tests
-- **Total**: 299 tests with comprehensive coverage
-
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
@@ -394,4 +308,10 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 - Inspired by [n8n](https://n8n.io), [Activepieces](https://activepieces.com), [Langflow](https://langflow.org)
 - Built with [Flet](https://flet.dev) for cross-platform UI
-- AI powered by [llama.cpp](https://github.com/ggerganov/llama.cpp)
+- AI powered by [llama.cpp](https://github.com/ggerganov/llama.cpp), [ChromaDB](https://www.trychroma.com/), and [sentence-transformers](https://www.sbert.net/)
+
+---
+
+**Built with ❤️ by the Skynette community**
+
+[⭐ Star on GitHub](https://github.com/flyingpurplepizzaeater/Skynette) | [🐛 Report Issue](https://github.com/flyingpurplepizzaeater/Skynette/issues) | [💬 Discussions](https://github.com/flyingpurplepizzaeater/Skynette/discussions)
