@@ -1232,6 +1232,7 @@ class TestGoogleDriveListNode:
         assert node.category == "Apps"
 
 
+@pytest.mark.skipif(not __import__("importlib.util").util.find_spec("googleapiclient"), reason="googleapiclient not installed - requires cloud extras")
 class TestGoogleDriveUploadNode:
     """Tests for GoogleDriveUploadNode."""
 
