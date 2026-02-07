@@ -98,8 +98,8 @@ source venv/bin/activate
 # On Windows:
 venv\Scripts\activate
 
-# Install the package with dependencies
-pip install -e ".[dev]"
+# Install the package with dependencies (includes AI and dev tools)
+pip install -e ".[ai,dev]"
 
 # Run the application
 python src/main.py
@@ -354,7 +354,7 @@ git clone https://github.com/flyingpurplepizzaeater/Skynette.git
 cd Skynette
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -e ".[dev]"
+pip install -e ".[ai,dev]"
 
 # Run tests (299 total: 279 unit + 20 integration)
 pytest --cov=src --cov-report=term-missing
